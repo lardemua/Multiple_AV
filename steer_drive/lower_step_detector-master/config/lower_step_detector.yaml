@@ -1,0 +1,7 @@
+laser_intensity_max: 1.5
+margin_between_plane_and_down_step: 0.5 
+virtual_laser_intensity: 1.0
+laser_scan_range_deg: 180.0
+detect_step_angle_min_deg: 10.0
+chunk_angle_for_noise_deg: 10.0
+ratio_detect_in_chunk: 0.5

@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<robot name="origins" 
+  xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:property name="camera_link" value="0.05" />
+  <!-- Size of square 'camera' box -->
+  <!-- Import Rviz colors -->
+  <xacro:include filename="$(find cirkit_unit03_description)/urdf/materials.xacro" />
+  <!-- Import macros -->
+  <xacro:include filename="$(find cirkit_unit03_description)/urdf/cirkit_unit03_macro.xacro" />
+  <link name="base_link">
+    <visual>
+      <!-- <origin rpy="0 0 0" xyz="0 0 0.55" /> -->
+      <origin xyz="-1.7575 -0.91 0.05" rpy="${PI/2} 0.02 ${PI/2}"/>
+      <geometry>
+        <!-- <mesh filename="package://cirkit_unit03_description/meshes/cirkit_unit03/cirkit_unit03_body.dae"/> -->
+        <mesh filename="package://cirkit_unit03_description/meshes/cirkit_unit03/atlas2.STL"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0.35" />
+      <geometry>
+        <box size="1.0 0.55 0.4"/>
+      </geometry>
+    </collision>
+    <xacro:default_inertial mass="1450"/>
+  </link>
+  <xacro:rear_wheel/>
+  <xacro:front_wheel right_left="right" reflect_right_left="1"/>
+  <xacro:front_wheel right_left="left" reflect_right_left="-1"/>
+  <xacro:wheel right_left="right" reflect_right_left="1" front_rear="rear" reflect_front_rear="-1"/>
+  <xacro:wheel right_left="left" reflect_right_left="-1" front_rear="rear" reflect_front_rear="-1"/>
+
+  <!-- front_bottom_lrf -->
+  <link name="front_bottom_lrf">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://cirkit_unit03_description/meshes/LRF/UTM-30LX.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="base_to_front_bottom_lrf" type="fixed">
+    <axis xyz="0 1 0"/>
+    <parent link="base_link"/>
+    <child link="front_bottom_lrf"/>
+    <origin xyz="1.82 0 0.65"/>
+  </joint>
+
+  <!-- line_lrf -->
+  <link name="line_lrf">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://cirkit_unit03_description/meshes/LRF/UTM-30LX.dae"/>
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="base_to_line_lrf" type="fixed">
+    <axis xyz="0 1 0"/>
+    <parent link="base_link"/>
+    <child link="line_lrf"/>
+    <origin rpy="0 0 0" xyz="0 0 1.50"/>
+    <!-- <origin rpy="0 0 ${-PI/2}" xyz="0.82 15 0.65"/> -->
+  </joint>
+
+  <!-- steer -->
+  <link name="front_steer_link"/>
+
+  <joint name="front_steer_joint" type="fixed">
+    <axis xyz="0 1 0"/>
+    <parent link="base_link"/>
+    <child link="front_steer_link"/>
+    <origin xyz="${length_from_base_to_wheel_front_x} 0 ${radius_wheel}"/>
+  </joint>
+
+  
+  <transmission name="tran1">
+    <type>transmission_interface/SimpleTransmission</type>
+
+    <joint name="base_to_left_rear_wheel">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+
+    <actuator name="motor1">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="tran2">
+    <type>transmission_interface/SimpleTransmission</type>
+
+    <joint name="base_to_right_rear_wheel">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+    </joint>
+    
+    <actuator name="motor2">
+      <hardwareInterface>EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+</robot>

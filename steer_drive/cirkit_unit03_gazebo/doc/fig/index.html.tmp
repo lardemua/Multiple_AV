@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<title>Thumbnails for LAR page</title>
+<style type="text/css">
+<!--
+#thumbs{
+	position: relative;
+}
+
+#thumbs div{
+	float: left;
+	width: 180px;
+	height: 190px;
+	text-align: center;
+	font-size: x-small;   /*added by V. Santos, 23-Jul-2013,23:23*/
+	font-family: helvetica;   /*added by V. Santos, 23-Jul-2013,23:23*/
+}
+
+#thumbs a:link img, #thumbs a:visited img{
+	border: 1px solid #acacac;
+	padding: 5px;
+}
+
+#thumbs a:hover img{
+	border: 1px solid black;
+}
+
+-->
+</style>
+</head>
+<body>
+<h3>Images in /public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig</h3> 
+<address>Click thumbnails for full image size. Click <a href=".index.php">here</a> for directory listing.</address>
+<hr>
+<div id="thumbs">
+
+	<div>
+		<a href="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/gazebo_1.png" title="Full Size"><img src="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/gazebo_1_t.jpg"  /></a>
+		gazebo_1 <!-- Add the file name - V. Santos, 23-Jul-2013,23:24 -->
+	</div>
+
+
+	<div>
+		<a href="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/gazebo_2.png" title="Full Size"><img src="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/gazebo_2_t.jpg"  /></a>
+		gazebo_2 <!-- Add the file name - V. Santos, 23-Jul-2013,23:24 -->
+	</div>
+
+
+	<div>
+		<a href="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_1.png" title="Full Size"><img src="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_1_t.jpg"  /></a>
+		rviz_1 <!-- Add the file name - V. Santos, 23-Jul-2013,23:24 -->
+	</div>
+
+
+	<div>
+		<a href="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_2.png" title="Full Size"><img src="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_2_t.jpg"  /></a>
+		rviz_2 <!-- Add the file name - V. Santos, 23-Jul-2013,23:24 -->
+	</div>
+
+
+	<div>
+		<a href="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_3.png" title="Full Size"><img src="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_3_t.jpg"  /></a>
+		rviz_3 <!-- Add the file name - V. Santos, 23-Jul-2013,23:24 -->
+	</div>
+
+
+	<div>
+		<a href="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_4.png" title="Full Size"><img src="/public/LAR Projects/RobotNavigation/2018_RicardoSilva/codigo_catkin_ws/steer_drive/cirkit_unit03_gazebo/doc/fig/rviz_4_t.jpg"  /></a>
+		rviz_4 <!-- Add the file name - V. Santos, 23-Jul-2013,23:24 -->
+	</div>
+
+</div>
+<div id="pb">
+<!--	powered by <a href="http://www.phpace.com/">a simple php image thumbnail script</a> -->
+</div>
+</body>
+</html>

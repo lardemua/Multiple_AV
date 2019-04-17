@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<urdf>
+  <robot name="ATLASCAR2">
+    <link name="link1"/>
+    <link name="link2"/>
+    <link name="link3"/>
+
+    <joint name="Speed" type="revolute">
+      <parent link="link1"/>
+      <child link="link2"/>
+      <limit effort="10" velocity="10" lower="0" upper="120"/>
+    </joint>
+    <joint name="Direction" type="revolute">
+      <parent link="link2"/>
+      <child link="link3"/>
+      <limit effort="10" velocity="10" lower="-41.5" upper="41.5"/>
+    </joint>
+  </robot>
+</urdf>

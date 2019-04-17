@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!-- ackermann_vehicle.launch
+
+Use Gazebo to simulate a vehicle with Ackermann steering. -->
+<launch>
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="paused" default="true"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="worlds/monaco.world"/>
+    <!--<arg name="world_name" value="$(find cirkit_unit03_gazebo)/worlds/cirkit_unit03.world"/>-->
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+  <!-- Load the URDF for GAZEBO into the ROS Parameter Server -->
+  <include file="$(find cirkit_unit03_gazebo)/launch/description.gazebo.launch"/>
+  <include file="$(find cirkit_unit03_control)/launch/control_gazebo.launch"/>
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+  <rosparam file="$(find cirkit_unit03_gazebo)/config/cirkit_unit03_hardware_gazebo.yaml" command="load"/>
+  <rosparam file="$(find cirkit_unit03_gazebo)/config/pids.yaml" command="load"/>
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-urdf -model cirkit_unit03 -param robot_description"/>
+  <node name="cirkit_unit03_gazebo" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_node" output="screen"/>
+  <!-- Trajectory planning -->
+  <!-- <include file="$(find trajectory_planner)/launch/trajectory_planner_simulated_simulator.launch"/> -->
+  <node name="tf_generator4" pkg="cirkit_unit03_gazebo" type="tf_generator4" />
+  <node name="tf_generator5" pkg="cirkit_unit03_gazebo" type="tf_generator5" />
+  <node name="tf_generator6" pkg="cirkit_unit03_gazebo" type="tf_generator6" />
+  <node name="cirkit_unit03_gazebo_line" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node" />
+  <!-- PARI -->
+  <node name="server_node" pkg="comm_tcp" type="server_node" args="50000" required="true" output="screen"/>
+</launch>

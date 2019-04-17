@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!-- -->
+<launch>
+  <arg name = "record" default = "false"/>
+  <param name = "includeUnav" value="true" type="bool"/>
+  <param name = "IncludeScans" value="111111" type="string"/>
+  <param name = "ref_sensor" value="lms151_E" type="string"/>
+  <!--Launch the tf publisher node-->
+  <node pkg="free_space_detection" type="device_frame_publisher_node" name="device_frame_publisher" required="true" output="screen"/>
+  <!--Launch the free_space node-->
+  <node pkg="free_space_detection" type="free_space_detection_node" name="free_space_detection" required="true" output="screen"/>
+  <!--Launch the local_planning node-->
+  <node pkg="local_path_planning" type="local_path_planning_node" name="local_path_planning" required="true" output="screen"/>
+  <!--Launch the visualization-->
+  <node pkg="rviz" type="rviz" name="rviz" args="--display-config $(find local_path_planning)/config/rvizcentroid.rviz" required="true"/>
+  <!--Launch the recorder-->
+  <node name="rosbag_record" pkg="rosbag" type="record" output="screen" if="$(arg record)" args=" /ld_rms/scan0 /ld_rms/scan1  /ld_rms/scan2 /ld_rms/scan3 /lms151_D_scan /lms151_E_scan /camera/image_color -o $(find local_path_planning)/laserData/"/>
+  <!--Launch the robot model-->
+  <include file="$(find local_path_planning)/launch/robotmodel.launch"/>
+</launch>

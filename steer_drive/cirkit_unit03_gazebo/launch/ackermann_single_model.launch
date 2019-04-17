@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+
+<launch>
+
+
+
+
+    <arg name="namespace" default="h0" />
+    <!-- Generate the tf_prefix from the namespace -->
+    <arg name="tfpre" default="$(arg namespace)_tf" />
+    <!-- Put value on the parameter server in the group's namespace -->
+    <!-- <param name="tf_prefix" value="$(arg namespace)_tf" /> -->
+
+    <!-- Load the URDF for GAZEBO into the ROS Parameter Server -->
+
+
+
+
+    <!-- Initial pose - see "rosrun gazebo_ros spawn_model -h" for syntax -->
+    <arg name="initX" default="0" />
+    <arg name="initY" default="0" />
+    <arg name="initYaw" default="0" />
+
+    <!-- <include file="$(find cirkit_unit03_gazebo)/launch/description.gazebo.launch"/> -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find cirkit_unit03_gazebo)/urdf/description.gazebo.xacro' nsp:=$(arg namespace) tfpre:=$(arg tfpre)">
+
+    </param>
+
+    <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-x $(arg initX) -y $(arg initY) -Y $(arg initYaw) -urdf -model cirkit_unit03_$(arg namespace) -param robot_description"/>
+
+    <!-- Start the state publisher node in the namespace - uses the 
+       joint states from gazebo
+       along with the URDF model (robot_description) to publish 
+       the joint positions to /tf -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <!-- <include file="$(find cirkit_unit03_control)/launch/control_gazebo.launch"/> -->
+    <!-- Load joint controller configurations from YAML file to parameter server -->
+
+    <!-- Here we spawn (load and launch) two controllers which become 
+       part of Gazebo. The key thing we need to do is to set the 
+       "base_frame_id" of the diff_drive_controller
+       to include the tf_prefix so that our tf trees work out.   
+       So, we load the default control configuration and then overwrite 
+       the base_frame_id -->
+    <rosparam file="$(find cirkit_unit03_control)/config/cirkit_unit03_steer_drive_controller_gazebo.yaml" command="load"/>
+
+    <rosparam param="steer_drive_controller/base_frame_id" subst_value="True">$(arg tfpre)/base_link
+    </rosparam>
+
+    <!-- load the controllers -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="steer_drive_controller joint_state_controller" />
+
+
+
+
+
+    <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+    <rosparam file="$(find cirkit_unit03_gazebo)/config/cirkit_unit03_hardware_gazebo.yaml" command="load"/>
+
+    <rosparam file="$(find cirkit_unit03_gazebo)/config/pids.yaml" command="load"/>
+
+
+    
+    <node name="cirkit_unit03_gazebo_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_node" output="screen" >
+        <remap from="/simulator_laser_scan" to="/$(arg namespace)/simulator_laser_scan"/>
+        <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
+        <!-- <remap from="base_link" to="$(arg namespace)/base_link"/> -->
+        <!-- <remap from="laser_link" to="$(arg namespace)/laser_link"/> -->
+    </node>
+
+
+
+
+    <!-- Trajectory planning -->
+    <!-- <include file="$(find trajectory_planner)/launch/trajectory_planner_simulated_simulator.launch"/> -->
+    <param name="sim" value="true" type="bool"/>
+    <!-- Free space include -->
+    <!-- <include file="$(find free_space_detection)/launch/robotmodel.launch"/> -->
+    <param name="ATLASCAR2" textfile="$(find free_space_detection)/urdf/atlas2.urdf" />
+
+
+
+    <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen">
+        <remap from="/array_of_markers" to="/$(arg namespace)/array_of_markers"/>
+        <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
+        <remap from="/mtt_targets" to="/$(arg namespace)/mtt_targets"/>
+        <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
+        <remap from="/steer_drive_controller/cmd_vel" to="/$(arg namespace)/steer_drive_controller/cmd_vel"/>
+        <remap from="/min_dist_to_obstacles" to="/$(arg namespace)/min_dist_to_obstacles"/>
+        <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
+        <remap from="/trajectory_information" to="/$(arg namespace)/trajectory_information"/>
+        <remap from="/vehicle_odometry" to="/$(arg namespace)/vehicle_odometry"/>
+    </node>
+
+    <!-- <group ns="$(arg namespace)"> -->
+    <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen">
+        <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
+        <remap from="APgenerator/im" to="/$(arg namespace)/APgenerator/im"/>
+
+    </node>
+    <!-- </group> -->
+
+    <node name="tf_generator_$(arg namespace)" pkg="trajectory_planner" type="tf_generator" />
+
+    <node name="tf_generator2_$(arg namespace)" pkg="trajectory_planner" type="tf_generator2" />
+
+    <node name="tracking_frame_generator_$(arg namespace)" pkg="trajectory_planner" type="tracking_frame_generator" required="true" output="screen"/>
+
+    <node name="rviz_$(arg namespace)" pkg="rviz" type="rviz" args="--display-config $(find trajectory_planner)/config/rviz_simulator.rviz" required="true">
+        <remap from="/APgenerator/im/update" to="/$(arg namespace)/APgenerator/im/update" />
+        <remap from="/APgenerator/im/update_full" to="/$(arg namespace)/APgenerator/im/update_full" />
+        <remap from="/APgenerator/im/feedback" to="/$(arg namespace)/APgenerator/im/feedback"/>
+        <remap from="/array_of_markers" to="/$(arg namespace)/array_of_markers" />
+        <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
+        <remap from="/simulator_laser_scan" to="/$(arg namespace)/simulator_laser_scan"/>
+        <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
+        <remap from="/initialpose" to="/$(arg namespace)/initialpose"/>
+        <remap from="/move_base_simple/goal" to="/$(arg namespace)/move_base_simple/goal"/>
+        <remap from="/clicked_point" to="/$(arg namespace)/clicked_point"/>
+    </node>
+
+
+
+
+
+
+
+    <node name="tf_generator4_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator4" />
+
+    <node name="tf_generator5_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator5" />
+
+    <node name="tf_generator6_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator6" />
+
+    <!-- ackermann_vehicle_gazebo_line.cpp -->
+    <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node" >
+        <remap from="/line_laser_scan" to="/$(arg namespace)/line_laser_scan"/>
+        <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
+    </node>
+
+    <!-- Twister server for rviz control-->
+    <!-- <node pkg="interactive_marker_twist_server" type="marker_server" name="twist_marker_server" output="screen">
+        <param name="link_name" value="$(arg tfpre)/base_link" />
+    </node> -->
+
+    <!-- Twist mux is a node from Clearpath that mixes control commands from multiple sources -->
+    <!-- <node pkg="twist_mux" type="twist_mux" name="twist_mux">
+        <rosparam command="load" file="$(find husky_control)/config/twist_mux.yaml" />
+        <remap from="cmd_vel_out" to="husky_velocity_controller/cmd_vel"/>
+    </node> -->
+
+</launch>
