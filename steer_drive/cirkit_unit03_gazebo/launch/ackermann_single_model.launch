@@ -78,7 +78,7 @@
     <param name="sim" value="true" type="bool"/>
     <!-- Free space include -->
     <!-- <include file="$(find free_space_detection)/launch/robotmodel.launch"/> -->
-    <param name="ATLASCAR2" textfile="$(find free_space_detection)/urdf/atlas2.urdf" />
+    <!-- <param name="ATLASCAR2" textfile="$(find free_space_detection)/urdf/atlas2.urdf" /> -->
 
 
 

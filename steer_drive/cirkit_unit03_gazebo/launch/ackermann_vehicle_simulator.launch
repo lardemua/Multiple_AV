@@ -37,7 +37,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
 
   </group>
 
-  <group ns="h2">
+  <!-- <group ns="h2">
 
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
       <arg name="namespace" value="h2" />
@@ -46,7 +46,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
       <arg name="initYaw" value="3.14" />
     </include>
 
-  </group>
+  </group> -->
 
   <!-- <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic" output="screen" /> -->
   <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen" />
