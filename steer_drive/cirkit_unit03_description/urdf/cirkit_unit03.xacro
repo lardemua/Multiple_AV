@@ -2,6 +2,11 @@
 <robot name="origins" 
   xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:property name="camera_link" value="0.05" />
+
+  <!-- <material name="blue">
+    <color rgba="0 0 0.8 1"/>
+  </material> -->
+
   <!-- Size of square 'camera' box -->
   <!-- Import Rviz colors -->
   <xacro:include filename="$(find cirkit_unit03_description)/urdf/materials.xacro" />
@@ -15,11 +20,12 @@
         <!-- <mesh filename="package://cirkit_unit03_description/meshes/cirkit_unit03/cirkit_unit03_body.dae"/> -->
         <mesh filename="package://cirkit_unit03_description/meshes/cirkit_unit03/atlas2.STL"/>
       </geometry>
+      <material name="blue"/>
     </visual>
     <collision>
-      <origin rpy="0 0 0" xyz="0 0 0.35" />
+      <origin rpy="0 0 0" xyz="0 0 0.9" />
       <geometry>
-        <box size="1.0 0.55 0.4"/>
+        <box size="2.5 0.8 0.8"/>
       </geometry>
     </collision>
     <xacro:default_inertial mass="1450"/>
@@ -75,7 +81,7 @@
     <origin xyz="${length_from_base_to_wheel_front_x} 0 ${radius_wheel}"/>
   </joint>
 
-  
+
   <transmission name="tran1">
     <type>transmission_interface/SimpleTransmission</type>
 
@@ -95,7 +101,7 @@
     <joint name="base_to_right_rear_wheel">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
     </joint>
-    
+
     <actuator name="motor2">
       <hardwareInterface>EffortJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>

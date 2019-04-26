@@ -5,7 +5,9 @@
   <xacro:arg name="nsp" default="h0" />
   <xacro:arg name="tfpre" default="h0_tf" />
 
+  <!-- Configuração do Modelo e os componentes -->
   <xacro:include filename="$(find cirkit_unit03_description)/urdf/cirkit_unit03.xacro" />
+  <!-- Configuração do Gazebo -->
   <xacro:include filename="$(find cirkit_unit03_gazebo)/urdf/cirkit_unit03.gazebo.xacro" />
 
   <!-- Gazebo plugin for ROS Control -->

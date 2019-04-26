@@ -41,9 +41,9 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
 
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
       <arg name="namespace" value="h2" />
-      <arg name="initX" value="15" />
-      <arg name="initY" value="0" />
-      <arg name="initYaw" value="0" />
+      <arg name="initX" value="91" />
+      <arg name="initY" value="2" />
+      <arg name="initYaw" value="3.14" />
     </include>
 
   </group>

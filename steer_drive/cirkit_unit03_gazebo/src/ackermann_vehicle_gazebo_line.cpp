@@ -22,8 +22,8 @@
  ***************************************************************************************************/
 
 /**
- * @file ackermann_vehicle_gazebo.cpp
- * @brief Convertsline laser scan to point cloud
+ * @file ackermann_vehicle_gazebo_line.cpp
+ * @brief Converts line laser scan to point cloud
  * @author Ricardo Silva
  * @version v0
  * @date 2018-06-06

@@ -76,17 +76,17 @@ void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr
 
   switch (feedback->event_type)
   {
-    case visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE:
-      message.x = feedback->pose.position.x;
-      message.y = feedback->pose.position.y;
-      message.theta = 2.0 * asin(feedback->pose.orientation.z);
+  case visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE:
+    message.x = feedback->pose.position.x;
+    message.y = feedback->pose.position.y;
+    message.theta = 2.0 * asin(feedback->pose.orientation.z);
 
-      message.header.stamp = ros::Time::now();
-      message.header.frame_id = "/world";
+    message.header.stamp = ros::Time::now();
+    message.header.frame_id = "/world";
 
-      coor_pub.publish(message);
+    coor_pub.publish(message);
 
-      break;
+    break;
   }
 
   server->applyChanges();
@@ -159,6 +159,20 @@ InteractiveMarker make6DofMarker(bool fixed)
 
   server->insert(int_marker);
   server->setCallback(int_marker.name, &processFeedback);
+
+  //---------------------------------------
+
+  message.x = 6;
+  message.y = 0;
+  message.theta = 0;
+
+  message.header.stamp = ros::Time::now();
+  message.header.frame_id = "/world";
+
+  coor_pub.publish(message);
+
+  //----------------------------------------
+
   return int_marker;
 }
 
