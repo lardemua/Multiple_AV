@@ -41,7 +41,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cirkit_unit03_description/meshes/LRF/UTM-30LX.dae"/>
+        <mesh filename="package://cirkit_unit03_description/meshes/LRF/UTM-30LX.dae"/> <!-- mesh do LIDAR -->
       </geometry>
     </visual>
   </link>
@@ -58,7 +58,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cirkit_unit03_description/meshes/LRF/UTM-30LX.dae"/>
+        <mesh filename="package://cirkit_unit03_description/meshes/LRF/UTM-30LX.dae"/> <!-- mesh do LIDAR -->
       </geometry>
     </visual>
   </link>

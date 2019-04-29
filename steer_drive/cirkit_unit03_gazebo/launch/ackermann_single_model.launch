@@ -46,8 +46,8 @@
        the base_frame_id -->
     <rosparam file="$(find cirkit_unit03_control)/config/cirkit_unit03_steer_drive_controller_gazebo.yaml" command="load"/>
 
-    <rosparam param="steer_drive_controller/base_frame_id" subst_value="True">$(arg tfpre)/base_link
-    </rosparam>
+    <!-- <rosparam param="steer_drive_controller/base_frame_id" subst_value="True">$(arg tfpre)/base_link
+    </rosparam> -->
 
     <!-- load the controllers -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="steer_drive_controller joint_state_controller" />
@@ -62,12 +62,10 @@
     <rosparam file="$(find cirkit_unit03_gazebo)/config/pids.yaml" command="load"/>
 
 
-    
+    <!-- cirkit_unit03_gazebo_$(arg namespace) = ackermann_vehicle_gazebo.cpp -->
     <node name="cirkit_unit03_gazebo_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_node" output="screen" >
         <remap from="/simulator_laser_scan" to="/$(arg namespace)/simulator_laser_scan"/>
         <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
-        <!-- <remap from="base_link" to="$(arg namespace)/base_link"/> -->
-        <!-- <remap from="laser_link" to="$(arg namespace)/laser_link"/> -->
     </node>
 
 
@@ -129,11 +127,13 @@
 
     <node name="tf_generator4_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator4" />
 
+    <!-- tf_generator5 = laser_link_generator.cpp -->
     <node name="tf_generator5_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator5" />
 
+    <!-- tf_generator6 = line_link_generator.cpp -->
     <node name="tf_generator6_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator6" />
 
-    <!-- ackermann_vehicle_gazebo_line.cpp -->
+    <!--  cirkit_unit03_gazebo_line_$(arg namespace) = ackermann_vehicle_gazebo_line.cpp -->
     <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node" >
         <remap from="/line_laser_scan" to="/$(arg namespace)/line_laser_scan"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
