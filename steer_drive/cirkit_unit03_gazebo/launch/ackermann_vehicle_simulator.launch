@@ -35,7 +35,23 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
       <arg name="initYaw" value="0" />
     </include>
 
+    <param name="/h1/SPEED_SAFFETY"  value="1"/> <!-- velocidade minima -->
+    <param name="/h1/SPEED_REQUIRED"  value="10"/>  <!-- velocidade maxima -->
+    
+    <param name="/h1/MAX_STEERING_ANGLE"  value="41.5"/> <!-- max angulo volante -->
+    <param name="/h1/TRAJECTORY_ANGLE"  value="3"/> <!-- angulo volante de cada iteracao -->
+    <param name="/h1/NUM_TRAJ"  value="25"/> <!-- nº traj geradas -->
+    <param name="/h1/NUM_NODES"  value="10"/> <!-- -->
+
+     <!-- Trajectory weigths -->
+    <param name="/h1/W_DAP"  value="0.10"/> <!-- Distância ao Ponto Atrator -->
+    <param name="/h1/W_ADAP"  value="0.00"/> <!-- Diferença Angular ao Ponto Atrator -->
+    <param name="/h1/W_DLO"  value="0.90"/> <!-- Distância Mínima aos Obstáculos -->
+    <param name="/h1/W_CL"  value="0.20"/> <!-- Linha Central -->
+
   </group>
+
+  
 
   <group ns="h2">
 
@@ -45,6 +61,20 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
       <arg name="initY" value="2" />
       <arg name="initYaw" value="3.14" />
     </include>
+
+    <param name="/h2/SPEED_SAFFETY"  value="1"/> <!-- velocidade minima -->
+    <param name="/h2/SPEED_REQUIRED"  value="1"/>  <!-- velocidade maxima -->
+    
+    <param name="/h2/MAX_STEERING_ANGLE"  value="41.5"/> <!-- max angulo volante -->
+    <param name="/h2/TRAJECTORY_ANGLE"  value="3"/> <!-- angulo volante de cada iteracao -->
+    <param name="/h2/NUM_TRAJ"  value="25"/> <!-- nº traj geradas -->
+    <param name="/h2/NUM_NODES"  value="10"/> <!-- -->
+
+     <!-- Trajectory weigths -->
+    <param name="/h2/W_DAP"  value="0.10"/> <!-- -->
+    <param name="/h2/W_ADAP"  value="0.00"/> <!-- -->
+    <param name="/h2/W_DLO"  value="0.90"/> <!-- -->
+    <param name="/h2/W_CL"  value="0.20"/> <!-- -->
 
   </group>
 

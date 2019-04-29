@@ -74,8 +74,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Defines
 #define _D_ 2.550
-#define _NUM_TRAJ_ 25
-#define _NUM_NODES_ 10
+//#define _NUM_TRAJ_ 25
+// #define _NUM_NODES_ 10
 
 #define _VEHICLE_HEIGHT_TOP_ 1.460
 #define _VEHICLE_HEIGHT_BOTTOM_ 0.150
@@ -83,8 +83,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _VEHICLE_LENGHT_BACK_ 0.425
 #define _VEHICLE_WIDTH_ 1.775
 
-#define _MAX_STEERING_ANGLE_ 41.5
-#define _TRAJECTORY_ANGLE_ 3
+// #define _MAX_STEERING_ANGLE_ 41.5
+// #define _TRAJECTORY_ANGLE_ 3
 
 // namepaces
 using namespace visualization_msgs;
@@ -100,16 +100,20 @@ using namespace visualization_msgs;
 //   |        PROTOTYPES               |
 //   |_________________________________|
 //   Defined in trajectory_planner_nodelet.cpp
-void StatusMessageHandler(const atlasmv_base::AtlasmvStatus &msg);
+
+//trajectory_executive.cpp
+void StatusMessageHandler(const atlasmv_base::AtlasmvStatus &msg); //trajectory_executive.cpp
 int main(int argc, char **argv);
-bool jump_node(double dist_init, int node, c_trajectoryPtr t);
-void send_command_message(vector<double> speed_setted, int current_node, c_trajectoryPtr t);
-void pcl_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &input);
-void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &input);
-void velocity_callback(double speed);
-void velocity_update_callback(double speed);
-double angle_to_speed(double angle);
-double compute_last_dir(double angle);
+bool jump_node(double dist_init, int node, c_trajectoryPtr t); //trajectory_executive.cpp
+
+//trajectory_planner_nodelet.cpp
+void send_command_message(vector<double> speed_setted, int current_node, c_trajectoryPtr t); //trajectory_executive.cpp
+void pcl_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &input); //trajectory_planner_nodelet.cpp
+void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &input); //trajectory_planner_nodelet.cpp
+void velocity_callback(double speed); //trajectory_planner_nodelet.cpp
+void velocity_update_callback(double speed); //trajectory_planner_nodelet.cpp
+double angle_to_speed(double angle); //trajectory_planner_nodelet.cpp
+double compute_last_dir(double angle); //trajectory_planner_nodelet.cpp
 
 // Global Vars
 _EXTERN_ ros::NodeHandle *p_n;

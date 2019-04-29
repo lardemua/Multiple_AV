@@ -54,13 +54,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @return t_func_output
  */
 t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
-                                               std::vector<t_obstacle> &vo) {
+                                               std::vector<t_obstacle> &vo)
+{
   // delete all previous computed collision pts
   trajectory->collision_pts.erase(trajectory->collision_pts.begin(),
                                   trajectory->collision_pts.end());
 
   if (trajectory->closest_node < 0 ||
-      trajectory->closest_node >= (int)trajectory->x.size()) {
+      trajectory->closest_node >= (int)trajectory->x.size())
+  {
     ROS_ERROR("Error on node");
     return FAILURE;
   }
@@ -70,20 +72,24 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
   trajectory->score.FS = 1;
   trajectory->score.CL = 1;
   trajectory->score.EVAL = 10.0;
-  for (int n = 0; n <= trajectory->closest_node; ++n) {
-    if (trajectory->v_lines.size() - 1 != trajectory->x.size()) {
+  for (int n = 0; n <= trajectory->closest_node; ++n)
+  {
+    if (trajectory->v_lines.size() - 1 != trajectory->x.size())
+    {
       ROS_ERROR("Node lines and number of nodes not equal");
     }
 
     // polygon to calculate intersections
     geometry_msgs::Polygon car_polygon;
-    for (size_t l = 0; l < trajectory->v_lines[n].size(); ++l) {
+    for (size_t l = 0; l < trajectory->v_lines[n].size(); ++l)
+    {
       geometry_msgs::Point32 point;
       point.x = trajectory->v_lines[n][l].x[0];
       point.y = trajectory->v_lines[n][l].y[0];
       point.z = 0; // pointPcl.z;
       car_polygon.points.push_back(point);
-      if (l == (trajectory->v_lines[n].size() - 1)) {
+      if (l == (trajectory->v_lines[n].size() - 1))
+      {
         point.x = trajectory->v_lines[n][l].x[1];
         point.y = trajectory->v_lines[n][l].y[1];
         point.z = 0; // pointPcl.z;
@@ -94,7 +100,8 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
     // ROS_INFO("polygon size = %ld", car_polygon.points.size());
 
     // cycle all vehicle lines
-    for (size_t l = 0; l < trajectory->v_lines[n].size(); ++l) {
+    for (size_t l = 0; l < trajectory->v_lines[n].size(); ++l)
+    {
       double Ax = trajectory->v_lines[n][l].x[0];
       double Ay = trajectory->v_lines[n][l].y[0];
       double Bx = trajectory->v_lines[n][l].x[1];
@@ -102,17 +109,21 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
 
       // cycle all obstacles
       // ROS_INFO("vo size = %ld", vo.size());
-      for (size_t o = 0; o < vo.size(); ++o) {
+      for (size_t o = 0; o < vo.size(); ++o)
+      {
         // cycle all lines inside each obstacle
-        for (size_t lo = 0; lo < vo[o].x.size(); ++lo) {
+        for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
+        {
           double DLOprev =
               sqrt(pow(trajectory->v_lines[n][l].x[0] - vo[o].x[lo], 2) +
                    pow(trajectory->v_lines[n][l].y[0] - vo[o].y[lo], 2));
-          if (trajectory->score.DLO > DLOprev) {
+          if (trajectory->score.DLO > DLOprev)
+          {
             trajectory->score.DLO = DLOprev;
           }
           // simulator evaluation
-          if (n == 0 && trajectory->score.EVAL > DLOprev) {
+          if (n == 0 && trajectory->score.EVAL > DLOprev)
+          {
             trajectory->score.EVAL = DLOprev;
           }
 
@@ -123,7 +134,8 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
 
           int wn = wn_PnPoly(P, &car_polygon, car_polygon_size);
 
-          if (wn != 0) {
+          if (wn != 0)
+          {
             t_point p;
             p.x = P.x;
             p.y = P.y;
@@ -134,10 +146,13 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
       }
 
       // road lines
-      if (_simulation_) {
+      if (_simulation_)
+      {
         // ROS_INFO("vl size = %ld", vl.size());
-        for (size_t oo = 0; oo < vl.size(); ++oo) {
-          for (size_t ll = 0; ll < vl[oo].x.size(); ++ll) {
+        for (size_t oo = 0; oo < vl.size(); ++oo)
+        {
+          for (size_t ll = 0; ll < vl[oo].x.size(); ++ll)
+          {
             geometry_msgs::Point32 P;
             P.x = vl[oo].x[ll];
             P.y = vl[oo].y[ll];
@@ -145,11 +160,17 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
 
             int wn = wn_PnPoly(P, &car_polygon, car_polygon_size);
 
-            if (wn != 0) {
+            if (wn != 0)
+            {
               t_point p;
               p.x = P.x;
               p.y = P.y;
-              if (trajectory->alpha[0] >= 0) {
+              if (trajectory->alpha[0] >= 0)
+              {
+                ros::NodeHandle n;
+                double W_CL;
+                n.getParam("W_CL", W_CL);
+
                 trajectory->score.CL = W_CL;
               }
             }
@@ -169,19 +190,24 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
  * @return wn = the winding number (=0 only when P is outside)
  */
 int c_manage_trajectory::wn_PnPoly(geometry_msgs::Point32 P,
-                                   geometry_msgs::Polygon *V, int n) {
+                                   geometry_msgs::Polygon *V, int n)
+{
   int wn = 0; // the  winding number counter
 
   // loop through all edges of the polygon
-  for (int i = 0; i < n; i++) {     // edge from V[i] to  V[i+1]
-    if (V->points[i].y <= P.y) {    // start y <= P.y
-      if (V->points[i + 1].y > P.y) // an upward crossing
+  for (int i = 0; i < n; i++)
+  { // edge from V[i] to  V[i+1]
+    if (V->points[i].y <= P.y)
+    {                                                      // start y <= P.y
+      if (V->points[i + 1].y > P.y)                        // an upward crossing
         if (isLeft(V->points[i], V->points[i + 1], P) > 0) // P left of  edge
-          ++wn;                      // have  a valid up intersect
-    } else {                         // start y > P.y (no test needed)
-      if (V->points[i + 1].y <= P.y) // a downward crossing
+          ++wn;                                            // have  a valid up intersect
+    }
+    else
+    {                                                      // start y > P.y (no test needed)
+      if (V->points[i + 1].y <= P.y)                       // a downward crossing
         if (isLeft(V->points[i], V->points[i + 1], P) < 0) // P right of  edge
-          --wn; // have  a valid down intersect
+          --wn;                                            // have  a valid down intersect
     }
   }
   return wn;
@@ -196,7 +222,8 @@ int c_manage_trajectory::wn_PnPoly(geometry_msgs::Point32 P,
  */
 inline int c_manage_trajectory::isLeft(geometry_msgs::Point32 P0,
                                        geometry_msgs::Point32 P1,
-                                       geometry_msgs::Point32 P2) {
+                                       geometry_msgs::Point32 P2)
+{
   return ((P1.x - P0.x) * (P2.y - P0.y) - (P2.x - P0.x) * (P1.y - P0.y));
 }
 
@@ -219,7 +246,8 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
                                                  double Bx, double By,
                                                  double Cx, double Cy,
                                                  double Dx, double Dy,
-                                                 double *X, double *Y) {
+                                                 double *X, double *Y)
+{
   double distAB, theCos, theSin, newX, ABpos;
 
   //  Fail if either line segment is zero-length.
@@ -228,7 +256,8 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
 
   //  Fail if the segments share an end-point.
   if (((Ax == Cx) && (Ay == Cy)) || ((Bx == Cx) && (By == Cy)) ||
-      ((Ax == Dx) && (Ay == Dy)) || ((Bx == Dx) && (By == Dy))) {
+      ((Ax == Dx) && (Ay == Dy)) || ((Bx == Dx) && (By == Dy)))
+  {
     return DONT_INTERSECT;
   }
 
@@ -278,10 +307,12 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
  * @param mtt::TargetListPC& msg
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) {
+t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg)
+{
   vo.erase(vo.begin(), vo.end());
   // ROS_INFO("msg_obstacles size = %ld", msg.obstacle_lines.size());
-  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) {
+  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i)
+  {
     t_obstacle o;
 
     pcl::PointCloud<pcl::PointXYZ> pc;
@@ -289,7 +320,8 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) {
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
     pcl::fromPCLPointCloud2(pcl_pc, pc);
 
-    for (size_t j = 0; j < pc.points.size(); ++j) {
+    for (size_t j = 0; j < pc.points.size(); ++j)
+    {
       o.x.push_back(pc.points[j].x);
       o.y.push_back(pc.points[j].y);
     }
@@ -304,10 +336,12 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) {
  * @param mtt::TargetListPC& msg
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg) {
+t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
+{
   vl.erase(vl.begin(), vl.end());
   // ROS_INFO("msg_lines size = %ld", msg.obstacle_lines.size());
-  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) {
+  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i)
+  {
     t_obstacle o;
 
     pcl::PointCloud<pcl::PointXYZ> pc;
@@ -315,7 +349,8 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg) {
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
     pcl::fromPCLPointCloud2(pcl_pc, pc);
 
-    for (size_t j = 0; j < pc.points.size(); ++j) {
+    for (size_t j = 0; j < pc.points.size(); ++j)
+    {
       o.x.push_back(pc.points[j].x);
       o.y.push_back(pc.points[j].y);
     }
@@ -337,7 +372,8 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg) {
  */
 t_func_output c_manage_trajectory::set_vehicle_description(double w, double lb,
                                                            double lf, double ht,
-                                                           double hb) {
+                                                           double hb)
+{
   vehicle_description.width = w;
   vehicle_description.lenght_back = lb;
   vehicle_description.lenght_front = lf;
@@ -353,12 +389,14 @@ t_func_output c_manage_trajectory::set_vehicle_description(double w, double lb,
  * @return t_func_output
  */
 t_func_output c_manage_trajectory::get_traj_info_msg_from_chosen(
-    trajectory_planner::traj_info *info) {
+    trajectory_planner::traj_info *info)
+{
   info->arc.erase(info->arc.begin(), info->arc.end());
   info->total_arc.erase(info->total_arc.begin(), info->total_arc.end());
   info->alpha.erase(info->alpha.begin(), info->alpha.end());
   info->speed.erase(info->speed.begin(), info->speed.end());
-  for (int j = 0; j <= (int)vt[chosen_traj.index]->closest_node; ++j) {
+  for (int j = 0; j <= (int)vt[chosen_traj.index]->closest_node; ++j)
+  {
     info->arc.push_back(vt[chosen_traj.index]->arc[j]);
     info->total_arc.push_back(vt[chosen_traj.index]->total_arc[j]);
     info->alpha.push_back(vt[chosen_traj.index]->alpha[j]);
@@ -379,21 +417,36 @@ t_func_output c_manage_trajectory::get_traj_info_msg_from_chosen(
  * @return t_func_output
  */
 t_func_output
-c_manage_trajectory::set_speed_vector(trajectory_planner::traj_info *info) {
-  for (int i = 0; i <= (int)vt[chosen_traj.index]->closest_node; ++i) {
-    if (i < ((int)vt[chosen_traj.index]->arc.size() - 1)) {
-      if ((info->arc[i]) * (info->arc[i + 1]) < 0.0) {
+c_manage_trajectory::set_speed_vector(trajectory_planner::traj_info *info)
+{
+
+  ros::NodeHandle n;
+  double SPEED_REQUIRED;
+  double SPEED_SAFFETY;
+  n.getParam("SPEED_REQUIRED", SPEED_REQUIRED);
+  n.getParam("SPEED_SAFFETY", SPEED_SAFFETY);
+
+  for (int i = 0; i <= (int)vt[chosen_traj.index]->closest_node; ++i)
+  {
+    if (i < ((int)vt[chosen_traj.index]->arc.size() - 1))
+    {
+      if ((info->arc[i]) * (info->arc[i + 1]) < 0.0)
+      {
         info->speed.push_back(
             (info->arc[i] / fabs(info->arc[i])) *
-            _SPEED_SAFFETY_); // This is the speed set to reverse/forward or
-                              // forward/reverse
-      } else {
-        info->speed.push_back((info->arc[i] / fabs(info->arc[i])) *
-                              _SPEED_REQUIRED_);
+            SPEED_SAFFETY); // This is the speed set to reverse/forward or
+                            // forward/reverse
       }
-    } else {
+      else
+      {
+        info->speed.push_back((info->arc[i] / fabs(info->arc[i])) *
+                              SPEED_REQUIRED);
+      }
+    }
+    else
+    {
       info->speed.push_back((info->arc[i] / fabs(info->arc[i])) *
-                            _SPEED_REQUIRED_);
+                            SPEED_REQUIRED);
     }
   }
   return SUCCESS;
@@ -404,7 +457,8 @@ c_manage_trajectory::set_speed_vector(trajectory_planner::traj_info *info) {
  * @param int n
  * @return int
  */
-int c_manage_trajectory::set_chosen_traj(int n) {
+int c_manage_trajectory::set_chosen_traj(int n)
+{
   chosen_traj.index = n;
   cout << "Chosen trajectory index1: " << chosen_traj.index << endl;
   return 1;
@@ -418,7 +472,8 @@ int c_manage_trajectory::set_chosen_traj(int n) {
  * @return t_func_output
  */
 t_func_output c_manage_trajectory::set_attractor_point(double x, double y,
-                                                       double theta) {
+                                                       double theta)
+{
   AP.x = x;
   AP.y = y;
   AP.theta = theta;
@@ -431,10 +486,20 @@ t_func_output c_manage_trajectory::set_attractor_point(double x, double y,
  * @return t_func_output
  */
 t_func_output
-c_manage_trajectory::compute_global_traj_score(c_trajectoryPtr &trajectory) {
+c_manage_trajectory::compute_global_traj_score(c_trajectoryPtr &trajectory)
+{
   // double W_DAP = 0.40;
   // double W_ADAP = 0.35;
   // double W_DLO = 0.25;
+
+  ros::NodeHandle n;
+  double W_DAP;
+  n.getParam("W_DAP", W_DAP);
+  double W_ADAP;
+  n.getParam("W_ADAP", W_ADAP);
+  double W_DLO;
+  n.getParam("W_DLO", W_DLO);
+
   trajectory->score.overall_norm =
       (W_DAP * trajectory->score.DAPnorm + W_ADAP * trajectory->score.ADAPnorm +
        W_DLO * trajectory->score.DLOnorm) *
@@ -449,7 +514,8 @@ c_manage_trajectory::compute_global_traj_score(c_trajectoryPtr &trajectory) {
  * @param val
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::set_inter_axis_distance(double val) {
+t_func_output c_manage_trajectory::set_inter_axis_distance(double val)
+{
   inter_axis_distance = val;
   return SUCCESS;
 }
@@ -462,7 +528,8 @@ t_func_output c_manage_trajectory::set_inter_axis_distance(double val) {
  * @return t_func_output
  */
 t_func_output c_manage_trajectory::create_new_trajectory(
-    vector<double> alpha_in, vector<double> arc_in, vector<double> speed_in) {
+    vector<double> alpha_in, vector<double> arc_in, vector<double> speed_in)
+{
   // allocate space for new traj
   c_trajectoryPtr t_ptr(new c_trajectory(inter_axis_distance));
   vt.push_back(t_ptr);
@@ -483,7 +550,8 @@ t_func_output c_manage_trajectory::create_new_trajectory(
 t_func_output c_manage_trajectory::update_trajectory(vector<double> alpha_in,
                                                      vector<double> arc_in,
                                                      vector<double> speed_in,
-                                                     int traj_num) {
+                                                     int traj_num)
+{
   // set the parameters of the traj
   return vt[traj_num]->generate(alpha_in, arc_in, speed_in,
                                 vehicle_description);
@@ -493,12 +561,15 @@ t_func_output c_manage_trajectory::update_trajectory(vector<double> alpha_in,
  * @brief Chooses the trajectory
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::compute_chosen_traj(void) {
+t_func_output c_manage_trajectory::compute_chosen_traj(void)
+{
   double max_val = -1000;
   chosen_traj.index = -1;
 
-  for (int i = 0; i < (int)vt.size(); i++) {
-    if (vt[i]->score.overall_norm > max_val) {
+  for (int i = 0; i < (int)vt.size(); i++)
+  {
+    if (vt[i]->score.overall_norm > max_val)
+    {
       chosen_traj.index = i;
       cout << "Chosen trajectory index2: " << chosen_traj.index << endl;
       chosen_traj.min_dist = vt[i]->score.EVAL;
@@ -518,11 +589,13 @@ t_func_output c_manage_trajectory::compute_chosen_traj(void) {
  * @brief Create a static marker
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::create_static_markers(void) {
+t_func_output c_manage_trajectory::create_static_markers(void)
+{
   // cout<<"ja create static"<<endl;
   static_marker_vec.clear();
   int marker_count = 0;
-  for (int i = 0; i < (int)vt.size(); i++) {
+  for (int i = 0; i < (int)vt.size(); i++)
+  {
     vt[i]->create_markers(&static_marker_vec, &marker_count, i);
   }
   return SUCCESS;
@@ -534,16 +607,19 @@ t_func_output c_manage_trajectory::create_static_markers(void) {
  * @return t_func_output
  */
 t_func_output c_manage_trajectory::compute_vis_marker_array(
-    visualization_msgs::MarkerArray *marker_array) {
+    visualization_msgs::MarkerArray *marker_array)
+{
   std::vector<visualization_msgs::Marker> marker_vec;
 
   // ROS_INFO("static marker vec size=%ld", static_marker_vec.size());
-  for (size_t i = 0; i < static_marker_vec.size(); ++i) {
+  for (size_t i = 0; i < static_marker_vec.size(); ++i)
+  {
     marker_vec.push_back(static_marker_vec[i]);
   }
 
   int marker_count = 0;
-  for (int i = 0; i < (int)vt.size(); ++i) {
+  for (int i = 0; i < (int)vt.size(); ++i)
+  {
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP,
     // vt[i]->score.DAPnorm, "DAP "); draw_on_node(vt[i], &marker_vec,
     // &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
@@ -574,8 +650,10 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   marker2.color.b = 0.039;
   marker2.color.a = 1.00;
   int first_step = 1;
-  for (size_t i = 0; i < vt[chosen_traj.index]->x.size(); ++i) {
-    if (first_step == 1) {
+  for (size_t i = 0; i < vt[chosen_traj.index]->x.size(); ++i)
+  {
+    if (first_step == 1)
+    {
       p.x = 0;
       p.y = 0;
       p.z = 2;
@@ -585,7 +663,9 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
       p.z = 2;
       marker2.points.push_back(p);
       first_step = 0;
-    } else {
+    }
+    else
+    {
       p.x = vt[chosen_traj.index]->x[i - 1];
       p.y = vt[chosen_traj.index]->y[i - 1];
       p.z = 2;
@@ -617,8 +697,10 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   marker5.color.g = 1;
   marker5.color.b = 0;
   marker5.color.a = 0.1;
-  for (size_t i = 0; i <= vt[chosen_traj.index]->x.size(); ++i) {
-    if (i == 0) {
+  for (size_t i = 0; i <= vt[chosen_traj.index]->x.size(); ++i)
+  {
+    if (i == 0)
+    {
       marker5.pose.position.x =
           ((_VEHICLE_LENGHT_FRONT_ + _VEHICLE_LENGHT_BACK_) / 2 -
            _VEHICLE_LENGHT_BACK_) *
@@ -630,7 +712,9 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
       marker5.pose.position.z = -0.1;
       marker5.pose.orientation.z = sin(0);
       marker5.pose.orientation.w = cos(0);
-    } else {
+    }
+    else
+    {
       marker5.pose.position.x =
           vt[chosen_traj.index]->x[i - 1] +
           ((_VEHICLE_LENGHT_FRONT_ + _VEHICLE_LENGHT_BACK_) / 2 -
@@ -668,7 +752,8 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   marker3.color.b = 0.1;
   marker3.color.a = 0.6;
 
-  for (size_t i = 0; i < vt.size(); ++i) {
+  for (size_t i = 0; i < vt.size(); ++i)
+  {
     marker3.id += 2;
     marker3.pose.position.x = vt[i]->x[vt[i]->closest_node];
     marker3.pose.position.y = vt[i]->y[vt[i]->closest_node];
@@ -697,10 +782,12 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
 
   static size_t coli_marker_total = 0;
   int total = 0;
-  for (size_t j = 0; j < vt.size(); ++j) {
+  for (size_t j = 0; j < vt.size(); ++j)
+  {
     // ROS_INFO("Traj%ld has %ld collisions\n", j, vt[j]->collision_pts.size());
 
-    for (size_t i = 0; i < vt[j]->collision_pts.size(); ++i) {
+    for (size_t i = 0; i < vt[j]->collision_pts.size(); ++i)
+    {
       marker4.id = total;
       marker4.pose.position.x = vt[j]->collision_pts[i].x;
       marker4.pose.position.y = vt[j]->collision_pts[i].y;
@@ -711,7 +798,8 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
 
   // ROS_INFO("total=%d coli=%ld", total, coli_marker_total);
   // erase old colision markers
-  for (size_t j = total; j < coli_marker_total; ++j) {
+  for (size_t j = total; j < coli_marker_total; ++j)
+  {
     // ROS_INFO("deleting marker ");
     marker4.header.frame_id = "/vehicle_odometry";
     marker4.id = j;
@@ -730,12 +818,14 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
  * @brief Compute trajectories scores
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::compute_trajectories_scores(void) {
+t_func_output c_manage_trajectory::compute_trajectories_scores(void)
+{
   double maximum_admissible_to_DAP =
       8.0; // ATENTION to negative values if bigger than maximum
   double maximum_admissible_to_DLO =
       10.0; // ATENTION to negative values if bigger than maximum
-  for (int i = 0; i < (int)vt.size(); ++i) {
+  for (int i = 0; i < (int)vt.size(); ++i)
+  {
     // Compute DAP and ADAP
     compute_DAP(vt[i], AP);
 
@@ -754,7 +844,8 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void) {
   }
 
   // compute overall score for each traj
-  for (size_t i = 0; i < vt.size(); ++i) {
+  for (size_t i = 0; i < vt.size(); ++i)
+  {
     compute_global_traj_score(vt[i]);
   }
 
@@ -770,26 +861,32 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void) {
  * @return t_func_output
  */
 t_func_output c_manage_trajectory::compute_DAP(c_trajectoryPtr &trajectory,
-                                               t_desired_coordinates &AP) {
+                                               t_desired_coordinates &AP)
+{
   trajectory->score.DAP = 10e6;
 
   trajectory->closest_node = -1;
 
-  for (size_t i = 0; i < trajectory->x.size(); ++i) {
+  for (size_t i = 0; i < trajectory->x.size(); ++i)
+  {
     double DAP_prev =
         sqrt(pow(trajectory->x[i] - AP.x, 2) + pow(trajectory->y[i] - AP.y, 2));
 
-    if (DAP_prev < trajectory->score.DAP) {
+    if (DAP_prev < trajectory->score.DAP)
+    {
       trajectory->score.DAP = DAP_prev;
       trajectory->closest_node = i;
     }
   }
 
-  if (trajectory->closest_node != -1) {
+  if (trajectory->closest_node != -1)
+  {
     trajectory->score.ADAP =
         compute_ADAP(trajectory, AP, trajectory->closest_node);
     return SUCCESS;
-  } else {
+  }
+  else
+  {
     return FAILURE;
   }
 }
@@ -802,7 +899,8 @@ t_func_output c_manage_trajectory::compute_DAP(c_trajectoryPtr &trajectory,
  * @return double
  */
 double c_manage_trajectory::compute_ADAP(c_trajectoryPtr &trajectory,
-                                         t_desired_coordinates &AP, int i) {
+                                         t_desired_coordinates &AP, int i)
+{
   double adap = abs(trajectory->theta[i] - AP.theta);
   if (adap > M_PI)
     adap = 2 * M_PI - adap;
@@ -822,7 +920,8 @@ double c_manage_trajectory::compute_ADAP(c_trajectoryPtr &trajectory,
 void c_manage_trajectory::draw_on_node(
     c_trajectoryPtr &trajectory,
     std::vector<visualization_msgs::Marker> *marker_vec, int *marker_count,
-    double z_high, double value, double normalized_value, string string_init) {
+    double z_high, double value, double normalized_value, string string_init)
+{
   // Create a marker
   visualization_msgs::Marker marker;
   std_msgs::ColorRGBA color;

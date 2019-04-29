@@ -152,6 +152,15 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
  */
 void velocity_callback(double speed)
 {
+
+  ros::NodeHandle n;
+  double MAX_STEERING_ANGLE;
+  n.getParam("MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  double TRAJECTORY_ANGLE;
+  n.getParam("TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
+  double NUM_NODES;
+  n.getParam("NUM_NODES", NUM_NODES);
+
   double max_dist = pow(speed * 3.6, 2) / 100;
   if (max_dist > 20)
   {
@@ -163,16 +172,16 @@ void velocity_callback(double speed)
   }
 
   double i = 0.00000001;
-  while (i < _MAX_STEERING_ANGLE_)
+  while (i < MAX_STEERING_ANGLE)
   {
     if (i == 0.00000001)
     {
       vector<double> v_a;
       vector<double> v_arc;
-      for (int j = 0; j < _NUM_NODES_; ++j)
+      for (int j = 0; j < NUM_NODES; ++j)
       {
         v_a.push_back(M_PI / 180. * i);
-        v_arc.push_back(max_dist / _NUM_NODES_);
+        v_arc.push_back(max_dist / NUM_NODES);
       }
       manage_vt->create_new_trajectory(v_a, v_arc, v_a);
     }
@@ -180,23 +189,24 @@ void velocity_callback(double speed)
     {
       vector<double> v_a1;
       vector<double> v_arc1;
-      for (int j = 0; j < _NUM_NODES_; ++j)
+      for (int j = 0; j < NUM_NODES; ++j)
       {
         v_a1.push_back(M_PI / 180. * i);
-        v_arc1.push_back(max_dist / _NUM_NODES_);
+        v_arc1.push_back(max_dist / NUM_NODES);
       }
       manage_vt->create_new_trajectory(v_a1, v_arc1, v_a1);
 
       vector<double> v_a2;
       vector<double> v_arc2;
-      for (int j = 0; j < _NUM_NODES_; ++j)
+      for (int j = 0; j < NUM_NODES; ++j)
       {
         v_a2.push_back(M_PI / 180. * (-i));
-        v_arc2.push_back(max_dist / _NUM_NODES_);
+        v_arc2.push_back(max_dist / NUM_NODES);
       }
       manage_vt->create_new_trajectory(v_a2, v_arc2, v_a2);
     }
-    i = i + _TRAJECTORY_ANGLE_;
+
+    i = i + TRAJECTORY_ANGLE;
   }
   have_trajectory = true;
 }
@@ -208,6 +218,15 @@ void velocity_callback(double speed)
  */
 void velocity_update_callback(double speed)
 {
+
+  ros::NodeHandle n;
+  double MAX_STEERING_ANGLE;
+  n.getParam("MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  double TRAJECTORY_ANGLE;
+  n.getParam("TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
+  double NUM_NODES;
+  n.getParam("NUM_NODES", NUM_NODES);
+
   double max_dist = pow(speed * 3.6, 2) / 100;
   if (max_dist > 20)
   {
@@ -220,16 +239,16 @@ void velocity_update_callback(double speed)
 
   double i = 0.00000001;
   int num_traj = 0;
-  while (i < _MAX_STEERING_ANGLE_)
+  while (i < MAX_STEERING_ANGLE)
   {
     if (i == 0.00000001)
     {
       vector<double> v_a;
       vector<double> v_arc;
-      for (int j = 0; j < _NUM_NODES_; ++j)
+      for (int j = 0; j < NUM_NODES; ++j)
       {
         v_a.push_back(M_PI / 180. * i);
-        v_arc.push_back(max_dist / _NUM_NODES_);
+        v_arc.push_back(max_dist / NUM_NODES);
       }
       manage_vt->update_trajectory(v_a, v_arc, v_a, num_traj);
       num_traj = num_traj + 1;
@@ -238,25 +257,25 @@ void velocity_update_callback(double speed)
     {
       vector<double> v_a1;
       vector<double> v_arc1;
-      for (int j = 0; j < _NUM_NODES_; ++j)
+      for (int j = 0; j < NUM_NODES; ++j)
       {
         v_a1.push_back(M_PI / 180. * i);
-        v_arc1.push_back(max_dist / _NUM_NODES_);
+        v_arc1.push_back(max_dist / NUM_NODES);
       }
       manage_vt->update_trajectory(v_a1, v_arc1, v_a1, num_traj);
       num_traj = num_traj + 1;
 
       vector<double> v_a2;
       vector<double> v_arc2;
-      for (int j = 0; j < _NUM_NODES_; ++j)
+      for (int j = 0; j < NUM_NODES; ++j)
       {
         v_a2.push_back(M_PI / 180. * (-i));
-        v_arc2.push_back(max_dist / _NUM_NODES_);
+        v_arc2.push_back(max_dist / NUM_NODES);
       }
       manage_vt->update_trajectory(v_a2, v_arc2, v_a2, num_traj);
       num_traj = num_traj + 1;
     }
-    i = i + _TRAJECTORY_ANGLE_;
+    i = i + TRAJECTORY_ANGLE;
   }
   have_trajectory = true;
 }
@@ -268,8 +287,16 @@ void velocity_update_callback(double speed)
  */
 double angle_to_speed(double angle)
 {
-  double m = (_SPEED_SAFFETY_ - _SPEED_REQUIRED_) / (_MAX_STEERING_ANGLE_ * M_PI / 180);
-  return (m * abs(angle) + _SPEED_REQUIRED_);
+
+  ros::NodeHandle n;
+  double SPEED_REQUIRED;
+  double SPEED_SAFFETY;
+  n.getParam("SPEED_REQUIRED", SPEED_REQUIRED);
+  n.getParam("SPEED_SAFFETY", SPEED_SAFFETY);
+  double MAX_STEERING_ANGLE;
+  n.getParam("MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  double m = (SPEED_SAFFETY - SPEED_REQUIRED) / (MAX_STEERING_ANGLE * M_PI / 180);
+  return (m * abs(angle) + SPEED_REQUIRED);
   // plan_trajectory = true;
 }
 
@@ -367,13 +394,16 @@ int main(int argc, char **argv)
   // initialize inter axis distance
   manage_vt->set_inter_axis_distance(_D_);
 
+  double SPEED_SAFFETY;
+  n.getParam("SPEED_SAFFETY", SPEED_SAFFETY);
+
   // initialize trajectories
-  velocity_callback(_SPEED_SAFFETY_);
+  velocity_callback(SPEED_SAFFETY);
 
   //  trajectory information
   commandPublisher = n.advertise<trajectory_planner::traj_info>("/trajectory_information", 1000);
 
-  double speed = _SPEED_SAFFETY_;
+  double speed = SPEED_SAFFETY;
   while (ros::ok())
   {
     // cout << "ros::ok" << endl;

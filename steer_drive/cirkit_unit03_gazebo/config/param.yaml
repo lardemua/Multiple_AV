@@ -1,0 +1,12 @@
+SPEED_SAFFETY: 1 #velocidade minima
+SPEED_REQUIRED : 10 #velocidade maxima
+MAX_STEERING_ANGLE: 41.5 #max angulo volante
+TRAJECTORY_ANGLE: 3 #angulo volante de cada iteracao
+NUM_TRAJ: 25 #nº traj geradas
+NUM_NODES: 10
+
+# Trajectory weigths
+W_DAP: 0.10
+W_ADAP: 0.00
+W_DLO: 0.90
+W_CL: 0.20
