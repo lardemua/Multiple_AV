@@ -1,12 +1,9 @@
 /**************************************************************************************************
  Software License Agreement (BSD License)
-
  Copyright (c) 2011-2013, LAR toolkit developers - University of Aveiro -
 http://lars.mec.ua.pt All rights reserved.
-
  Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-
   *Redistributions of source code must retain the above copyright notice, this
 list of conditions and the following disclaimer. *Redistributions in binary form
 must reproduce the above copyright notice, this list of conditions and the
@@ -14,7 +11,6 @@ following disclaimer in the documentation and/or other materials provided with
 the distribution. *Neither the name of the University of Aveiro nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -56,6 +52,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
                                                std::vector<t_obstacle> &vo)
 {
+
+  ros::NodeHandle n;
+  n.getParam("simul", _simulation_);
+
   // delete all previous computed collision pts
   trajectory->collision_pts.erase(trajectory->collision_pts.begin(),
                                   trajectory->collision_pts.end());
@@ -145,6 +145,8 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
         }
       }
 
+      // ros::NodeHandle n;
+      // n.getParam("simul", _simulation_);
       // road lines
       if (_simulation_)
       {
@@ -167,10 +169,10 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
               p.y = P.y;
               if (trajectory->alpha[0] >= 0)
               {
-                ros::NodeHandle n;
+                ros::NodeHandle nh;
                 double W_CL;
-                n.getParam("W_CL", W_CL);
-
+                nh.getParam("W_CL", W_CL);
+                // ROS_INFO("CL = %ld", W_CL);
                 trajectory->score.CL = W_CL;
               }
             }

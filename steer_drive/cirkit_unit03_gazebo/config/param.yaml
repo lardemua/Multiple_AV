@@ -10,3 +10,6 @@ W_DAP: 0.10
 W_ADAP: 0.00
 W_DLO: 0.90
 W_CL: 0.20
+
+# Simulation
+simul: true

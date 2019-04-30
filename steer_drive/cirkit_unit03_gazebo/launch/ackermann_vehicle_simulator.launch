@@ -47,7 +47,9 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="/h1/W_DAP"  value="0.10"/> <!-- Distância ao Ponto Atrator -->
     <param name="/h1/W_ADAP"  value="0.00"/> <!-- Diferença Angular ao Ponto Atrator -->
     <param name="/h1/W_DLO"  value="0.90"/> <!-- Distância Mínima aos Obstáculos -->
-    <param name="/h1/W_CL"  value="0.20"/> <!-- Linha Central -->
+    <param name="/h1/W_CL"  value="1"/> <!-- Linha Central -->
+
+    <param name="/h1/simul"  value="false"/> <!-- Linha Central -->
 
   </group>
 
@@ -72,7 +74,9 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="/h2/W_DAP"  value="0.10"/> 
     <param name="/h2/W_ADAP"  value="0.00"/> 
     <param name="/h2/W_DLO"  value="0.90"/> 
-    <param name="/h2/W_CL"  value="0.20"/> 
+    <param name="/h2/W_CL"  value="1"/> 
+
+    <param name="/h1/simul"  value="false"/>
 
   </group>
 

@@ -1,12 +1,9 @@
 /**************************************************************************************************
  Software License Agreement (BSD License)
-
  Copyright (c) 2011-2013, LAR toolkit developers - University of Aveiro -
 http://lars.mec.ua.pt All rights reserved.
-
  Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-
         *Redistributions of source code must retain the above copyright notice,
 this list of conditions and the following disclaimer. *Redistributions in binary
 form must reproduce the above copyright notice, this list of conditions and the
@@ -14,7 +11,6 @@ following disclaimer in the documentation and/or other materials provided with
 the distribution. *Neither the name of the University of Aveiro nor the names of
 its contributors may be used to endorse or promote products derived from this
 software without specific prior written permission.
-
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -52,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool plan_trajectory = false;
 bool have_plan = false;
 bool have_trajectory = false;
-vector<double> last_dir{ 0, 0, 0, 0, 0 };
+vector<double> last_dir{0, 0, 0, 0, 0};
 geometry_msgs::PoseStamped pose_in;
 geometry_msgs::PoseStamped pose_transformed;
 
@@ -331,10 +327,11 @@ double compute_last_dir(double angle)
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "trajectory_planner_nodelet");
-  ros::NodeHandle n("~");
+  ros::NodeHandle n;
   p_n = &n;
-
-  if (n.getParam("/sim", _simulation_))
+  n.getParam("simul", _simulation_);
+  
+  if (_simulation_)
   {
     if (_simulation_)
     {
@@ -347,7 +344,7 @@ int main(int argc, char **argv)
   }
   else
   {
-    ROS_WARN("Param 'sim' not found!");
+    ROS_WARN("Param 'simul' not found!");
   }
 
   // Define the publishers and subscribers
@@ -591,7 +588,7 @@ int main(int argc, char **argv)
 
         if (manage_vt->chosen_traj.index != -1)
         {
-          vector<double> vec1 = { ros::Time::now().toSec(), manage_vt->chosen_traj.min_dist };
+          vector<double> vec1 = {ros::Time::now().toSec(), manage_vt->chosen_traj.min_dist};
           mindist_msg.data.clear();
           mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
           mindist_pub.publish(mindist_msg);
@@ -637,5 +634,5 @@ int main(int argc, char **argv)
     loop_rate.sleep();
     ros::spinOnce();
   }
-}  // main
+} // main
 #endif
