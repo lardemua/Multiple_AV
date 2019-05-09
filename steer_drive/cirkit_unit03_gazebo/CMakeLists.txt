@@ -28,14 +28,36 @@ find_package(catkin REQUIRED COMPONENTS roslaunch
 	colormap
         pcl_ros
         velodyne_pointcloud
+        dynamic_reconfigure
         tf_conversions)
 find_package(cmake_modules)
 find_package(Eigen REQUIRED)
 
+################################################
+## Declare ROS dynamic reconfigure parameters ##
+################################################
+
+## To declare and build dynamic reconfigure parameters within this
+## package, follow these steps:
+## * In the file package.xml:
+##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
+## * In this file (CMakeLists.txt):
+##   * add "dynamic_reconfigure" to
+##     find_package(catkin REQUIRED COMPONENTS ...)
+##   * uncomment the "generate_dynamic_reconfigure_options" section below
+##     and list every .cfg file to be processed
+
+## Generate dynamic reconfigure parameters in the 'cfg' folder
+generate_dynamic_reconfigure_options(
+        cfg/MyParams.cfg
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
+)
+
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES free_space_detection
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime colormap pcl_ros velodyne_pointcloud
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime colormap pcl_ros velodyne_pointcloud dynamic_reconfigure
   DEPENDS Eigen
 )
 
@@ -62,21 +84,26 @@ add_executable(tf_generator5 src/laser_link_generator.cpp)
 add_executable(tf_generator6 src/line_link_generator.cpp)
 add_executable(cirkit_unit03_gazebo_line_node src/ackermann_vehicle_gazebo_line.cpp)
 
+add_executable(Dynamic_params src/Dynamic_params.cpp)
+
 add_dependencies(tf_generator4 trajectory_planner_generate_messages_cpp)
 add_dependencies(tf_generator5 trajectory_planner_generate_messages_cpp)
 add_dependencies(tf_generator6 trajectory_planner_generate_messages_cpp)
 add_dependencies(cirkit_unit03_gazebo_line_node trajectory_planner_generate_messages_cpp)
 
+add_dependencies(Dynamic_params ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}) # ${PROJECT_NAME}_gencfg)
+
       
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
-${catkin_LIBRARIES}
-${Eigen_LIBRARIES}
+        ${catkin_LIBRARIES}
+        ${Eigen_LIBRARIES}
 )
 target_link_libraries(tf_generator4 ${catkin_LIBRARIES})
 target_link_libraries(tf_generator5 ${catkin_LIBRARIES})
 target_link_libraries(tf_generator6 ${catkin_LIBRARIES})
 target_link_libraries(cirkit_unit03_gazebo_line_node ${catkin_LIBRARIES})
+target_link_libraries(Dynamic_params ${catkin_LIBRARIES})
 
 #roslaunch_add_file_check(test/cirkit_unit03_clearpath_playpen_launch.test.xml)
 #roslaunch_add_file_check(test/cirkit_unit03_world_launch.test.xml)

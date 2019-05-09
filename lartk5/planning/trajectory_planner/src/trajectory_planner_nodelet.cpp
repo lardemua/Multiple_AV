@@ -151,11 +151,11 @@ void velocity_callback(double speed)
 
   ros::NodeHandle n;
   double MAX_STEERING_ANGLE;
-  n.getParam("MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
   double TRAJECTORY_ANGLE;
-  n.getParam("TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
+  n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
   double NUM_NODES;
-  n.getParam("NUM_NODES", NUM_NODES);
+  n.getParam("Param/NUM_NODES", NUM_NODES);
 
   double max_dist = pow(speed * 3.6, 2) / 100;
   if (max_dist > 20)
@@ -217,11 +217,11 @@ void velocity_update_callback(double speed)
 
   ros::NodeHandle n;
   double MAX_STEERING_ANGLE;
-  n.getParam("MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
   double TRAJECTORY_ANGLE;
-  n.getParam("TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
+  n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
   double NUM_NODES;
-  n.getParam("NUM_NODES", NUM_NODES);
+  n.getParam("Param/NUM_NODES", NUM_NODES);
 
   double max_dist = pow(speed * 3.6, 2) / 100;
   if (max_dist > 20)
@@ -287,10 +287,10 @@ double angle_to_speed(double angle)
   ros::NodeHandle n;
   double SPEED_REQUIRED;
   double SPEED_SAFFETY;
-  n.getParam("SPEED_REQUIRED", SPEED_REQUIRED);
-  n.getParam("SPEED_SAFFETY", SPEED_SAFFETY);
+  n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
+  n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
   double MAX_STEERING_ANGLE;
-  n.getParam("MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
   double m = (SPEED_SAFFETY - SPEED_REQUIRED) / (MAX_STEERING_ANGLE * M_PI / 180);
   return (m * abs(angle) + SPEED_REQUIRED);
   // plan_trajectory = true;
@@ -329,7 +329,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "trajectory_planner_nodelet");
   ros::NodeHandle n;
   p_n = &n;
-  n.getParam("simul", _simulation_);
+  n.getParam("Param/simul", _simulation_);
   
   if (_simulation_)
   {
@@ -392,7 +392,7 @@ int main(int argc, char **argv)
   manage_vt->set_inter_axis_distance(_D_);
 
   double SPEED_SAFFETY;
-  n.getParam("SPEED_SAFFETY", SPEED_SAFFETY);
+  n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
 
   // initialize trajectories
   velocity_callback(SPEED_SAFFETY);

@@ -53,7 +53,7 @@
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="steer_drive_controller joint_state_controller" />
 
 
-
+    <node name="Param" pkg="cirkit_unit03_gazebo" type="Dynamic_params" respawn="false" output="screen"/>
 
 
     <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->

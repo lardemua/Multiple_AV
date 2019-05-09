@@ -54,7 +54,7 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
 {
 
   ros::NodeHandle n;
-  n.getParam("simul", _simulation_);
+  n.getParam("Param/simul", _simulation_);
 
   // delete all previous computed collision pts
   trajectory->collision_pts.erase(trajectory->collision_pts.begin(),
@@ -171,7 +171,7 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
               {
                 ros::NodeHandle nh;
                 double W_CL;
-                nh.getParam("W_CL", W_CL);
+                nh.getParam("Param/W_CL", W_CL);
                 // ROS_INFO("CL = %ld", W_CL);
                 trajectory->score.CL = W_CL;
               }
@@ -425,8 +425,8 @@ c_manage_trajectory::set_speed_vector(trajectory_planner::traj_info *info)
   ros::NodeHandle n;
   double SPEED_REQUIRED;
   double SPEED_SAFFETY;
-  n.getParam("SPEED_REQUIRED", SPEED_REQUIRED);
-  n.getParam("SPEED_SAFFETY", SPEED_SAFFETY);
+  n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
+  n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
 
   for (int i = 0; i <= (int)vt[chosen_traj.index]->closest_node; ++i)
   {
@@ -496,11 +496,11 @@ c_manage_trajectory::compute_global_traj_score(c_trajectoryPtr &trajectory)
 
   ros::NodeHandle n;
   double W_DAP;
-  n.getParam("W_DAP", W_DAP);
+  n.getParam("Param/W_DAP", W_DAP);
   double W_ADAP;
-  n.getParam("W_ADAP", W_ADAP);
+  n.getParam("Param/W_ADAP", W_ADAP);
   double W_DLO;
-  n.getParam("W_DLO", W_DLO);
+  n.getParam("Param/W_DLO", W_DLO);
 
   trajectory->score.overall_norm =
       (W_DAP * trajectory->score.DAPnorm + W_ADAP * trajectory->score.ADAPnorm +
