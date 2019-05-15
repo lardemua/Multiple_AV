@@ -56,6 +56,9 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
   ros::NodeHandle n;
   n.getParam("Param/simul", _simulation_);
 
+  double W_CL;
+  n.getParam("Param/W_CL", W_CL);
+
   // delete all previous computed collision pts
   trajectory->collision_pts.erase(trajectory->collision_pts.begin(),
                                   trajectory->collision_pts.end());
@@ -141,6 +144,7 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
             p.y = P.y;
             trajectory->collision_pts.push_back(p);
             trajectory->score.FS *= 0;
+            // ROS_INFO("FS = %lf",trajectory->score.FS);
           }
         }
       }
@@ -148,37 +152,54 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
       // ros::NodeHandle n;
       // n.getParam("simul", _simulation_);
       // road lines
+
       if (_simulation_)
       {
-        // ROS_INFO("vl size = %ld", vl.size());
-        for (size_t oo = 0; oo < vl.size(); ++oo)
+        if (trajectory->alpha[0] >= 0)
         {
-          for (size_t ll = 0; ll < vl[oo].x.size(); ++ll)
-          {
-            geometry_msgs::Point32 P;
-            P.x = vl[oo].x[ll];
-            P.y = vl[oo].y[ll];
-            P.z = 0; // pointPcl.z;
-
-            int wn = wn_PnPoly(P, &car_polygon, car_polygon_size);
-
-            if (wn != 0)
-            {
-              t_point p;
-              p.x = P.x;
-              p.y = P.y;
-              if (trajectory->alpha[0] >= 0)
-              {
-                ros::NodeHandle nh;
-                double W_CL;
-                nh.getParam("Param/W_CL", W_CL);
-                // ROS_INFO("CL = %ld", W_CL);
-                trajectory->score.CL = W_CL;
-              }
-            }
-          }
+          trajectory->score.CL = W_CL;
         }
       }
+
+      // NAO SERVE PARA NADA????
+
+      // if (_simulation_)
+      // {
+
+      //   // ROS_INFO("vl size = %ld", vl.size());
+      //   for (size_t oo = 0; oo < vl.size(); ++oo) //para cada vetor da nuvem de pontos
+      //   {
+      //     // if (vl[oo].x.size() > 1)
+      //     // {
+      //     //   ROS_INFO("vl x size = %ld", vl[oo].x.size());
+      //     // }
+
+      //     for (size_t ll = 0; ll < vl[oo].x.size(); ++ll) //para cada ponto do vetor
+      //     {
+      //       geometry_msgs::Point32 P;
+      //       P.x = vl[oo].x[ll];
+      //       P.y = vl[oo].y[ll];
+      //       P.z = 0; // pointPcl.z;
+
+      //       int wn = wn_PnPoly(P, &car_polygon, car_polygon_size); //verificação se o ponto está dentro
+
+      //       if (wn != 0) //se estiver dentro
+      //       {
+      //         t_point p;
+      //         p.x = P.x;
+      //         p.y = P.y;
+      //         if (trajectory->alpha[0] >= 0)
+      //         {
+      //           // ros::NodeHandle nh;
+      //           // double W_CL;
+      //           // nh.getParam("Param/W_CL", W_CL);
+      //           // ROS_INFO("CL = %ld", W_CL);
+      //           trajectory->score.CL = W_CL;
+      //         }
+      //       }
+      //     }
+      //   }
+      // }
     }
   }
   return SUCCESS;
@@ -309,12 +330,19 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
  * @param mtt::TargetListPC& msg
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg)
+t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -> msg_transformed(contem a nuvem de pontos)
 {
   vo.erase(vo.begin(), vo.end());
   // ROS_INFO("msg_obstacles size = %ld", msg.obstacle_lines.size());
   for (size_t i = 0; i < msg.obstacle_lines.size(); ++i)
   {
+    //typedef struct
+    // {
+    //   std::vector<double> x;
+    //   std::vector<double> y;
+    //   int id;
+    // } t_obstacle;
+
     t_obstacle o;
 
     pcl::PointCloud<pcl::PointXYZ> pc;
@@ -342,22 +370,29 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
 {
   vl.erase(vl.begin(), vl.end());
   // ROS_INFO("msg_lines size = %ld", msg.obstacle_lines.size());
-  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i)
+  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines = msg_transformed2.obstacle_lines = pc_msg2 (pontos?)
   {
+    //typedef struct
+    // {
+    //   std::vector<double> x;
+    //   std::vector<double> y;
+    //   int id;
+    // } t_obstacle;
+
     t_obstacle o;
 
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
-    pcl::fromPCLPointCloud2(pcl_pc, pc);
+    pcl::fromPCLPointCloud2(pcl_pc, pc); //nuvem de pontos dos obstaculos
 
-    for (size_t j = 0; j < pc.points.size(); ++j)
+    for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
-      o.x.push_back(pc.points[j].x);
+      o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
       o.y.push_back(pc.points[j].y);
     }
 
-    vl.push_back(o);
+    vl.push_back(o); //vl tem agora a nuvem de pontos
   }
   return SUCCESS;
 }
@@ -622,15 +657,12 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   int marker_count = 0;
   for (int i = 0; i < (int)vt.size(); ++i)
   {
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP,
-    // vt[i]->score.DAPnorm, "DAP "); draw_on_node(vt[i], &marker_vec,
-    // &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.45, vt[i]->score.DLO,
-    // vt[i]->score.DLOnorm, "DLO ");
-    draw_on_node(vt[i], &marker_vec, &marker_count, 0.60,
-                 (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) *
-                     vt[i]->score.FS,
-                 vt[i]->score.overall_norm, "P = ");
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP ");
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
+
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 2.5, vt[i]->score.DLO, vt[i]->score.DLOnorm, "DLO ");
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.CL, vt[i]->score.CL, "CL ");
+    draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
   }
 
   // ________________________________
@@ -822,10 +854,8 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
  */
 t_func_output c_manage_trajectory::compute_trajectories_scores(void)
 {
-  double maximum_admissible_to_DAP =
-      8.0; // ATENTION to negative values if bigger than maximum
-  double maximum_admissible_to_DLO =
-      10.0; // ATENTION to negative values if bigger than maximum
+  double maximum_admissible_to_DAP = 8.0; // ATENTION to negative values if bigger than maximum
+  double maximum_admissible_to_DLO = 10.0; // ATENTION to negative values if bigger than maximum
   for (int i = 0; i < (int)vt.size(); ++i)
   {
     // Compute DAP and ADAP
@@ -835,8 +865,7 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
     compute_DLO(vt[i], vo);
 
     // normalize DAP
-    vt[i]->score.DAPnorm =
-        max(0.0, (1 - (vt[i]->score.DAP) / maximum_admissible_to_DAP));
+    vt[i]->score.DAPnorm = max(0.0, (1 - (vt[i]->score.DAP) / maximum_admissible_to_DAP));
 
     // normalize ADAP
     vt[i]->score.ADAPnorm = max(0.0, (1 - (vt[i]->score.ADAP / (M_PI))));
@@ -869,15 +898,15 @@ t_func_output c_manage_trajectory::compute_DAP(c_trajectoryPtr &trajectory,
 
   trajectory->closest_node = -1;
 
-  for (size_t i = 0; i < trajectory->x.size(); ++i)
+  for (size_t i = 0; i < trajectory->x.size(); ++i) //verifica todos os nós pelo mais proximo
   {
     double DAP_prev =
         sqrt(pow(trajectory->x[i] - AP.x, 2) + pow(trajectory->y[i] - AP.y, 2));
 
-    if (DAP_prev < trajectory->score.DAP)
+    if (DAP_prev < trajectory->score.DAP) //se for mais proximo
     {
       trajectory->score.DAP = DAP_prev;
-      trajectory->closest_node = i;
+      trajectory->closest_node = i; //nó mais proximo
     }
   }
 

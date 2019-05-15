@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   p_broadcaster6 = &broadcaster6;
   ros::Rate r(50);
 
-  tf::Transform transform1(tf::Matrix3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), tf::Vector3(-1.82, -5.34, 0));
+  tf::Transform transform1(tf::Matrix3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), tf::Vector3(-1.82, -5.2151, 0));
   // tf::Transform transform1(tf::Matrix3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), tf::Vector3(-1.82, -6.1, 0));
   while (n.ok())
   {

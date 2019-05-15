@@ -35,7 +35,17 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
       <arg name="initYaw" value="0" />
     </include>
 
-    
+    <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
+    <param name="Param/NUM_NODES" value="10" />
+    <param name="Param/NUM_TRAJ" value="25" /> <!-- Não utilizado -->
+    <param name="Param/SPEED_REQUIRED" value="10.0" />
+    <param name="Param/SPEED_SAFFETY" value="1.0" />
+    <param name="Param/TRAJECTORY_ANGLE" value="3" />
+    <param name="Param/W_ADAP" value="0.00" />
+    <param name="Param/W_CL" value="0.4" />
+    <param name="Param/W_DAP" value="0.10" />
+    <param name="Param/W_DLO" value="0.90" />
+    <param name="Param/simul" value="true" />
 
   </group>
 
@@ -49,20 +59,18 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
       <arg name="initYaw" value="0" />
     </include>
 
-    <param name="/h2/SPEED_SAFFETY"  value="1"/> 
-    <param name="/h2/SPEED_REQUIRED"  value="5"/>  
-    
-    <param name="/h2/MAX_STEERING_ANGLE"  value="41.5"/> 
-    <param name="/h2/TRAJECTORY_ANGLE"  value="3"/>
-    <param name="/h2/NUM_TRAJ"  value="25"/>
-    <param name="/h2/NUM_NODES"  value="10"/> 
+    <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
+    <param name="Param/NUM_NODES" value="5.0" />
+    <param name="Param/NUM_TRAJ" value="5.0" />
+    <param name="Param/SPEED_REQUIRED" value="5.0" />
+    <param name="Param/SPEED_SAFFETY" value="1.0" />
+    <param name="Param/TRAJECTORY_ANGLE" value="3.0" />
+    <param name="Param/W_ADAP" value="0.00" />
+    <param name="Param/W_CL" value="0.4" />
+    <param name="Param/W_DAP" value="0.10" />
+    <param name="Param/W_DLO" value="0.90" />
+    <param name="Param/simul" value="false" />
 
-    <param name="/h2/W_DAP"  value="0.10"/> 
-    <param name="/h2/W_ADAP"  value="0.00"/> 
-    <param name="/h2/W_DLO"  value="0.90"/> 
-    <param name="/h2/W_CL"  value="1"/> 
-
-    <param name="/h2/simul"  value="false"/>
 
   </group> -->
 
@@ -76,18 +84,18 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
       <arg name="initYaw" value="3.14" />
     </include>
 
-    <param name="/h2/SPEED_SAFFETY"  value="1"/> 
-    <param name="/h2/SPEED_REQUIRED"  value="10"/>  
+    <param name="/h2/SPEED_SAFFETY" value="1"/> 
+    <param name="/h2/SPEED_REQUIRED" value="10"/>  
     
-    <param name="/h2/MAX_STEERING_ANGLE"  value="41.5"/> 
-    <param name="/h2/TRAJECTORY_ANGLE"  value="3"/>
-    <param name="/h2/NUM_TRAJ"  value="25"/>
-    <param name="/h2/NUM_NODES"  value="10"/> 
+    <param name="/h2/MAX_STEERING_ANGLE" value="41.5"/> 
+    <param name="/h2/TRAJECTORY_ANGLE" value="3"/>
+    <param name="/h2/NUM_TRAJ" value="25"/>
+    <param name="/h2/NUM_NODES" value="10"/> 
 
-    <param name="/h2/W_DAP"  value="0.10"/> 
-    <param name="/h2/W_ADAP"  value="0.00"/> 
-    <param name="/h2/W_DLO"  value="0.90"/> 
-    <param name="/h2/W_CL"  value="0.20"/> 
+    <param name="/h2/W_DAP" value="0.10"/> 
+    <param name="/h2/W_ADAP" value="0.00"/> 
+    <param name="/h2/W_DLO" value="0.90"/> 
+    <param name="/h2/W_CL" value="0.20"/> 
 
   </group> -->
 

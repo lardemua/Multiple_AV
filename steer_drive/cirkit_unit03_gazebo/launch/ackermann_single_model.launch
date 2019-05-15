@@ -61,7 +61,7 @@
 
     <rosparam file="$(find cirkit_unit03_gazebo)/config/pids.yaml" command="load"/>
 
-    <rosparam file="$(find cirkit_unit03_gazebo)/config/param.yaml" command="load"/>
+    <!-- <rosparam file="$(find cirkit_unit03_gazebo)/config/param.yaml" command="load"/> -->
 
     <!-- cirkit_unit03_gazebo_$(arg namespace) = ackermann_vehicle_gazebo.cpp -->
     <node name="cirkit_unit03_gazebo_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_node" output="screen">

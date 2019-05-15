@@ -58,8 +58,7 @@ private:
  */
 scanFilter::scanFilter()
 {
-  laserscanSub =
-      node_.subscribe<sensor_msgs::LaserScan>("/simulator_laser_scan", 1000, &scanFilter::scanCallback, this);
+  laserscanSub = node_.subscribe<sensor_msgs::LaserScan>("/simulator_laser_scan", 1000, &scanFilter::scanCallback, this);
   pointcloudPub = node_.advertise<sensor_msgs::PointCloud2>("/reduced_pcl", 1000, false);
   tfListener.setExtrapolationLimit(ros::Duration(0.1));
 }

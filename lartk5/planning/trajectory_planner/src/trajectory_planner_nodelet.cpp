@@ -113,13 +113,17 @@ void mtt_callback(mtt::TargetListPC msg)
  */
 void pcl_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &input)
 {
+  //Convertions
   pcl::PCLPointCloud2 pcl_pc2;
   pcl_conversions::toPCL(*input, pcl_pc2);
   pcl::fromPCLPointCloud2(pcl_pc2, *pc_v_ptr);
 
+  //Erase PointCloud pc_v1
   pc_v1.erase(pc_v1.begin(), pc_v1.end());
 
+  //Insert a new point in the cloud, at the end of the container.(This breaks the organized structure of the cloud by setting the height to 1!)
   pc_v1.push_back(*pc_v_ptr);
+
   // plan_trajectory = true;
 }
 
@@ -153,7 +157,7 @@ void velocity_callback(double speed)
   double MAX_STEERING_ANGLE;
   n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
   double TRAJECTORY_ANGLE;
-  n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
+  n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE); //3
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
 
@@ -330,22 +334,22 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   p_n = &n;
   n.getParam("Param/simul", _simulation_);
-  
-  if (_simulation_)
-  {
-    if (_simulation_)
-    {
-      ROS_INFO("Using Simulation!");
-    }
-    else
-    {
-      ROS_INFO("Not using Simulation!");
-    }
-  }
-  else
-  {
-    ROS_WARN("Param 'simul' not found!");
-  }
+
+  // if (_simulation_)
+  // {
+  //   if (_simulation_)
+  //   {
+  //     ROS_INFO("Using Simulation!");
+  //   }
+  //   else
+  //   {
+  //     ROS_INFO("Not using Simulation!");
+  //   }
+  // }
+  // else
+  // {
+  //   ROS_WARN("Param 'simul' not found!");
+  // }
 
   // Define the publishers and subscribers
   tf::TransformBroadcaster mw_broadcaster;
@@ -363,10 +367,10 @@ int main(int argc, char **argv)
 
   // road lines
   ros::Subscriber line_sub;
-  if (_simulation_)
-  {
-    line_sub = n.subscribe("/line_pcl", 1000, line_callback);
-  }
+  // if (_simulation_)
+  // {
+  line_sub = n.subscribe("/line_pcl", 1000, line_callback);
+  // }
 
   ros::Rate loop_rate(10);
 
@@ -472,17 +476,24 @@ int main(int argc, char **argv)
 
         //--------------------------------------------------------------------------------------------------------//
         // ROS_INFO("pc_v1 size = %ld", pc_v1.size());
-        for (size_t i = 0; i < pc_v1.size(); ++i)
+        for (size_t i = 0; i < pc_v1.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v1 -> contem a nuvem de pontos com as paredes
         {
           if (i == 0)
           {
             try
             {
+              //Get the transform between two frames by frame ID.
+              //pc_v1[i].header.frame_id -> The frame to which data should be transformed
+              //"/vehicle_odometry" -> The frame where the data originated
+              // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
+              //transform_mtt -> The transform reference to fill.
               p_listener->lookupTransform(pc_v1[i].header.frame_id, "/vehicle_odometry", ros::Time(0), transform_mtt);
               // ROS_INFO("FFFFFFrame_id=%s ",
               // pc_v1[i].header.frame_id.c_str());
-              mtt_broadcaster.sendTransform(
-                  tf::StampedTransform(transform_mtt, time, pc_v1[i].header.frame_id, "/vehicle_odometry"));
+
+              //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
+              mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v1[i].header.frame_id, "/vehicle_odometry"));
+
               ros::spinOnce();
             }
             catch (tf::TransformException ex)
@@ -494,29 +505,47 @@ int main(int argc, char **argv)
           // ROS_INFO("pc_v1[%ld] frame_id=%s pcp frame_id=%s", i,
           // pc_v1[i].header.frame_id.c_str(),
           //  pct.header.frame_id.c_str());
-          pcl_ros::transformPointCloud(pc_v1[i], pct, transform_mtt.inverse());
 
+          //Apply a rigid transform defined by a 3D offset and a quaternion.
+          //pc_v1[i] -> cloud_in
+          //pct -> cloud_out
+          //transform_mtt.inverse() -> a rigid transformation from tf
+          pcl_ros::transformPointCloud(pc_v1[i], pct, transform_mtt.inverse()); //transform_mtt -> tf entre "pc_v1[i].header.frame_id" e "/vehicle_odometry"
+
+          // This message holds a collection of N-dimensional points, which may
+          //contain additional information such as normals, intensity, etc. The
+          //point data is stored as a binary blob, its layout described by the
+          //contents of the "fields" array.
           sensor_msgs::PointCloud2 pc_msg;
           pcl::toROSMsg(pct, pc_msg);
           pc_msg.header.frame_id = "/vehicle_odometry";
           pc_msg.header.stamp = ros::Time::now();
-          msg_transformed.obstacle_lines.push_back(pc_msg);
+          msg_transformed.obstacle_lines.push_back(pc_msg); //insere o ponto na mensagem
         }
-        manage_vt->set_obstacles(msg_transformed);
+        manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
 
-        // road lines
+        // -------------------------------------------------------------------------------------------------------------
+        // ------------------------------------------------ROAD LINES---------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------
         if (_simulation_)
         {
           // ROS_INFO("pc_v2 size = %ld", pc_v2.size());
-          for (size_t i = 0; i < pc_v2.size(); ++i)
+          for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
           {
             if (i == 0)
             {
               try
               {
+                //Get the transform between two frames by frame ID.
+                //pc_v2[i].header.frame_id -> The frame to which data should be transformed
+                //"/vehicle_odometry" -> The frame where the data originated
+                // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
+                //transform_mtt -> The transform reference to fill.
                 p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", ros::Time(0), transform_mtt);
-                mtt_broadcaster.sendTransform(
-                    tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
+
+                //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
+                mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
+
                 ros::spinOnce();
               }
               catch (tf::TransformException ex)
@@ -524,14 +553,24 @@ int main(int argc, char **argv)
                 ROS_ERROR("%s", ex.what());
               }
             }
-            pcl_ros::transformPointCloud(pc_v2[i], pct2, transform_mtt.inverse());
+            //Apply a rigid transform defined by a 3D offset and a quaternion.
+            //pc_v2[i] -> cloud_in
+            //pct2 -> cloud_out
+            //transform_mtt.inverse() -> a rigid transformation from tf
+            pcl_ros::transformPointCloud(pc_v2[i], pct2, transform_mtt.inverse()); //transform_mtt -> tf entre "pc_v2[i].header.frame_id" e "/vehicle_odometry"
+
+            // This message holds a collection of N-dimensional points, which may
+            //contain additional information such as normals, intensity, etc. The
+            //point data is stored as a binary blob, its layout described by the
+            //contents of the "fields" array.
             sensor_msgs::PointCloud2 pc_msg2;
+
             pcl::toROSMsg(pct2, pc_msg2);
             pc_msg2.header.frame_id = "/vehicle_odometry";
             pc_msg2.header.stamp = ros::Time::now();
             msg_transformed2.obstacle_lines.push_back(pc_msg2);
           }
-          manage_vt->set_lines(msg_transformed2);
+          manage_vt->set_lines(msg_transformed2); //envia a linha como obstaculo
         }
 
         //   ___________________________________
