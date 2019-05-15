@@ -110,7 +110,7 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
       double Bx = trajectory->v_lines[n][l].x[1];
       double By = trajectory->v_lines[n][l].y[1];
 
-      // cycle all obstacles
+      // cycle all obstacles (walls)
       // ROS_INFO("vo size = %ld", vo.size());
       for (size_t o = 0; o < vo.size(); ++o)
       {
@@ -165,9 +165,9 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
 
       // if (_simulation_)
       // {
-
+      //   // cycle all obstacles (lines)
       //   // ROS_INFO("vl size = %ld", vl.size());
-      //   for (size_t oo = 0; oo < vl.size(); ++oo) //para cada vetor da nuvem de pontos
+      //   for (size_t oo = 0; oo < vl.size(); ++oo) //para cada vetor da nuvem de pontos da linha
       //   {
       //     // if (vl[oo].x.size() > 1)
       //     // {
@@ -330,11 +330,12 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
  * @param mtt::TargetListPC& msg
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -> msg_transformed(contem a nuvem de pontos)
+t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -> msg_transformed
 {
-  vo.erase(vo.begin(), vo.end());
+  vo.erase(vo.begin(), vo.end()); //std::vector<t_obstacle> vo
+
   // ROS_INFO("msg_obstacles size = %ld", msg.obstacle_lines.size());
-  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i)
+  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines -> msg_transformed.obstacle_lines -> contem a nuvem de pontos
   {
     //typedef struct
     // {
@@ -348,15 +349,15 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
-    pcl::fromPCLPointCloud2(pcl_pc, pc);
+    pcl::fromPCLPointCloud2(pcl_pc, pc); //nuvem de pontos dos obstaculos
 
-    for (size_t j = 0; j < pc.points.size(); ++j)
+    for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
-      o.x.push_back(pc.points[j].x);
+      o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
       o.y.push_back(pc.points[j].y);
     }
 
-    vo.push_back(o);
+    vo.push_back(o); //vo tem agora a nuvem de pontos
   }
   return SUCCESS;
 }
@@ -540,7 +541,7 @@ c_manage_trajectory::compute_global_traj_score(c_trajectoryPtr &trajectory)
   trajectory->score.overall_norm =
       (W_DAP * trajectory->score.DAPnorm + W_ADAP * trajectory->score.ADAPnorm +
        W_DLO * trajectory->score.DLOnorm) *
-      trajectory->score.FS * trajectory->score.CL;
+      trajectory->score.FS;
   // cout<<"Overallscore= "<<trajectory->score.overall_norm<<endl;
 
   return SUCCESS;

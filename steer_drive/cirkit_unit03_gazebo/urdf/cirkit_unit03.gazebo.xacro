@@ -79,7 +79,7 @@
         <scan>
           <horizontal>
             <samples>1080</samples>
-            <resolution>0.02</resolution>
+            <resolution>0.1</resolution>
             <min_angle>0.20</min_angle>
             <max_angle>2.20</max_angle>
           </horizontal>

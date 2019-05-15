@@ -31,7 +31,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
       <arg name="namespace" value="h1" />
       <arg name="initX" value="-21" />
-      <arg name="initY" value="0" />
+      <arg name="initY" value="-3" />
       <arg name="initYaw" value="0" />
     </include>
 
@@ -40,9 +40,9 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/NUM_TRAJ" value="25" /> <!-- Não utilizado -->
     <param name="Param/SPEED_REQUIRED" value="10.0" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
-    <param name="Param/TRAJECTORY_ANGLE" value="3" />
+    <param name="Param/TRAJECTORY_ANGLE" value="2" />
     <param name="Param/W_ADAP" value="0.00" />
-    <param name="Param/W_CL" value="0.4" />
+    <param name="Param/W_CL" value="1" />
     <param name="Param/W_DAP" value="0.10" />
     <param name="Param/W_DLO" value="0.90" />
     <param name="Param/simul" value="true" />

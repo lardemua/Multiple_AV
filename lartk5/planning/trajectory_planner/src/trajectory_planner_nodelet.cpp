@@ -226,6 +226,8 @@ void velocity_update_callback(double speed)
   n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
+  double NUM_TRAJ;
+  n.getParam("Param/NUM_TRAJ", NUM_TRAJ);
 
   double max_dist = pow(speed * 3.6, 2) / 100;
   if (max_dist > 20)
@@ -238,20 +240,23 @@ void velocity_update_callback(double speed)
   }
 
   double i = 0.00000001;
-  int num_traj = 0;
+
+  double ang_traj = (MAX_STEERING_ANGLE-i)/NUM_TRAJ;
+
+  int num_trajec = 0;
   while (i < MAX_STEERING_ANGLE)
   {
     if (i == 0.00000001)
     {
       vector<double> v_a;
-      vector<double> v_arc;
+      vector<double> v_arc; 
       for (int j = 0; j < NUM_NODES; ++j)
       {
         v_a.push_back(M_PI / 180. * i);
         v_arc.push_back(max_dist / NUM_NODES);
       }
-      manage_vt->update_trajectory(v_a, v_arc, v_a, num_traj);
-      num_traj = num_traj + 1;
+      manage_vt->update_trajectory(v_a, v_arc, v_a, num_trajec);
+      num_trajec = num_trajec + 1;
     }
     else
     {
@@ -262,9 +267,10 @@ void velocity_update_callback(double speed)
         v_a1.push_back(M_PI / 180. * i);
         v_arc1.push_back(max_dist / NUM_NODES);
       }
-      manage_vt->update_trajectory(v_a1, v_arc1, v_a1, num_traj);
-      num_traj = num_traj + 1;
+      manage_vt->update_trajectory(v_a1, v_arc1, v_a1, num_trajec);
+      num_trajec = num_trajec + 1;
 
+      //angulo na outra direcao
       vector<double> v_a2;
       vector<double> v_arc2;
       for (int j = 0; j < NUM_NODES; ++j)
@@ -272,8 +278,8 @@ void velocity_update_callback(double speed)
         v_a2.push_back(M_PI / 180. * (-i));
         v_arc2.push_back(max_dist / NUM_NODES);
       }
-      manage_vt->update_trajectory(v_a2, v_arc2, v_a2, num_traj);
-      num_traj = num_traj + 1;
+      manage_vt->update_trajectory(v_a2, v_arc2, v_a2, num_trajec);
+      num_trajec = num_trajec + 1;
     }
     i = i + TRAJECTORY_ANGLE;
   }
@@ -522,7 +528,7 @@ int main(int argc, char **argv)
           pc_msg.header.stamp = ros::Time::now();
           msg_transformed.obstacle_lines.push_back(pc_msg); //insere o ponto na mensagem
         }
-        manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
+        // manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
 
         // -------------------------------------------------------------------------------------------------------------
         // ------------------------------------------------ROAD LINES---------------------------------------------------
@@ -568,9 +574,12 @@ int main(int argc, char **argv)
             pcl::toROSMsg(pct2, pc_msg2);
             pc_msg2.header.frame_id = "/vehicle_odometry";
             pc_msg2.header.stamp = ros::Time::now();
+
+            msg_transformed.obstacle_lines.push_back(pc_msg2);
             msg_transformed2.obstacle_lines.push_back(pc_msg2);
           }
-          manage_vt->set_lines(msg_transformed2); //envia a linha como obstaculo
+          manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
+          manage_vt->set_lines(msg_transformed2);    //envia a linha como obstaculo
         }
 
         //   ___________________________________
