@@ -68,6 +68,13 @@ void set_coordinates(trajectory_planner::coordinates msg)
 {
   // 	cout<<"stat Message received!!!"<<endl;
   // Change parameters
+  // pose_in.pose.position.x = msg.x;
+  // pose_in.pose.position.y = msg.y;
+  // pose_in.pose.orientation.w = cos(msg.theta / 2.0);
+  // pose_in.pose.orientation.x = 0.0;
+  // pose_in.pose.orientation.y = 0.0;
+  // pose_in.pose.orientation.z = sin(msg.theta / 2.0);
+
   pose_in.pose.position.x = msg.x;
   pose_in.pose.position.y = msg.y;
   pose_in.pose.orientation.w = cos(msg.theta / 2.0);
@@ -161,7 +168,7 @@ void velocity_callback(double speed)
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
 
-  double max_dist = pow(speed * 3.6, 2) / 100;
+  double max_dist = pow(speed * 3.6, 2) / 100; //distancia de travagem?
   if (max_dist > 20)
   {
     max_dist = 20;
@@ -216,7 +223,7 @@ void velocity_callback(double speed)
  * @param vehicle speed
  * @return void
  */
-void velocity_update_callback(double speed)
+void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
 {
 
   ros::NodeHandle n;
@@ -229,7 +236,7 @@ void velocity_update_callback(double speed)
   double NUM_TRAJ;
   n.getParam("Param/NUM_TRAJ", NUM_TRAJ);
 
-  double max_dist = pow(speed * 3.6, 2) / 100;
+  double max_dist = pow(speed * 3.6, 2) / 100; //3.6? -> tamanho do veiculo?
   if (max_dist > 20)
   {
     max_dist = 20;
@@ -241,7 +248,7 @@ void velocity_update_callback(double speed)
 
   double i = 0.00000001;
 
-  double ang_traj = (MAX_STEERING_ANGLE-i)/NUM_TRAJ;
+  double ang_traj = (MAX_STEERING_ANGLE - i) / NUM_TRAJ;
 
   int num_trajec = 0;
   while (i < MAX_STEERING_ANGLE)
@@ -249,10 +256,10 @@ void velocity_update_callback(double speed)
     if (i == 0.00000001)
     {
       vector<double> v_a;
-      vector<double> v_arc; 
+      vector<double> v_arc;
       for (int j = 0; j < NUM_NODES; ++j)
       {
-        v_a.push_back(M_PI / 180. * i);
+        v_a.push_back(M_PI / 180. * i); //envio do angulo em radianos
         v_arc.push_back(max_dist / NUM_NODES);
       }
       manage_vt->update_trajectory(v_a, v_arc, v_a, num_trajec);
@@ -362,8 +369,19 @@ int main(int argc, char **argv)
   tf::TransformBroadcaster mtt_broadcaster;
   tf::TransformListener listener;
   p_listener = &listener;
+
   ros::Publisher array_pub = n.advertise<visualization_msgs::MarkerArray>("/array_of_markers", 1);
-  ros::Subscriber sub = n.subscribe("/msg_coordinates", 1, set_coordinates);
+  bool waypoints_bool;
+  n.getParam("Param/WAYPOINTS", waypoints_bool);
+  // if (waypoints_bool == true)
+  // {
+    ros::Subscriber sub = n.subscribe("/AP", 1, set_coordinates);
+  // }
+  // else
+  // {
+  //   ros::Subscriber sub = n.subscribe("/msg_coordinates", 1, set_coordinates);
+  // }
+
   ros::Subscriber mtt_sub = n.subscribe("/mtt_targets", 1, mtt_callback);
   //----------------------------------------------------------------------------------------------------//
   // Polygon stuff
@@ -575,7 +593,15 @@ int main(int argc, char **argv)
             pc_msg2.header.frame_id = "/vehicle_odometry";
             pc_msg2.header.stamp = ros::Time::now();
 
-            msg_transformed.obstacle_lines.push_back(pc_msg2);
+            bool _LINES_;
+            n.getParam("Param/LINES", _LINES_);
+
+            if (_LINES_)
+            {
+              msg_transformed.obstacle_lines.push_back(pc_msg2);
+            }
+
+            // msg_transformed.obstacle_lines.push_back(pc_msg2);
             msg_transformed2.obstacle_lines.push_back(pc_msg2);
           }
           manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos

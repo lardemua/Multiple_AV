@@ -658,12 +658,12 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   int marker_count = 0;
   for (int i = 0; i < (int)vt.size(); ++i)
   {
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP ");
+    draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
 
     // draw_on_node(vt[i], &marker_vec, &marker_count, 2.5, vt[i]->score.DLO, vt[i]->score.DLOnorm, "DLO ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.CL, vt[i]->score.CL, "CL ");
-    draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
   }
 
   // ________________________________
@@ -795,6 +795,8 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
     marker3.pose.position.z = 0;
     marker_vec.push_back(marker3);
   }
+
+
 
   // ________________________________
   //|                                |

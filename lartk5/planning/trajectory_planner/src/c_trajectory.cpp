@@ -58,7 +58,7 @@ t_func_output c_trajectory::generate(vector<double> alpha_in, vector<double> arc
 	//|                                |
 	//|       Test input vectors       |
 	//|________________________________|
-	if ((alpha_in.size() == arc_in.size()) && (arc_in.size() == speed_in.size()))
+	if ((alpha_in.size() == arc_in.size()) && (arc_in.size() == speed_in.size())) //size=NUM_NODES
 	{
 		// Copy all the values to internal variables
 		double arc_sum = 0;
@@ -67,7 +67,7 @@ t_func_output c_trajectory::generate(vector<double> alpha_in, vector<double> arc
 		arc.clear();
 		speed.clear();
 		total_arc.clear();
-		for (size_t i = 0; i < alpha_in.size(); ++i)
+		for (size_t i = 0; i < alpha_in.size(); ++i) //para cada ponto do vetor (size=NUM_NODES)
 		{
 			if (abs(alpha_in[i]) <= M_PI / 2)
 			{

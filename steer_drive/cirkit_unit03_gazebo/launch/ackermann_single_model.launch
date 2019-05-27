@@ -2,9 +2,7 @@
 
 <launch>
 
-
-
-
+    <!-- Nome do namespace que será alterado consoante o veiculo -->
     <arg name="namespace" default="h0" />
     <!-- Generate the tf_prefix from the namespace -->
     <arg name="tfpre" default="$(arg namespace)_tf" />
@@ -69,17 +67,12 @@
         <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
     </node>
 
-
-
-
     <!-- Trajectory planning -->
     <!-- <include file="$(find trajectory_planner)/launch/trajectory_planner_simulated_simulator.launch"/> -->
-    <param name="sim" value="true" type="bool"/>
+    <!-- <param name="sim" value="true" type="bool"/> -->
     <!-- Free space include -->
     <!-- <include file="$(find free_space_detection)/launch/robotmodel.launch"/> -->
     <!-- <param name="ATLASCAR2" textfile="$(find free_space_detection)/urdf/atlas2.urdf" /> -->
-
-
 
     <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen">
         <remap from="/array_of_markers" to="/$(arg namespace)/array_of_markers"/>
@@ -94,10 +87,9 @@
     </node>
 
     <!-- <group ns="$(arg namespace)"> -->
-    <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen">
+    <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen" launch-prefix="xterm -e gdb --args">
         <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
         <remap from="APgenerator/im" to="/$(arg namespace)/APgenerator/im"/>
-
     </node>
     <!-- </group> -->
 

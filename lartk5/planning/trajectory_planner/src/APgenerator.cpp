@@ -53,6 +53,10 @@
 #include <numeric>
 #include <vector>
 #include "std_msgs/String.h"
+#include "gazebo_msgs/ModelStates.h"
+#include <fstream>
+#include <stdlib.h> /* atof */
+#include <string>
 
 // namepaces
 using namespace visualization_msgs;
@@ -61,7 +65,17 @@ using namespace visualization_msgs;
 boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
 ros::NodeHandle *p_n;
 ros::Publisher coor_pub;
+ros::Publisher ap_pub;
+ros::Subscriber model_states;
 trajectory_planner::coordinates message;
+trajectory_planner::coordinates message_ap;
+ros::Publisher ap_marker;
+std::vector<double> pose{0, 0, 0};
+std::vector<double> previousWaypoint{0, 0};
+std::vector<double> nextWaypoint{0, 0};
+double waypoints[291175][2];
+bool firstIter = true;
+int currentWaypoint = 0;
 
 void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback)
 {
@@ -176,6 +190,149 @@ InteractiveMarker make6DofMarker(bool fixed)
   return int_marker;
 }
 
+void makeMarker(trajectory_planner::coordinates message)
+{
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "AP";
+  marker.header.stamp = ros::Time();
+  marker.ns = "AP";
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::SPHERE;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position.x = message.x;
+  marker.pose.position.y = message.y;
+  marker.pose.position.z = 1;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 1;
+  marker.scale.y = 0.1;
+  marker.scale.z = 0.1;
+  marker.color.a = 1.0; // Don't forget to set the alpha!
+  marker.color.r = 0.0;
+  marker.color.g = 1.0;
+  marker.color.b = 0.0;
+  marker.text = "HERE!";
+  ap_marker.publish(marker);
+}
+
+void ExtractPose(gazebo_msgs::ModelStates models)
+{
+  pose[0] = models.pose[1].position.x;
+  pose[1] = models.pose[1].position.y;
+  pose[2] = models.pose[1].orientation.z;
+  // ROS_INFO("x= %f, y= %f", pose[0], pose[1]);
+}
+
+void CalcAP(gazebo_msgs::ModelStates models)
+{
+
+  ExtractPose(models);
+
+  if (firstIter == true)
+  {
+    double Nx = 1000.0;
+    double Px = 1000.0;
+    firstIter = false;
+
+    if (abs(pose[2]) < M_PI_4) // 1: direção: x->
+    {
+      for (int w = 0; w < (sizeof(waypoints)[0]); w++)
+      {
+        double newDiff = pose[0] - waypoints[w][0];
+        if (newDiff < 0 && abs(newDiff) < Px)
+        {
+          Px = abs(newDiff);
+
+          nextWaypoint[0] = waypoints[w][0];
+          nextWaypoint[1] = waypoints[w][1];
+
+          currentWaypoint = w;
+
+          previousWaypoint[0] = waypoints[w - 1][0];
+          previousWaypoint[1] = waypoints[w - 1][1];
+        }
+      }
+    }
+    // else if (abs(pose[2]) > 3 * M_PI_4) // 2: direção: <-x
+    // {
+    // }
+    // else if (pose[2] >= M_PI_4 && pose[2] <= 3 * M_PI_4) // 3: direção: y->
+    // {
+    // }
+    // else if (pose[2] >= 5 * M_PI_4 && pose[2] <= 7 * M_PI_4) // 4: direção: <-y
+    // {
+    // }
+    else
+    {
+      ROS_INFO("ERROR with the orientation of the model!");
+    }
+  }
+
+  
+
+  double distFront = sqrt(pow((pose[0] - nextWaypoint[0]), 2) + pow((pose[1] - nextWaypoint[1]), 2));
+  double distBack = sqrt(pow((pose[0] - previousWaypoint[0]), 2) + pow((pose[1] - previousWaypoint[1]), 2));
+
+  if (distFront < distBack)
+  {
+    currentWaypoint++;
+    nextWaypoint[0] = waypoints[currentWaypoint][0];
+    nextWaypoint[1] = waypoints[currentWaypoint][1];
+    ROS_INFO("New waypoint= %f,%f", nextWaypoint[0], nextWaypoint[1]);
+  }
+
+  double distX= nextWaypoint[0] - pose[0];
+  double distY= nextWaypoint[1] - pose[1];
+
+  ROS_INFO("distFront= %f, distBack= %f", distFront, distBack);
+
+  message.x = distX;
+  message.y = distY;
+  message.theta = 0;
+
+  message.header.stamp = ros::Time::now();
+  message.header.frame_id = "/world";
+
+  ap_pub.publish(message);
+
+  makeMarker(message);
+}
+
+void ReadFile()
+{
+  std::ifstream sourcefile("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/XeY1000.csv");
+
+  if (!sourcefile.is_open())
+    std::cout << "ERROR: File Open" << '\n';
+
+  std::string posX;
+  std::string posY;
+  double pos_x, pos_y;
+  int count = 0;
+
+  while (sourcefile.good())
+  {
+
+    getline(sourcefile, posX, ',');
+    getline(sourcefile, posY, '\n');
+
+    pos_x = atof(posX.c_str());
+    pos_y = atof(posY.c_str());
+
+    waypoints[count][0] = pos_x;
+    waypoints[count][1] = pos_y;
+
+    // ROS_INFO("READ FILE");
+
+    count++;
+  }
+  // ROS_INFO("READ FILE");
+
+  sourcefile.close();
+}
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "APgenerator");
@@ -183,7 +340,15 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(10);
   p_n = &n;
 
+  ReadFile();
+
   coor_pub = n.advertise<trajectory_planner::coordinates>("/msg_coordinates", 1000);
+
+  ap_pub = n.advertise<trajectory_planner::coordinates>("/AP", 1000);
+
+  model_states = n.subscribe("/gazebo/model_states", 1, CalcAP);
+
+  ap_marker = n.advertise<visualization_msgs::Marker>("/ap_marker", 0);
 
   server.reset(new interactive_markers::InteractiveMarkerServer("APgenerator/im", "", false));
   ros::Duration(0.1).sleep();

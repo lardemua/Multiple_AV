@@ -41,9 +41,9 @@ class waypointsAnalise
 public:
   waypointsAnalise(std::string topicName, std::string frame_id);
 
-  void waypointsDataTreatment(const std_msgs::Float64MultiArray::ConstPtr& waypoints);
+  void waypointsDataTreatment(const std_msgs::Float64MultiArray::ConstPtr &waypoints);
 
-  geometry_msgs::PointStamped computeAP(const std_msgs::Float64MultiArray& polygon_in);
+  geometry_msgs::PointStamped computeAP(const std_msgs::Float64MultiArray &polygon_in);
 
 private:
   ros::NodeHandle n;
@@ -71,10 +71,10 @@ private:
  */
 waypointsAnalise::waypointsAnalise(std::string topicName, std::string frame_id)
 {
-  this->topicName = topicName;
-  this->frameId = frame_id;
+  this->topicName = topicName; // "/waypoints_previous_next"
+  this->frameId = frame_id; //  "/world"
 
-  waypointsSub = n.subscribe(topicName, 1, &waypointsAnalise::waypointsDataTreatment, this);
+  waypointsSub = n.subscribe(topicName, 1, &waypointsAnalise::waypointsDataTreatment, this); //1 = só aceita uma mensagem
   APPub = n.advertise<trajectory_planner::coordinates>("msg_coordinates", 1);
   WayPreviousPub = n.advertise<geometry_msgs::PointStamped>("previous_way_point", 1);
   WayNextPub = n.advertise<geometry_msgs::PointStamped>("next_way_point", 1);
@@ -87,9 +87,13 @@ waypointsAnalise::waypointsAnalise(std::string topicName, std::string frame_id)
    @param Way points array
    @return void
  */
-void waypointsAnalise::waypointsDataTreatment(const std_msgs::Float64MultiArray::ConstPtr& waypoints)
+void waypointsAnalise::waypointsDataTreatment(const std_msgs::Float64MultiArray::ConstPtr &waypoints)
 {
-  if (waypoints->data.size() == 4)
+  // data: [-128.1624398615693, 21.821115892719185, -1.479677526491777, 1.4204924280242963, 40.63365, 40.63486, -8.66122, -8.66043, 40.64399495897794, -8.7299821744901, 15.0]
+
+  //Xprevf,       Xnextf,   Yprevf,   Ynextf, Lat_way_previous, Lat_way_next, Lon_way_previous, Lon_way_next, lat_dest, lon_dest, idxx,
+
+  if (waypoints->data.size() == 4) //waypoints = "/waypoints_previous_next"
   {
     geometry_msgs::PointStamped previous;
     geometry_msgs::PointStamped next;
@@ -126,7 +130,7 @@ void waypointsAnalise::waypointsDataTreatment(const std_msgs::Float64MultiArray:
    @param Way points array
    @return Target point
  */
-geometry_msgs::PointStamped waypointsAnalise::computeAP(const std_msgs::Float64MultiArray& waypoints_in)
+geometry_msgs::PointStamped waypointsAnalise::computeAP(const std_msgs::Float64MultiArray &waypoints_in)
 {
   double r = 12;
   geometry_msgs::PointStamped point;
@@ -142,7 +146,7 @@ geometry_msgs::PointStamped waypointsAnalise::computeAP(const std_msgs::Float64M
 
   return point;
 }
-}
+} // namespace waypoints_analise
 
 /**
    @brief Main function to compute target point
@@ -150,12 +154,12 @@ geometry_msgs::PointStamped waypointsAnalise::computeAP(const std_msgs::Float64M
    @param argv
    @return int
  */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   /*-- Node initialization --*/
   ros::init(argc, argv, "APwaypoints");
 
-  ros::NodeHandle n;  // node "local_path_planning" access point
+  ros::NodeHandle n; // node "local_path_planning" access point
 
   waypoints_analise::waypointsAnalise waypointsAnalise("/waypoints_previous_next", "/world");
 

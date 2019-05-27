@@ -1,0 +1,3 @@
+g++ editFileWaypoints.cpp
+
+a.out
