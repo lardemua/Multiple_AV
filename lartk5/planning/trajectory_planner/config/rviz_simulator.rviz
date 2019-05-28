@@ -150,7 +150,18 @@ Visualization Manager:
       Marker Topic: /array_of_markers
       Name: AllTrajectoriesMarkerArray
       Namespaces:
-        {}
+        car_actual_traj: true
+        car_contour: false
+        car_shadow: false
+        chosen_trajectory: true
+        closest_node: true
+        colision_points: true
+        info: true
+        lines: true
+        node_number: true
+        nodes: true
+        orientation_arrow: true
+        trajectory_number: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -168,9 +179,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 0; 0; 0
-      Max Intensity: 42.89701843261719
+      Max Intensity: 50.379150390625
       Min Color: 0; 0; 0
-      Min Intensity: -6.039505481719971
+      Min Intensity: -5.617280960083008
       Name: ReducedPointCloud2
       Position Transformer: XYZ
       Queue Size: 10
@@ -264,7 +275,7 @@ Visualization Manager:
       Marker Topic: /ap_marker
       Name: AP
       Namespaces:
-        {}
+        AP: true
       Queue Size: 100
       Value: true
   Enabled: true

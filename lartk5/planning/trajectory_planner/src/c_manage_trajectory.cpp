@@ -674,7 +674,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   visualization_msgs::Marker marker2;
   geometry_msgs::Point p;
   marker2.header.frame_id = "/vehicle_odometry";
-  marker2.header.stamp = ros::Time::now();
+  marker2.header.stamp = ros::Time(0);
   marker2.ns = "chosen_trajectory";
   marker2.id = 0;
   marker2.action = visualization_msgs::Marker::ADD;
@@ -720,7 +720,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   // Represents the form of the car in each node
   visualization_msgs::Marker marker5;
   marker5.header.frame_id = "/vehicle_odometry";
-  marker5.header.stamp = ros::Time::now();
+  marker5.header.stamp = ros::Time(0);
   marker5.ns = "car_actual_traj";
   marker5.id = 0;
   marker5.action = visualization_msgs::Marker::ADD;
@@ -775,7 +775,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   // Represents the form of the car in each node
   visualization_msgs::Marker marker3;
   marker3.header.frame_id = "/vehicle_odometry";
-  marker3.header.stamp = ros::Time::now();
+  marker3.header.stamp = ros::Time(0);
   marker3.ns = "closest_node";
   marker3.action = visualization_msgs::Marker::ADD;
   marker3.type = visualization_msgs::Marker::SPHERE;
@@ -805,7 +805,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   // Represents the form of the car in each node
   visualization_msgs::Marker marker4;
   marker4.header.frame_id = "/vehicle_odometry";
-  marker4.header.stamp = ros::Time::now();
+  marker4.header.stamp = ros::Time(0);
   marker4.ns = "colision_points";
   marker4.action = visualization_msgs::Marker::ADD;
   marker4.type = visualization_msgs::Marker::CYLINDER;
@@ -965,7 +965,7 @@ void c_manage_trajectory::draw_on_node(
   //|________________________________|
   // Points marker to t nodes
   marker.header.frame_id = "/vehicle_odometry";
-  marker.header.stamp = ros::Time::now();
+  marker.header.stamp = ros::Time(0);
   marker.ns = "info";
   marker.action = visualization_msgs::Marker::ADD;
   marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;

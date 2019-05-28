@@ -375,7 +375,7 @@ int main(int argc, char **argv)
   n.getParam("Param/WAYPOINTS", waypoints_bool);
   // if (waypoints_bool == true)
   // {
-    ros::Subscriber sub = n.subscribe("/AP", 1, set_coordinates);
+  ros::Subscriber sub = n.subscribe("/Apoint", 1, set_coordinates);
   // }
   // else
   // {
@@ -448,8 +448,14 @@ int main(int argc, char **argv)
       //|_________________________________|
       bool have_transform = true;
       // Set the frame where to draw the trajectories
+
+      // ros::Time time = ros::Time::now();
+      ros::Time time = ros::Time(0);
+      // while(!p_listener->canTransform("/world", "/vehicle_odometry", time));
+
       try
       {
+        // p_listener->lookupTransform("/world", "/vehicle_odometry", time, transformw);
         p_listener->lookupTransform("/world", "/vehicle_odometry", ros::Time(0), transformw);
       }
       catch (tf::TransformException ex)
@@ -461,12 +467,13 @@ int main(int argc, char **argv)
       if (have_transform & have_trajectory)
       {
         // cout << "have_transform: " << endl;
-        ros::Time time = ros::Time::now();
-        mw_broadcaster.sendTransform(tf::StampedTransform(transformw, time, "/world", "/vehicle_odometry"));
+        // ros::Time time = ros::Time::now();
+        ros::Time time = ros::Time(0);
+        // mw_broadcaster.sendTransform(tf::StampedTransform(transformw, time, "/world", "/vehicle_odometry"));
         ros::spinOnce();
-        mw_broadcaster.sendTransform(tf::StampedTransform(transformw, time + ros::Duration(5), "/world",
-                                                          "/vehicle_"
-                                                          "odometry"));
+        // mw_broadcaster.sendTransform(tf::StampedTransform(transformw, time + ros::Duration(5), "/world",
+        //                                                   "/vehicle_"
+        //                                                   "odometry"));
         ros::spinOnce();
         // 				cout<<"stat Publishing transform"<<endl;
 
@@ -479,7 +486,9 @@ int main(int argc, char **argv)
 
         // Transform attractor point to /vehicle_odometry
         tf::Transformer tt;
-        pose_in.header.stamp = time + ros::Duration(0.1);
+        // pose_in.header.stamp = time + ros::Duration(0.1);
+        pose_in.header.stamp = time;
+
         p_listener->transformPose("/vehicle_odometry", pose_in, pose_transformed);
 
         // ROS_INFO("pose_in frame_id=%s pose_transformed frame_id=%s",
@@ -506,6 +515,8 @@ int main(int argc, char **argv)
           {
             try
             {
+              ros::Time time;
+              time.fromNSec(pc_v1[i].header.stamp);
               //Get the transform between two frames by frame ID.
               //pc_v1[i].header.frame_id -> The frame to which data should be transformed
               //"/vehicle_odometry" -> The frame where the data originated
@@ -516,7 +527,7 @@ int main(int argc, char **argv)
               // pc_v1[i].header.frame_id.c_str());
 
               //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
-              mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v1[i].header.frame_id, "/vehicle_odometry"));
+              // mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v1[i].header.frame_id, "/vehicle_odometry"));
 
               ros::spinOnce();
             }
@@ -543,7 +554,7 @@ int main(int argc, char **argv)
           sensor_msgs::PointCloud2 pc_msg;
           pcl::toROSMsg(pct, pc_msg);
           pc_msg.header.frame_id = "/vehicle_odometry";
-          pc_msg.header.stamp = ros::Time::now();
+          pc_msg.header.stamp = ros::Time(0);
           msg_transformed.obstacle_lines.push_back(pc_msg); //insere o ponto na mensagem
         }
         // manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
@@ -560,6 +571,9 @@ int main(int argc, char **argv)
             {
               try
               {
+                ros::Time time;
+                time.fromNSec(pc_v2[i].header.stamp);
+
                 //Get the transform between two frames by frame ID.
                 //pc_v2[i].header.frame_id -> The frame to which data should be transformed
                 //"/vehicle_odometry" -> The frame where the data originated
@@ -568,7 +582,7 @@ int main(int argc, char **argv)
                 p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", ros::Time(0), transform_mtt);
 
                 //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
-                mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
+                // mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
 
                 ros::spinOnce();
               }
@@ -591,7 +605,7 @@ int main(int argc, char **argv)
 
             pcl::toROSMsg(pct2, pc_msg2);
             pc_msg2.header.frame_id = "/vehicle_odometry";
-            pc_msg2.header.stamp = ros::Time::now();
+            pc_msg2.header.stamp = ros::Time(0);
 
             bool _LINES_;
             n.getParam("Param/LINES", _LINES_);
@@ -614,7 +628,7 @@ int main(int argc, char **argv)
         //   |_________________________________|
         manage_vt->create_static_markers();
 
-        ros::Time st = ros::Time::now();
+        ros::Time st = ros::Time(0);
 
         manage_vt->compute_trajectories_scores();
 
@@ -662,7 +676,7 @@ int main(int argc, char **argv)
 
         if (manage_vt->chosen_traj.index != -1)
         {
-          vector<double> vec1 = {ros::Time::now().toSec(), manage_vt->chosen_traj.min_dist};
+          vector<double> vec1 = {ros::Time(0).toSec(), manage_vt->chosen_traj.min_dist};
           mindist_msg.data.clear();
           mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
           mindist_pub.publish(mindist_msg);
@@ -698,7 +712,7 @@ int main(int argc, char **argv)
       // !!!! The previous 'if' must have a weight evaluation !!!!  if ... &&
       // GlobalScore>=0.74
 
-      mw_broadcaster.sendTransform(tf::StampedTransform(transformw, ros::Time::now(), "/world", "/vehicle_odometry"));
+      // mw_broadcaster.sendTransform(tf::StampedTransform(transformw,  ros::Time(0), "/world", "/vehicle_odometry"));
       // cout << "stat Publishing transform" << endl;
     }
 

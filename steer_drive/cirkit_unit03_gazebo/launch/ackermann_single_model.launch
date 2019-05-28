@@ -2,8 +2,11 @@
 
 <launch>
 
+    <param name="use_sim_time" value="true"/>
+    <!-- <param name=/use_sim_time value=true/> -->
     <!-- Nome do namespace que será alterado consoante o veiculo -->
-    <arg name="namespace" default="h0" />
+    <arg name="car_number" default="0" />
+    <arg name="namespace" default="h$(arg car_number)" />
     <!-- Generate the tf_prefix from the namespace -->
     <arg name="tfpre" default="$(arg namespace)_tf" />
     <!-- Put value on the parameter server in the group's namespace -->
@@ -74,7 +77,7 @@
     <!-- <include file="$(find free_space_detection)/launch/robotmodel.launch"/> -->
     <!-- <param name="ATLASCAR2" textfile="$(find free_space_detection)/urdf/atlas2.urdf" /> -->
 
-    <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen">
+    <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen" >
         <remap from="/array_of_markers" to="/$(arg namespace)/array_of_markers"/>
         <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
         <remap from="/mtt_targets" to="/$(arg namespace)/mtt_targets"/>
@@ -84,16 +87,24 @@
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
         <remap from="/trajectory_information" to="/$(arg namespace)/trajectory_information"/>
         <remap from="/vehicle_odometry" to="/$(arg namespace)/vehicle_odometry"/>
+        <remap from="/Apoint" to="/$(arg namespace)/Apoint"/>
     </node>
+
+    <param name="car_number" value="$(arg car_number)"/>
 
     <!-- <group ns="$(arg namespace)"> -->
     <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen" launch-prefix="xterm -e gdb --args">
         <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
         <remap from="APgenerator/im" to="/$(arg namespace)/APgenerator/im"/>
+        <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
+        <remap from="/ap_marker" to="/$(arg namespace)/ap_marker"/>
+        <remap from="/Apoint" to="/$(arg namespace)/Apoint"/>
+        <!-- <param name="car_number" value="$(arg car_number)"/> -->
     </node>
     <!-- </group> -->
 
-    <node name="tf_generator_$(arg namespace)" pkg="trajectory_planner" type="tf_generator" />
+    <node name="tf_generator_$(arg namespace)" pkg="trajectory_planner" type="tf_generator">
+    </node>
 
     <node name="tf_generator2_$(arg namespace)" pkg="trajectory_planner" type="tf_generator2" />
 
@@ -110,6 +121,7 @@
         <remap from="/initialpose" to="/$(arg namespace)/initialpose"/>
         <remap from="/move_base_simple/goal" to="/$(arg namespace)/move_base_simple/goal"/>
         <remap from="/clicked_point" to="/$(arg namespace)/clicked_point"/>
+        <remap from="/ap_marker" to="/$(arg namespace)/ap_marker"/>
     </node>
 
 

@@ -1,200 +1,176 @@
-/**************************************************************************************************
- Software License Agreement (BSD License)
+// #ifndef _APgenerator_CPP_
+#define _APgenerator_CPP_
 
- Copyright (c) 2011-2013, LAR toolkit developers - University of Aveiro - http://lars.mec.ua.pt
- All rights reserved.
+#include <trajectory_planner/APgenerator.h>
 
- Redistribution and use in source and binary forms, with or without modification, are permitted
- provided that the following conditions are met:
-
-  *Redistributions of source code must retain the above copyright notice, this list of
-   conditions and the following disclaimer.
-  *Redistributions in binary form must reproduce the above copyright notice, this list of
-   conditions and the following disclaimer in the documentation and/or other materials provided
-   with the distribution.
-  *Neither the name of the University of Aveiro nor the names of its contributors may be used to
-   endorse or promote products derived from this software without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
- IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
- CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
- IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-***************************************************************************************************/
-
-/**
- * @file APgenerator.cpp
- * @brief Interactive marker atractor point generator
- * @author Joel Pereira
- * @version v0
- * @date 2012-04-19
- */
-
-/**
- * @file APgenerator.cpp
- * @brief Interactive marker atractor point generator
- * @author Ricardo Silva
- * @version v1
- * @date 2018-06-06
- */
-
-#include <interactive_markers/interactive_marker_server.h>
-#include <interactive_markers/menu_handler.h>
-#include <math.h>
-#include <stdio.h>
-#include <trajectory_planner/coordinates.h>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-#include <numeric>
-#include <vector>
-#include "std_msgs/String.h"
-#include "gazebo_msgs/ModelStates.h"
-#include <fstream>
-#include <stdlib.h> /* atof */
-#include <string>
-
-// namepaces
 using namespace visualization_msgs;
 
+tf::TransformListener *p_listener;
+tf::StampedTransform *transform_mtt;
+tf::TransformBroadcaster *mtt_broadcaster;
+
 // Global Vars
-boost::shared_ptr<interactive_markers::InteractiveMarkerServer> server;
-ros::NodeHandle *p_n;
-ros::Publisher coor_pub;
-ros::Publisher ap_pub;
-ros::Subscriber model_states;
+ros::Publisher apoint_pub;
+ros::Subscriber line_sub;
+ros::Subscriber model_states_2;
+ros::Publisher ap_marker;
 trajectory_planner::coordinates message;
 trajectory_planner::coordinates message_ap;
-ros::Publisher ap_marker;
-std::vector<double> pose{0, 0, 0};
-std::vector<double> previousWaypoint{0, 0};
-std::vector<double> nextWaypoint{0, 0};
-double waypoints[291175][2];
 bool firstIter = true;
 int currentWaypoint = 0;
+double speed_min = 0.000000001;
+double speed_new = 0;
 
-void processFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback)
+std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
+pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
+
+void ExtractVel(gazebo_msgs::ModelStates models)
 {
-  // ROS_INFO("Here");
-  if (feedback->mouse_point_valid)
+  int pos_name = 0;
+  ros::NodeHandle n;
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "cirkit_unit03_h";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+  for (int n = 0; n < models.name.size(); n++)
   {
-    // mouse_point_ss << " at " << feedback->mouse_point.x
-    //<< ", " << feedback->mouse_point.y
-    //<< ", " << feedback->mouse_point.z
-    //<< " in frame " << feedback->header.frame_id;
+    if (models.name[n] == car_name)
+    {
+      pos_name = n;
+    }
+  }
+  ROS_INFO("car_name: %s", car_name);
+  double velX = models.twist[pos_name].linear.x;
+  double velY = models.twist[pos_name].linear.y;
+
+  speed_new = sqrt(pow(models.twist[pos_name].linear.x, 2) + pow(models.twist[pos_name].linear.y, 2));
+  // ROS_INFO("x= %f, y= %f", pose[0], pose[1]);
+}
+
+void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &input)
+{
+  pcl::PCLPointCloud2 pcl_pc2;
+  pcl_conversions::toPCL(*input, pcl_pc2);
+  pcl::fromPCLPointCloud2(pcl_pc2, *pc_v_ptrl);
+
+  pc_v2.erase(pc_v2.begin(), pc_v2.end());
+
+  pc_v2.push_back(*pc_v_ptrl);
+  // plan_trajectory = true;
+  ros::NodeHandle nh;
+  double SPEED_REQUIRED;
+  nh.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
+  double APdistMax; // 10
+  nh.getParam("Param/APdistMax", APdistMax);
+  double APdistMin; // 5
+  nh.getParam("Param/APdistMin", APdistMin);
+
+  double max_dist_AP;
+
+  if (speed_new != 0)
+  {
+    // max_dist_AP = APdistMax / (SPEED_REQUIRED / speed_new);
+    max_dist_AP = (APdistMax - APdistMin) * (speed_new / SPEED_REQUIRED);
+    max_dist_AP = APdistMin + max_dist_AP;
+  }
+  else
+  {
+    max_dist_AP = APdistMax;
   }
 
-  switch (feedback->event_type)
+  if (max_dist_AP < APdistMin * 1.2)
   {
-  case visualization_msgs::InteractiveMarkerFeedback::POSE_UPDATE:
-    message.x = feedback->pose.position.x;
-    message.y = feedback->pose.position.y;
-    message.theta = 2.0 * asin(feedback->pose.orientation.z);
-
-    message.header.stamp = ros::Time::now();
-    message.header.frame_id = "/world";
-
-    coor_pub.publish(message);
-
-    break;
+    max_dist_AP = APdistMin * 1.2;
   }
 
-  server->applyChanges();
+  double dist_max_reached = APdistMin;
+  int point_chosen_AP;
+
+  double ap_x = 6;
+  double ap_y = 0;
+
+  int count_ap = 0;
+
+  ROS_INFO("max_dist_AP: %f, dist_max_reached: %f", max_dist_AP, dist_max_reached); // 1,679380    0.200000
+
+  for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
+  {
+    if (i == 0)
+    {
+      try
+      {
+        //Get the transform between two frames by frame ID.
+        //pc_v2[i].header.frame_id -> The frame to which data should be transformed
+        //"/vehicle_odometry" -> The frame where the data originated
+        // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
+        //transform_mtt -> The transform reference to fill.
+        ros::Time time;
+        time.fromNSec(pc_v2[i].header.stamp);
+
+        // p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", time, *transform_mtt);
+        p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", ros::Time(0), *transform_mtt);
+
+        //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
+        // mtt_broadcaster->sendTransform(tf::StampedTransform(*transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
+
+        ros::spinOnce();
+      }
+      catch (tf::TransformException ex)
+      {
+        ROS_ERROR("%s", ex.what());
+      }
+    }
+
+    pcl::PointCloud<pcl::PointXYZ> pct2;
+    //Apply a rigid transform defined by a 3D offset and a quaternion.
+    //pc_v2[i] -> cloud_in
+    //pct2 -> cloud_out
+    //transform_mtt.inverse() -> a rigid transformation from tf
+    pcl_ros::transformPointCloud(pc_v2[i], pct2, transform_mtt->inverse()); //transform_mtt -> tf entre "pc_v2[i].header.frame_id" e "/vehicle_odometry"
+
+    for (size_t i = 0; i < pct2.points.size(); ++i)
+    {
+
+      if (pct2.points[i].x > 0)
+      {
+        // ROS_INFO("pct2.x: %f, pct2.y: %f", pct2.points[i].x, pct2.points[i].y);
+        double point_dist = sqrt(pow(pct2.points[i].x, 2) + pow(pct2.points[i].y, 2));
+        if (point_dist < max_dist_AP && point_dist > dist_max_reached)
+        {
+          dist_max_reached = point_dist;
+          point_chosen_AP = i;
+          count_ap++;
+
+          ap_x = pct2.points[i].x;
+          ap_y = pct2.points[i].y;
+        }
+      }
+    }
+  }
+  ROS_INFO("count_ap: %d", count_ap);                                                       //30
+  ROS_INFO("point_chosen_AP: %d, dist_max_reached: %f", point_chosen_AP, dist_max_reached); // 100    1.654483
+  ROS_INFO("ap_x: %f, ap_y: %f", ap_x, ap_y);                                               //
+  ROS_INFO("");
+  message_ap.x = ap_x;
+  message_ap.y = ap_y;
+  message_ap.theta = 0;
+
+  // !!!! Change this to some time
+  message_ap.header.stamp = ros::Time(0);
+  message_ap.header.frame_id = "/world";
+
+  apoint_pub.publish(message_ap);
+
+  CreateAPMarker(message_ap);
 }
 
-Marker makeBox(InteractiveMarker &msg)
-{
-  Marker marker;
-
-  marker.type = Marker::ARROW;
-  marker.scale.x = msg.scale / 2;
-  marker.scale.y = msg.scale / 6;
-  marker.scale.z = msg.scale / 6;
-  marker.color.r = 0;
-  marker.color.g = 0.7;
-  marker.color.b = 0;
-  marker.color.a = 0.6;
-  return marker;
-}
-
-InteractiveMarkerControl &makeBoxControl(InteractiveMarker &msg)
-{
-  InteractiveMarkerControl control;
-  control.always_visible = true;
-  control.markers.push_back(makeBox(msg));
-  msg.controls.push_back(control);
-
-  return msg.controls.back();
-}
-
-InteractiveMarker make6DofMarker(bool fixed)
-{
-  InteractiveMarker int_marker;
-  int_marker.header.frame_id = "/world";
-  int_marker.pose.position.x = 6;
-  int_marker.pose.position.y = 0;
-  int_marker.pose.position.z = 0;
-  int_marker.scale = 0.6;
-
-  int_marker.name = "Control target";
-  int_marker.description = "Control the final \nposition of the robot";
-
-  // insert a box
-  makeBoxControl(int_marker);
-  InteractiveMarkerControl control;
-
-  control.orientation.w = 1;
-  control.orientation.x = 1;
-  control.orientation.y = 0;
-  control.orientation.z = 0;
-  control.name = "move_x";
-  control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-  int_marker.controls.push_back(control);
-
-  control.orientation.w = 1;
-  control.orientation.x = 0;
-  control.orientation.y = 0;
-  control.orientation.z = 1;
-  control.name = "move_y";
-  control.interaction_mode = InteractiveMarkerControl::MOVE_AXIS;
-  int_marker.controls.push_back(control);
-
-  control.orientation.w = 1;
-  control.orientation.x = 0;
-  control.orientation.y = 1;
-  control.orientation.z = 0;
-  control.interaction_mode = InteractiveMarkerControl::ROTATE_AXIS;
-  control.name = "rotate_z";
-  int_marker.controls.push_back(control);
-
-  server->insert(int_marker);
-  server->setCallback(int_marker.name, &processFeedback);
-
-  //---------------------------------------
-
-  message.x = 6;
-  message.y = 0;
-  message.theta = 0;
-
-  message.header.stamp = ros::Time::now();
-  message.header.frame_id = "/world";
-
-  coor_pub.publish(message);
-
-  //----------------------------------------
-
-  return int_marker;
-}
-
-void makeMarker(trajectory_planner::coordinates message)
+void CreateAPMarker(trajectory_planner::coordinates message)
 {
   visualization_msgs::Marker marker;
-  marker.header.frame_id = "AP";
-  marker.header.stamp = ros::Time();
+  marker.header.frame_id = "/vehicle_odometry";
+  marker.header.stamp = ros::Time(0);
   marker.ns = "AP";
   marker.id = 0;
   marker.type = visualization_msgs::Marker::SPHERE;
@@ -207,130 +183,13 @@ void makeMarker(trajectory_planner::coordinates message)
   marker.pose.orientation.z = 0.0;
   marker.pose.orientation.w = 1.0;
   marker.scale.x = 1;
-  marker.scale.y = 0.1;
-  marker.scale.z = 0.1;
-  marker.color.a = 1.0; // Don't forget to set the alpha!
-  marker.color.r = 0.0;
-  marker.color.g = 1.0;
+  marker.scale.y = 1;
+  marker.scale.z = 0.01;
+  marker.color.a = 1; // Don't forget to set the alpha!
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
   marker.color.b = 0.0;
-  marker.text = "HERE!";
   ap_marker.publish(marker);
-}
-
-void ExtractPose(gazebo_msgs::ModelStates models)
-{
-  pose[0] = models.pose[1].position.x;
-  pose[1] = models.pose[1].position.y;
-  pose[2] = models.pose[1].orientation.z;
-  // ROS_INFO("x= %f, y= %f", pose[0], pose[1]);
-}
-
-void CalcAP(gazebo_msgs::ModelStates models)
-{
-
-  ExtractPose(models);
-
-  if (firstIter == true)
-  {
-    double Nx = 1000.0;
-    double Px = 1000.0;
-    firstIter = false;
-
-    if (abs(pose[2]) < M_PI_4) // 1: direção: x->
-    {
-      for (int w = 0; w < (sizeof(waypoints)[0]); w++)
-      {
-        double newDiff = pose[0] - waypoints[w][0];
-        if (newDiff < 0 && abs(newDiff) < Px)
-        {
-          Px = abs(newDiff);
-
-          nextWaypoint[0] = waypoints[w][0];
-          nextWaypoint[1] = waypoints[w][1];
-
-          currentWaypoint = w;
-
-          previousWaypoint[0] = waypoints[w - 1][0];
-          previousWaypoint[1] = waypoints[w - 1][1];
-        }
-      }
-    }
-    // else if (abs(pose[2]) > 3 * M_PI_4) // 2: direção: <-x
-    // {
-    // }
-    // else if (pose[2] >= M_PI_4 && pose[2] <= 3 * M_PI_4) // 3: direção: y->
-    // {
-    // }
-    // else if (pose[2] >= 5 * M_PI_4 && pose[2] <= 7 * M_PI_4) // 4: direção: <-y
-    // {
-    // }
-    else
-    {
-      ROS_INFO("ERROR with the orientation of the model!");
-    }
-  }
-
-  
-
-  double distFront = sqrt(pow((pose[0] - nextWaypoint[0]), 2) + pow((pose[1] - nextWaypoint[1]), 2));
-  double distBack = sqrt(pow((pose[0] - previousWaypoint[0]), 2) + pow((pose[1] - previousWaypoint[1]), 2));
-
-  if (distFront < distBack)
-  {
-    currentWaypoint++;
-    nextWaypoint[0] = waypoints[currentWaypoint][0];
-    nextWaypoint[1] = waypoints[currentWaypoint][1];
-    ROS_INFO("New waypoint= %f,%f", nextWaypoint[0], nextWaypoint[1]);
-  }
-
-  double distX= nextWaypoint[0] - pose[0];
-  double distY= nextWaypoint[1] - pose[1];
-
-  ROS_INFO("distFront= %f, distBack= %f", distFront, distBack);
-
-  message.x = distX;
-  message.y = distY;
-  message.theta = 0;
-
-  message.header.stamp = ros::Time::now();
-  message.header.frame_id = "/world";
-
-  ap_pub.publish(message);
-
-  makeMarker(message);
-}
-
-void ReadFile()
-{
-  std::ifstream sourcefile("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/XeY1000.csv");
-
-  if (!sourcefile.is_open())
-    std::cout << "ERROR: File Open" << '\n';
-
-  std::string posX;
-  std::string posY;
-  double pos_x, pos_y;
-  int count = 0;
-
-  while (sourcefile.good())
-  {
-
-    getline(sourcefile, posX, ',');
-    getline(sourcefile, posY, '\n');
-
-    pos_x = atof(posX.c_str());
-    pos_y = atof(posY.c_str());
-
-    waypoints[count][0] = pos_x;
-    waypoints[count][1] = pos_y;
-
-    // ROS_INFO("READ FILE");
-
-    count++;
-  }
-  // ROS_INFO("READ FILE");
-
-  sourcefile.close();
 }
 
 int main(int argc, char **argv)
@@ -340,27 +199,23 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(10);
   p_n = &n;
 
-  ReadFile();
+  mtt_broadcaster = new (tf::TransformBroadcaster);
+  transform_mtt = new (tf::StampedTransform);
+  p_listener = new (tf::TransformListener);
 
-  coor_pub = n.advertise<trajectory_planner::coordinates>("/msg_coordinates", 1000);
+  line_sub = n.subscribe("/line_pcl", 1000, line_callback);
 
-  ap_pub = n.advertise<trajectory_planner::coordinates>("/AP", 1000);
+  apoint_pub = n.advertise<trajectory_planner::coordinates>("/Apoint", 1000);
 
-  model_states = n.subscribe("/gazebo/model_states", 1, CalcAP);
+  model_states_2 = n.subscribe("/gazebo/model_states", 1, ExtractVel);
 
   ap_marker = n.advertise<visualization_msgs::Marker>("/ap_marker", 0);
 
-  server.reset(new interactive_markers::InteractiveMarkerServer("APgenerator/im", "", false));
   ros::Duration(0.1).sleep();
-  InteractiveMarker marker = make6DofMarker(true);
-
-  server->applyChanges();
 
   while (ros::ok())
   {
     loop_rate.sleep();
     ros::spinOnce();
   }
-
-  server.reset();
 }
