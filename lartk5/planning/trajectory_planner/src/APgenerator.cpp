@@ -44,6 +44,7 @@ void ExtractVel(gazebo_msgs::ModelStates models)
   ROS_INFO("car_name: %s", car_name);
   double velX = models.twist[pos_name].linear.x;
   double velY = models.twist[pos_name].linear.y;
+  ROS_INFO("velX: %f, velY: %f", velX, velY);
 
   speed_new = sqrt(pow(models.twist[pos_name].linear.x, 2) + pow(models.twist[pos_name].linear.y, 2));
   // ROS_INFO("x= %f, y= %f", pose[0], pose[1]);

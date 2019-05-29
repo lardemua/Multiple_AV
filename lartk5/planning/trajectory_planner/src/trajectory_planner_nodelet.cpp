@@ -612,14 +612,14 @@ int main(int argc, char **argv)
 
             if (_LINES_)
             {
-              msg_transformed.obstacle_lines.push_back(pc_msg2);
+              msg_transformed.obstacle_lines.push_back(pc_msg2); // adiciona a linha como obstaculo
             }
 
             // msg_transformed.obstacle_lines.push_back(pc_msg2);
             msg_transformed2.obstacle_lines.push_back(pc_msg2);
           }
-          manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
-          manage_vt->set_lines(msg_transformed2);    //envia a linha como obstaculo
+          manage_vt->set_obstacles(msg_transformed); //envia as paredes e outros obstaculos (linha caso _LINES_ seja true) como obstaculos
+          manage_vt->set_lines(msg_transformed2);    //ja nao faz nada
         }
 
         //   ___________________________________
