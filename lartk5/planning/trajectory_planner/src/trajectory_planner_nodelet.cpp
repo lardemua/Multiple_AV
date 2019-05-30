@@ -248,7 +248,6 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
 
   double i = 0.00000001;
 
-  double ang_traj = (MAX_STEERING_ANGLE - i) / NUM_TRAJ;
 
   int num_trajec = 0;
   while (i < MAX_STEERING_ANGLE)
@@ -347,6 +346,13 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   p_n = &n;
   n.getParam("Param/simul", _simulation_);
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
 
   // if (_simulation_)
   // {
@@ -456,7 +462,7 @@ int main(int argc, char **argv)
       try
       {
         // p_listener->lookupTransform("/world", "/vehicle_odometry", time, transformw);
-        p_listener->lookupTransform("/world", "/vehicle_odometry", ros::Time(0), transformw);
+        p_listener->lookupTransform("/world", car_name, ros::Time(0), transformw);
       }
       catch (tf::TransformException ex)
       {
@@ -489,7 +495,7 @@ int main(int argc, char **argv)
         // pose_in.header.stamp = time + ros::Duration(0.1);
         pose_in.header.stamp = time;
 
-        p_listener->transformPose("/vehicle_odometry", pose_in, pose_transformed);
+        p_listener->transformPose(car_name, pose_in, pose_transformed);
 
         // ROS_INFO("pose_in frame_id=%s pose_transformed frame_id=%s",
         // pose_in.header.frame_id.c_str(),
@@ -522,7 +528,7 @@ int main(int argc, char **argv)
               //"/vehicle_odometry" -> The frame where the data originated
               // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
               //transform_mtt -> The transform reference to fill.
-              p_listener->lookupTransform(pc_v1[i].header.frame_id, "/vehicle_odometry", ros::Time(0), transform_mtt);
+              p_listener->lookupTransform(pc_v1[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
               // ROS_INFO("FFFFFFrame_id=%s ",
               // pc_v1[i].header.frame_id.c_str());
 
@@ -553,7 +559,7 @@ int main(int argc, char **argv)
           //contents of the "fields" array.
           sensor_msgs::PointCloud2 pc_msg;
           pcl::toROSMsg(pct, pc_msg);
-          pc_msg.header.frame_id = "/vehicle_odometry";
+          pc_msg.header.frame_id = car_name;
           pc_msg.header.stamp = ros::Time(0);
           msg_transformed.obstacle_lines.push_back(pc_msg); //insere o ponto na mensagem
         }
@@ -579,7 +585,7 @@ int main(int argc, char **argv)
                 //"/vehicle_odometry" -> The frame where the data originated
                 // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
                 //transform_mtt -> The transform reference to fill.
-                p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", ros::Time(0), transform_mtt);
+                p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
 
                 //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
                 // mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
@@ -604,7 +610,7 @@ int main(int argc, char **argv)
             sensor_msgs::PointCloud2 pc_msg2;
 
             pcl::toROSMsg(pct2, pc_msg2);
-            pc_msg2.header.frame_id = "/vehicle_odometry";
+            pc_msg2.header.frame_id = car_name;
             pc_msg2.header.stamp = ros::Time(0);
 
             bool _LINES_;

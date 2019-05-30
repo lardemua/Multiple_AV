@@ -70,9 +70,17 @@ scanFilter::scanFilter()
  */
 void scanFilter::scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan)
 {
+  ros::NodeHandle n;
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "laser_link_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
   sensor_msgs::PointCloud2 cloud;
   projector.transformLaserScanToPointCloud("base_link", *scan, cloud, tfListener);
-  cloud.header.frame_id = "laser_link";
+  cloud.header.frame_id = car_name;
 
   pointcloudPub.publish(cloud);
 }

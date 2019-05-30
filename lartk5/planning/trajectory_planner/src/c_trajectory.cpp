@@ -52,7 +52,7 @@
  * @return t_func_output
  */
 t_func_output c_trajectory::generate(vector<double> alpha_in, vector<double> arc_in, vector<double> speed_in,
-																		 t_vehicle_description& vd)
+									 t_vehicle_description &vd)
 {
 	// ________________________________
 	//|                                |
@@ -271,19 +271,27 @@ t_func_output c_trajectory::compute_transformation()
  * @param int num_traj
  * @return void
  */
-void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marker_vec, int* marker_count, int num_traj)
+void c_trajectory::create_markers(std::vector<visualization_msgs::Marker> *marker_vec, int *marker_count, int num_traj)
 {
 	// Create a marker
 	visualization_msgs::Marker marker, marker2;
 	geometry_msgs::Point p, pp;
 	std_msgs::ColorRGBA color;
 
+	ros::NodeHandle nh;
+	int car_number = 0;
+	nh.getParam("car_number", car_number);
+	char car_name[20] = "/vehicle_odometry_";
+	char car_number_string[2];
+	sprintf(car_number_string, "%d", car_number);
+	strcat(car_name, car_number_string);
+
 	// ________________________________
 	//|                                |
 	//|           Line List            |
 	//|________________________________|
 	// Line marker to trajectory
-	marker.header.frame_id = "/vehicle_odometry";
+	marker.header.frame_id = car_name;
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "lines";
 	marker.id = num_traj;
@@ -328,7 +336,7 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marke
 	//|          Cube Marker           |
 	//|________________________________|
 	// Cube marker to t nodes
-	marker.header.frame_id = "/vehicle_odometry";
+	marker.header.frame_id = car_name;
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "nodes";
 	marker.action = visualization_msgs::Marker::ADD;
@@ -358,7 +366,7 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marke
 	//|           text nodes           |
 	//|________________________________|
 	// Points marker to t nodes
-	marker.header.frame_id = "/vehicle_odometry";
+	marker.header.frame_id = car_name;
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "node_number";
 	marker.action = visualization_msgs::Marker::ADD;
@@ -389,7 +397,7 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marke
 	//|         text trajectory        |
 	//|________________________________|
 	// Points marker to t nodes
-	marker.header.frame_id = "/vehicle_odometry";
+	marker.header.frame_id = car_name;
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "trajectory_number";
 	marker.action = visualization_msgs::Marker::ADD;
@@ -415,7 +423,7 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marke
 	//|             Arrow              |
 	//|________________________________|
 	// Line marker to trajectory
-	marker.header.frame_id = "/vehicle_odometry";
+	marker.header.frame_id = car_name;
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "orientation_arrow";
 	marker.action = visualization_msgs::Marker::ADD;
@@ -443,7 +451,7 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marke
 	//|     Rectangle (car shadow)     |
 	//|________________________________|
 	// Represents the form of the car in each node
-	marker.header.frame_id = "/vehicle_odometry";
+	marker.header.frame_id = car_name;
 	marker.header.stamp = ros::Time::now();
 	marker.ns = "car_shadow";
 	marker.action = visualization_msgs::Marker::ADD;
@@ -469,9 +477,9 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marke
 		else
 		{
 			marker.pose.position.x =
-					x[i - 1] + ((_VEHICLE_LENGHT_FRONT_ + _VEHICLE_LENGHT_BACK_) / 2 - _VEHICLE_LENGHT_BACK_) * cos(theta[i - 1]);
+				x[i - 1] + ((_VEHICLE_LENGHT_FRONT_ + _VEHICLE_LENGHT_BACK_) / 2 - _VEHICLE_LENGHT_BACK_) * cos(theta[i - 1]);
 			marker.pose.position.y =
-					y[i - 1] + ((_VEHICLE_LENGHT_FRONT_ + _VEHICLE_LENGHT_BACK_) / 2 - _VEHICLE_LENGHT_BACK_) * sin(theta[i - 1]);
+				y[i - 1] + ((_VEHICLE_LENGHT_FRONT_ + _VEHICLE_LENGHT_BACK_) / 2 - _VEHICLE_LENGHT_BACK_) * sin(theta[i - 1]);
 			marker.pose.position.z = 0;
 			marker.pose.orientation.z = sin(theta[i - 1] / 2);
 			marker.pose.orientation.w = cos(theta[i - 1] / 2);
@@ -484,7 +492,7 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker>* marke
 	//|          Car contour           |
 	//|________________________________|
 	// Line marker to car contour
-	marker2.header.frame_id = "/vehicle_odometry";
+	marker2.header.frame_id = car_name;
 	marker2.header.stamp = ros::Time::now();
 	marker2.ns = "car_contour";
 	marker2.id = (*marker_count)++;

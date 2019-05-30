@@ -97,6 +97,15 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
 
   for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
   {
+
+    ros::NodeHandle nh;
+    int car_number = 0;
+    nh.getParam("car_number", car_number);
+    char car_name[20] = "/vehicle_odometry_";
+    char car_number_string[2];
+    sprintf(car_number_string, "%d", car_number);
+    strcat(car_name, car_number_string);
+
     if (i == 0)
     {
       try
@@ -108,7 +117,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
         //transform_mtt -> The transform reference to fill.
         ros::Time time = ros::Time::now();
 
-        listener.lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", ros::Time(0), transform_mtt);
+        listener.lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
 
         //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
         // mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
@@ -159,7 +168,6 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(10);
   // p_n = &n;
 
-  
   line_sub = n.subscribe("/line_pcl", 1000, line_callback);
 
   model_states = n.subscribe("/gazebo/model_states", 1, ExtractVel);

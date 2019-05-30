@@ -45,7 +45,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <tf/transform_broadcaster.h>
-tf::TransformBroadcaster* p_broadcaster;
+tf::TransformBroadcaster *p_broadcaster;
 
 /**
  * @brief Generates a frame higher than the car frame, to publish the point cloud to the mtt obstacle
@@ -53,7 +53,7 @@ tf::TransformBroadcaster* p_broadcaster;
  * @param char**
  * @return int
  */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "tf_generator_node");
   ros::NodeHandle n;
@@ -61,11 +61,22 @@ int main(int argc, char** argv)
   p_broadcaster = &broadcaster;
   ros::Rate r(50);
 
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  char car_frame[20] = "/tracking_frame1_";
+  char car_frame_string[2];
+  sprintf(car_frame_string, "%d", car_number);
+  strcat(car_frame, car_frame_string);
+
   tf::Transform transform1(tf::Matrix3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), tf::Vector3(0, 0, 0));
   while (n.ok())
   {
-    p_broadcaster->sendTransform(tf::StampedTransform(transform1, ros::Time::now(), "/vehicle_odometry", "/tracking_"
-                                                                                                         "frame1"));
+    p_broadcaster->sendTransform(tf::StampedTransform(transform1, ros::Time::now(), car_name, car_frame));
     r.sleep();
     ros::spinOnce();
   }

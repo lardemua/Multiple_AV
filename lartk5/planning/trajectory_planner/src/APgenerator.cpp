@@ -19,7 +19,11 @@ trajectory_planner::coordinates message_ap;
 bool firstIter = true;
 int currentWaypoint = 0;
 double speed_min = 0.000000001;
-double speed_new = 0;
+double this_speed_new = 0;
+double this_pos_x = 0;
+double this_pos_y = 0;
+int count_ap_y = 0;
+double ap_y_temp = (2.650925) / 10;
 
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
 pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
@@ -34,19 +38,38 @@ void ExtractVel(gazebo_msgs::ModelStates models)
   char car_number_string[2];
   sprintf(car_number_string, "%d", car_number);
   strcat(car_name, car_number_string);
-  for (int n = 0; n < models.name.size(); n++)
+
+  double velX;
+  double velY;
+
+  double pos_other[models.name.size()-2][2];
+  double vel_other[models.name.size()-2];
+
+  for (int n = 1; n < models.name.size(); n++) //n=0 => track
   {
     if (models.name[n] == car_name)
     {
-      pos_name = n;
+      // ROS_INFO("car_name: %s", car_name);
+      // velX = models.twist[n].linear.x;
+      // velY = models.twist[n].linear.y;
+      // ROS_INFO("velX: %f, velY: %f", velX, velY);
+      this_pos_x = models.pose[n].position.x;
+      this_pos_y = models.pose[n].position.y;
+      this_speed_new = sqrt(pow(models.twist[n].linear.x, 2) + pow(models.twist[n].linear.y, 2));
+    }
+    else
+    {
+      // velX = models.twist[n].linear.x;
+      // velY = models.twist[n].linear.y;
+      pos_other[n][0] = models.pose[n].position.x;
+      pos_other[n][1] = models.pose[n].position.y;
+      // double dist = sqrt(pow(models.pose[n].position.x, 2) + pow(models.pose[n].position.y, 2));
+      vel_other[n] = sqrt(pow(models.twist[n].linear.x, 2) + pow(models.twist[n].linear.y, 2));
     }
   }
-  ROS_INFO("car_name: %s", car_name);
-  double velX = models.twist[pos_name].linear.x;
-  double velY = models.twist[pos_name].linear.y;
-  ROS_INFO("velX: %f, velY: %f", velX, velY);
 
-  speed_new = sqrt(pow(models.twist[pos_name].linear.x, 2) + pow(models.twist[pos_name].linear.y, 2));
+  
+
   // ROS_INFO("x= %f, y= %f", pose[0], pose[1]);
 }
 
@@ -68,12 +91,19 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
   double APdistMin; // 5
   nh.getParam("Param/APdistMin", APdistMin);
 
+  int car_number = 0;
+  nh.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
   double max_dist_AP;
 
-  if (speed_new != 0)
+  if (this_speed_new != 0)
   {
-    // max_dist_AP = APdistMax / (SPEED_REQUIRED / speed_new);
-    max_dist_AP = (APdistMax - APdistMin) * (speed_new / SPEED_REQUIRED);
+    // max_dist_AP = APdistMax / (SPEED_REQUIRED / this_speed_new);
+    max_dist_AP = (APdistMax - APdistMin) * (this_speed_new / SPEED_REQUIRED);
     max_dist_AP = APdistMin + max_dist_AP;
   }
   else
@@ -94,7 +124,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
 
   int count_ap = 0;
 
-  ROS_INFO("max_dist_AP: %f, dist_max_reached: %f", max_dist_AP, dist_max_reached); // 1,679380    0.200000
+  // ROS_INFO("max_dist_AP: %f, dist_max_reached: %f", max_dist_AP, dist_max_reached); // 1,679380    0.200000
 
   for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
   {
@@ -111,7 +141,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
         time.fromNSec(pc_v2[i].header.stamp);
 
         // p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", time, *transform_mtt);
-        p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", ros::Time(0), *transform_mtt);
+        p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), *transform_mtt);
 
         //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
         // mtt_broadcaster->sendTransform(tf::StampedTransform(*transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
@@ -150,10 +180,39 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
       }
     }
   }
-  ROS_INFO("count_ap: %d", count_ap);                                                       //30
-  ROS_INFO("point_chosen_AP: %d, dist_max_reached: %f", point_chosen_AP, dist_max_reached); // 100    1.654483
-  ROS_INFO("ap_x: %f, ap_y: %f", ap_x, ap_y);                                               //
-  ROS_INFO("");
+  // ROS_INFO("count_ap: %d", count_ap);                                                       //30
+  // ROS_INFO("point_chosen_AP: %d, dist_max_reached: %f", point_chosen_AP, dist_max_reached); // 100    1.654483
+  // ROS_INFO("ap_x: %f, ap_y: %f", ap_x, ap_y);                                               //
+  // ROS_INFO("");
+
+  //------------------------------------------------------------------------------------------------------
+  //---------------------Create Dynamic AP----------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------
+
+  bool _LINES_;
+  bool _OVERTAKING_;
+  nh.getParam("Param/LINES", _LINES_);
+  nh.getParam("Param/OVERTAKING", _OVERTAKING_);
+
+  if (_OVERTAKING_ == true)
+  {
+    ap_y = ap_y + 2.650925;
+    nh.setParam("Param/LINES", false);
+    // if (count_ap_y < 10)
+    // {
+    //   ap_y = ap_y + (ap_y_temp * count_ap_y);
+    //   count_ap_y++;
+    // }
+  }
+  else if (_LINES_ == true)
+  {
+    ap_y = ap_y - 2.650925;
+  }
+
+  //------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------
+
   message_ap.x = ap_x;
   message_ap.y = ap_y;
   message_ap.theta = 0;
@@ -169,8 +228,16 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
 
 void CreateAPMarker(trajectory_planner::coordinates message)
 {
+  ros::NodeHandle nh;
+  int car_number = 0;
+  nh.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
   visualization_msgs::Marker marker;
-  marker.header.frame_id = "/vehicle_odometry";
+  marker.header.frame_id = car_name;
   marker.header.stamp = ros::Time(0);
   marker.ns = "AP";
   marker.id = 0;

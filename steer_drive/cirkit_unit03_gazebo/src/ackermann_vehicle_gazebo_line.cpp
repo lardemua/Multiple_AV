@@ -43,7 +43,7 @@ class lineFilter
 {
 public:
   lineFilter();
-  void lineCallback(const sensor_msgs::LaserScan::ConstPtr& line);
+  void lineCallback(const sensor_msgs::LaserScan::ConstPtr &line);
 
 private:
   ros::NodeHandle node_;
@@ -70,16 +70,27 @@ lineFilter::lineFilter()
    @param laser scan
    @return void
  */
-void lineFilter::lineCallback(const sensor_msgs::LaserScan::ConstPtr& line)
+void lineFilter::lineCallback(const sensor_msgs::LaserScan::ConstPtr &line)
 {
+  ros::NodeHandle n;
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char link_name[20] = "line_link_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(link_name, car_number_string);
+
+  char car_name[20] = "laser_link_";
+  strcat(car_name, car_number_string);
+
   sensor_msgs::PointCloud2 cloud;
   sensor_msgs::PointCloud2 cloud_v;
   projector.transformLaserScanToPointCloud("base_link", *line, cloud, tfListener);
-  cloud.header.frame_id = "line_link";
+  cloud.header.frame_id = link_name;
 
-  if (tfListener.waitForTransform("laser_link", "line_link", ros::Time::now(), ros::Duration(1.0)))
+  if (tfListener.waitForTransform(car_name, link_name, ros::Time::now(), ros::Duration(1.0)))
   {
-    pcl_ros::transformPointCloud("laser_link", cloud, cloud_v, tfListener);
+    pcl_ros::transformPointCloud(car_name, cloud, cloud_v, tfListener);
     pointcloudPub.publish(cloud_v);
   }
 }
@@ -90,7 +101,7 @@ void lineFilter::lineCallback(const sensor_msgs::LaserScan::ConstPtr& line)
    @param argv
    @return int
  */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "cirkit_unit03_gazebo_line_node");
 

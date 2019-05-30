@@ -53,11 +53,17 @@ int main(int argc, char** argv)
   p_broadcaster5 = &broadcaster5;
   ros::Rate r(50);
 
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/laser_link_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
   tf::Transform transform1(tf::Matrix3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), tf::Vector3(-1.82, 0, 0));
   while (n.ok())
   {
-    p_broadcaster5->sendTransform(tf::StampedTransform(transform1, ros::Time::now(), "/world", "/laser_"
-                                                                                               "link"));
+    p_broadcaster5->sendTransform(tf::StampedTransform(transform1, ros::Time::now(), "/world", car_name));
     r.sleep();
     ros::spinOnce();
   }

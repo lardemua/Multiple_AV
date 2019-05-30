@@ -29,17 +29,15 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
   <group ns="h1">
 
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
-      <!-- <arg name="namespace" value="h1" /> -->
       <arg name="car_number" default="1" />
       <arg name="initX" value="-21" />
-      <arg name="initY" value="-1" />
+      <arg name="initY" value="-3" />
       <arg name="initYaw" value="0" />
     </include>
 
     <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
     <param name="Param/NUM_NODES" value="10" />
     <param name="Param/NUM_TRAJ" value="25" />
-    <!-- Não utilizado -->
     <param name="Param/SPEED_REQUIRED" value="10.0" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
     <param name="Param/TRAJECTORY_ANGLE" value="3" />
@@ -48,8 +46,9 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/W_DAP" value="0.40" />
     <param name="Param/W_DLO" value="0.90" />
     <param name="Param/simul" value="true" />
-    <param name="Param/LINES" value="false" />
+    <param name="Param/LINES" value="true" />
     <param name="Param/WAYPOINTS" value="false" />
+    <param name="Param/OVERTAKING" value="false" />
 
     <param name="Param/APdistMin" value="5" />
     <param name="Param/APdistMax" value="10" />
@@ -58,10 +57,10 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
   </group>
 
   <!-- Ultrapassagem -->
-  <group ns="h2">
+  <!-- <group ns="h2">
 
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
-      <!-- <arg name="namespace" value="h2" /> -->
+      
       <arg name="car_number" default="2" />
       <arg name="initX" value="29" />
       <arg name="initY" value="-2" />
@@ -71,7 +70,6 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
     <param name="Param/NUM_NODES" value="10" />
     <param name="Param/NUM_TRAJ" value="25" />
-     <!-- Não utilizado -->
     <param name="Param/SPEED_REQUIRED" value="5.0" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
     <param name="Param/TRAJECTORY_ANGLE" value="3" />
@@ -82,36 +80,42 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/simul" value="true" />
     <param name="Param/LINES" value="true" />
     <param name="Param/WAYPOINTS" value="false" />
+    <param name="Param/OVERTAKING" value="false" />
+
+    <param name="Param/APdistMin" value="5" />
+    <param name="Param/APdistMax" value="10" />
+
+  </group> -->
+
+  <!-- Cruzamento -->
+  <group ns="h2">
+
+    <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
+      <arg name="car_number" default="2" />
+      <arg name="initX" value="75" />
+      <arg name="initY" value="4" />
+      <arg name="initYaw" value="3.15" />
+    </include>
+
+    <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
+    <param name="Param/NUM_NODES" value="10" />
+    <param name="Param/NUM_TRAJ" value="25" />
+    <param name="Param/SPEED_REQUIRED" value="10.0" />
+    <param name="Param/SPEED_SAFFETY" value="1.0" />
+    <param name="Param/TRAJECTORY_ANGLE" value="3" />
+    <param name="Param/W_ADAP" value="0.00" />
+    <param name="Param/W_CL" value="1" />
+    <param name="Param/W_DAP" value="0.40" />
+    <param name="Param/W_DLO" value="0.90" />
+    <param name="Param/simul" value="true" />
+    <param name="Param/LINES" value="true" />
+    <param name="Param/WAYPOINTS" value="false" />
+    <param name="Param/OVERTAKING" value="false" />
 
     <param name="Param/APdistMin" value="5" />
     <param name="Param/APdistMax" value="10" />
 
   </group>
-
-  <!-- Colisão -->
-  <!-- <group ns="h2">
-
-    <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
-      <arg name="namespace" value="h2" />
-      <arg name="initX" value="91" />
-      <arg name="initY" value="2" />
-      <arg name="initYaw" value="3.14" />
-    </include>
-
-    <param name="/h2/SPEED_SAFFETY" value="1"/> 
-    <param name="/h2/SPEED_REQUIRED" value="10"/>  
-    
-    <param name="/h2/MAX_STEERING_ANGLE" value="41.5"/> 
-    <param name="/h2/TRAJECTORY_ANGLE" value="3"/>
-    <param name="/h2/NUM_TRAJ" value="25"/>
-    <param name="/h2/NUM_NODES" value="10"/> 
-
-    <param name="/h2/W_DAP" value="0.10"/> 
-    <param name="/h2/W_ADAP" value="0.00"/> 
-    <param name="/h2/W_DLO" value="0.90"/> 
-    <param name="/h2/W_CL" value="0.20"/> 
-
-  </group> -->
 
   <!-- <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic" output="screen" /> -->
   <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen" />

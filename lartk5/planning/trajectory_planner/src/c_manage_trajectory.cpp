@@ -42,6 +42,84 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <trajectory_planner/c_manage_trajectory.h>
 #include <trajectory_planner/trajectory_planner_nodelet.h>
 
+void CheckOvertaking(std::vector<t_obstacle> &vo);
+void CheckSituation(std::vector<t_obstacle> &vo);
+
+void CheckSituation(std::vector<t_obstacle> &vo)
+{
+  int count_points = 0;
+
+  ros::NodeHandle n;
+  double DetectDist = 0;
+  n.getParam("Param/DetectDist", DetectDist);
+
+  for (size_t o = 0; o < vo.size(); ++o)
+  {
+    // cycle all lines inside each obstacle
+    for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
+    {
+      if (vo[o].x[lo] > 1 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < (2.650925 - 1) && vo[o].y[lo] > (-2.650925 + 1))
+      {
+        // ROS_INFO("vo[o].x[lo]: %f,vo[o].y[lo]: %f",vo[o].x[lo],vo[o].y[lo]);
+        geometry_msgs::Point32 P;
+        P.x = vo[o].x[lo];
+        P.y = vo[o].y[lo];
+        P.z = 0; // pointPcl.z;
+
+        t_point p;
+        p.x = P.x;
+        p.y = P.y;
+
+        count_points++;
+      }
+
+      // ROS_INFO("FS = %lf",trajectory->score.FS);
+    }
+  }
+  if (count_points > 4)
+  {
+    // n.setParam("Param/OVERTAKING", true);
+    ROS_INFO("count= %d", count_points);
+  }
+}
+
+void CheckOvertaking(std::vector<t_obstacle> &vo)
+{
+
+  // int count_points = 0;
+
+  // for (size_t o = 0; o < vo.size(); ++o)
+  // {
+  //   // cycle all lines inside each obstacle
+  //   for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
+  //   {
+  //     // ROS_INFO("vo[o].x[lo]: %f,vo[o].y[lo]: %f",vo[o].x[lo],vo[o].y[lo]);
+  //     geometry_msgs::Point32 P;
+  //     P.x = vo[o].x[lo];
+  //     P.y = vo[o].y[lo];
+  //     P.z = 0; // pointPcl.z;
+
+  //     t_point p;
+  //     p.x = P.x;
+  //     p.y = P.y;
+
+  //     ros::NodeHandle n;
+  //     double DetectDist = 0;
+  //     n.getParam("Param/DetectDist", DetectDist);
+
+  // if (p.x > 1 && p.x < DetectDist && p.y < 2.650925 - 1 && p.y > -2.650925 + 1)
+  // {
+  //   count_points++;
+  //   if (count_points > 4)
+  //   {
+  //     n.setParam("Param/OVERTAKING", true);
+  //   }
+  // }
+  // ROS_INFO("FS = %lf",trajectory->score.FS);
+  //   }
+  // }
+}
+
 /**
  * @brief Compute the free space. Determines the inclusion of a point in the
  * rectangle that represents the car geometry.
@@ -73,7 +151,7 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
 
   trajectory->score.DLO = 10.0; // Equal to maximum_admissible_to_DLO
   trajectory->score.FS = 1;
-  trajectory->score.CL = 1;
+  // trajectory->score.CL = 1;
   trajectory->score.EVAL = 10.0;
   for (int n = 0; n <= trajectory->closest_node; ++n)
   {
@@ -117,6 +195,7 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
         // cycle all lines inside each obstacle
         for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
         {
+          // ROS_INFO("vo[o].x[lo]: %f,vo[o].y[lo]: %f",vo[o].x[lo],vo[o].y[lo]);
           double DLOprev =
               sqrt(pow(trajectory->v_lines[n][l].x[0] - vo[o].x[lo], 2) +
                    pow(trajectory->v_lines[n][l].y[0] - vo[o].y[lo], 2));
@@ -153,13 +232,13 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
       // n.getParam("simul", _simulation_);
       // road lines
 
-      if (_simulation_)
-      {
-        if (trajectory->alpha[0] >= 0)
-        {
-          trajectory->score.CL = W_CL;
-        }
-      }
+      // if (_simulation_)
+      // {
+      //   if (trajectory->alpha[0] >= 0)
+      //   {
+      //     trajectory->score.CL = W_CL;
+      //   }
+      // }
 
       // NAO SERVE PARA NADA????
 
@@ -658,13 +737,21 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   int marker_count = 0;
   for (int i = 0; i < (int)vt.size(); ++i)
   {
-    draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
 
     // draw_on_node(vt[i], &marker_vec, &marker_count, 2.5, vt[i]->score.DLO, vt[i]->score.DLOnorm, "DLO ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.CL, vt[i]->score.CL, "CL ");
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
+    draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
   }
+
+  ros::NodeHandle nh;
+  int car_number = 0;
+  nh.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
 
   // ________________________________
   //|                                |
@@ -673,7 +760,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   // Line marker to trajectory
   visualization_msgs::Marker marker2;
   geometry_msgs::Point p;
-  marker2.header.frame_id = "/vehicle_odometry";
+  marker2.header.frame_id = car_name;
   marker2.header.stamp = ros::Time(0);
   marker2.ns = "chosen_trajectory";
   marker2.id = 0;
@@ -719,7 +806,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   //|________________________________|
   // Represents the form of the car in each node
   visualization_msgs::Marker marker5;
-  marker5.header.frame_id = "/vehicle_odometry";
+  marker5.header.frame_id = car_name;
   marker5.header.stamp = ros::Time(0);
   marker5.ns = "car_actual_traj";
   marker5.id = 0;
@@ -774,7 +861,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   //|________________________________|
   // Represents the form of the car in each node
   visualization_msgs::Marker marker3;
-  marker3.header.frame_id = "/vehicle_odometry";
+  marker3.header.frame_id = car_name;
   marker3.header.stamp = ros::Time(0);
   marker3.ns = "closest_node";
   marker3.action = visualization_msgs::Marker::ADD;
@@ -796,15 +883,13 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
     marker_vec.push_back(marker3);
   }
 
-
-
   // ________________________________
   //|                                |
   //|        Colision (cylinder)     |
   //|________________________________|
   // Represents the form of the car in each node
   visualization_msgs::Marker marker4;
-  marker4.header.frame_id = "/vehicle_odometry";
+  marker4.header.frame_id = car_name;
   marker4.header.stamp = ros::Time(0);
   marker4.ns = "colision_points";
   marker4.action = visualization_msgs::Marker::ADD;
@@ -838,7 +923,7 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   for (size_t j = total; j < coli_marker_total; ++j)
   {
     // ROS_INFO("deleting marker ");
-    marker4.header.frame_id = "/vehicle_odometry";
+    marker4.header.frame_id = car_name;
     marker4.id = j;
     marker4.action = visualization_msgs::Marker::DELETE;
     marker_vec.push_back(marker4);
@@ -857,10 +942,14 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
  */
 t_func_output c_manage_trajectory::compute_trajectories_scores(void)
 {
-  double maximum_admissible_to_DAP = 8.0; // ATENTION to negative values if bigger than maximum
+  double maximum_admissible_to_DAP = 8.0;  // ATENTION to negative values if bigger than maximum
   double maximum_admissible_to_DLO = 10.0; // ATENTION to negative values if bigger than maximum
   for (int i = 0; i < (int)vt.size(); ++i)
   {
+
+    // CheckOvertaking(vo);
+    CheckSituation(vo);
+
     // Compute DAP and ADAP
     compute_DAP(vt[i], AP);
 
@@ -903,20 +992,18 @@ t_func_output c_manage_trajectory::compute_DAP(c_trajectoryPtr &trajectory,
 
   for (size_t i = 0; i < trajectory->x.size(); ++i) //verifica todos os nós pelo mais proximo
   {
-    double DAP_prev =
-        sqrt(pow(trajectory->x[i] - AP.x, 2) + pow(trajectory->y[i] - AP.y, 2));
+    double DAP_prev = sqrt(pow(trajectory->x[i] - AP.x, 2) + pow(trajectory->y[i] - AP.y, 2)); //distancia do nó ao AP
 
     if (DAP_prev < trajectory->score.DAP) //se for mais proximo
     {
-      trajectory->score.DAP = DAP_prev;
-      trajectory->closest_node = i; //nó mais proximo
+      trajectory->score.DAP = DAP_prev; //update score
+      trajectory->closest_node = i;     //nó mais proximo
     }
   }
 
   if (trajectory->closest_node != -1)
   {
-    trajectory->score.ADAP =
-        compute_ADAP(trajectory, AP, trajectory->closest_node);
+    trajectory->score.ADAP = compute_ADAP(trajectory, AP, trajectory->closest_node);
     return SUCCESS;
   }
   else
@@ -959,12 +1046,21 @@ void c_manage_trajectory::draw_on_node(
   // Create a marker
   visualization_msgs::Marker marker;
   std_msgs::ColorRGBA color;
+
+  ros::NodeHandle nh;
+  int car_number = 0;
+  nh.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
   // ________________________________
   //|                                |
   //|           text nodes           |
   //|________________________________|
   // Points marker to t nodes
-  marker.header.frame_id = "/vehicle_odometry";
+  marker.header.frame_id = car_name;
   marker.header.stamp = ros::Time(0);
   marker.ns = "info";
   marker.action = visualization_msgs::Marker::ADD;

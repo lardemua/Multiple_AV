@@ -62,6 +62,13 @@ int main(int argc, char** argv)
   p_broadcaster = &broadcaster;
   ros::Rate r(50);
 
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
   double theta = 0;
   int inc = 0;
   while (n.ok())
@@ -71,7 +78,7 @@ int main(int argc, char** argv)
     tf::Transform transform(tf::Matrix3x3(cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1),
                             tf::Vector3(-(0.58 + _D_) * cos(theta), -(0.58 + _D_) * sin(theta), 0.0));
 
-    p_broadcaster->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/world", "/vehicle_odometry"));
+    p_broadcaster->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/world", car_name));
     r.sleep();
     ros::spinOnce();
   }
