@@ -345,7 +345,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "trajectory_planner_nodelet");
   ros::NodeHandle n;
   p_n = &n;
-  n.getParam("Param/simul", _simulation_);
+  // n.getParam("Param/simul", _simulation_);
 
   int car_number = 0;
   n.getParam("car_number", car_number);
@@ -353,22 +353,6 @@ int main(int argc, char **argv)
   char car_number_string[2];
   sprintf(car_number_string, "%d", car_number);
   strcat(car_name, car_number_string);
-
-  // if (_simulation_)
-  // {
-  //   if (_simulation_)
-  //   {
-  //     ROS_INFO("Using Simulation!");
-  //   }
-  //   else
-  //   {
-  //     ROS_INFO("Not using Simulation!");
-  //   }
-  // }
-  // else
-  // {
-  //   ROS_WARN("Param 'simul' not found!");
-  // }
 
   // Define the publishers and subscribers
   tf::TransformBroadcaster mw_broadcaster;
@@ -568,8 +552,8 @@ int main(int argc, char **argv)
         // -------------------------------------------------------------------------------------------------------------
         // ------------------------------------------------ROAD LINES---------------------------------------------------
         // -------------------------------------------------------------------------------------------------------------
-        if (_simulation_)
-        {
+        // if (_simulation_)
+        // {
           // ROS_INFO("pc_v2 size = %ld", pc_v2.size());
           for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
           {
@@ -626,7 +610,7 @@ int main(int argc, char **argv)
           }
           manage_vt->set_obstacles(msg_transformed); //envia as paredes e outros obstaculos (linha caso _LINES_ seja true) como obstaculos
           manage_vt->set_lines(msg_transformed2);    //ja nao faz nada
-        }
+        // }
 
         //   ___________________________________
         //   |                                 |
@@ -695,8 +679,8 @@ int main(int argc, char **argv)
 
         // cout<<"Compute scores: "<<(ros::Time::now()-st).toSec();
 
-        ROS_INFO("manage_vt chosen traj= %f", manage_vt->chosen_traj.alpha);
-        ROS_INFO("chosen traj min dist= %f", manage_vt->chosen_traj.min_dist);
+        // ROS_INFO("manage_vt chosen traj= %f", manage_vt->chosen_traj.alpha);
+        // ROS_INFO("chosen traj min dist= %f", manage_vt->chosen_traj.min_dist);
 
         trajectory_planner::traj_info info;
 

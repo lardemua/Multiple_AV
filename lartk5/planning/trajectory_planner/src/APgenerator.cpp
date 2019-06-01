@@ -250,8 +250,8 @@ void CreateAPMarker(trajectory_planner::coordinates message)
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;
   marker.pose.orientation.w = 1.0;
-  marker.scale.x = 1;
-  marker.scale.y = 1;
+  marker.scale.x = 0.5;
+  marker.scale.y = 0.5;
   marker.scale.z = 0.01;
   marker.color.a = 1; // Don't forget to set the alpha!
   marker.color.r = 1.0;

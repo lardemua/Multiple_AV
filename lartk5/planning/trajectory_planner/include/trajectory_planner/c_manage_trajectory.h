@@ -96,11 +96,6 @@ typedef struct
 #define _USE_MATH_DEFINES
 #define _TRAJECTORY_LIB_DEBUG_ 1
 
-// Trajectory weigths
-// #define W_DAP 0.10
-// #define W_ADAP 0.00
-// #define W_DLO 0.90
-// #define W_CL 0.20
 
 // Namespaces
 using namespace std;

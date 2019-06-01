@@ -79,7 +79,7 @@ void CheckSituation(std::vector<t_obstacle> &vo)
   if (count_points > 4)
   {
     // n.setParam("Param/OVERTAKING", true);
-    ROS_INFO("count= %d", count_points);
+    // ROS_INFO("count= %d", count_points);
   }
 }
 
@@ -127,33 +127,28 @@ void CheckOvertaking(std::vector<t_obstacle> &vo)
  * @param vo
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
-                                               std::vector<t_obstacle> &vo)
+t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std::vector<t_obstacle> &vo)
 {
 
-  ros::NodeHandle n;
-  n.getParam("Param/simul", _simulation_);
-
-  double W_CL;
-  n.getParam("Param/W_CL", W_CL);
+  ros::NodeHandle nh;
+  double DLO_Max; 
+  nh.getParam("Param/DLO_Max", DLO_Max);
 
   // delete all previous computed collision pts
-  trajectory->collision_pts.erase(trajectory->collision_pts.begin(),
-                                  trajectory->collision_pts.end());
+  trajectory->collision_pts.erase(trajectory->collision_pts.begin(), trajectory->collision_pts.end());
 
-  if (trajectory->closest_node < 0 ||
-      trajectory->closest_node >= (int)trajectory->x.size())
+  if (trajectory->closest_node < 0 || trajectory->closest_node >= (int)trajectory->x.size()) //nó não existe
   {
     ROS_ERROR("Error on node");
     return FAILURE;
   }
-  // cycle all nodes until the closest node
+  
 
-  trajectory->score.DLO = 10.0; // Equal to maximum_admissible_to_DLO
+  trajectory->score.DLO = DLO_Max; // Equal to DLO_Max
   trajectory->score.FS = 1;
-  // trajectory->score.CL = 1;
   trajectory->score.EVAL = 10.0;
-  for (int n = 0; n <= trajectory->closest_node; ++n)
+
+  for (int n = 0; n <= trajectory->closest_node; ++n) // cycle all nodes until the closest node
   {
     if (trajectory->v_lines.size() - 1 != trajectory->x.size())
     {
@@ -227,58 +222,6 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory,
           }
         }
       }
-
-      // ros::NodeHandle n;
-      // n.getParam("simul", _simulation_);
-      // road lines
-
-      // if (_simulation_)
-      // {
-      //   if (trajectory->alpha[0] >= 0)
-      //   {
-      //     trajectory->score.CL = W_CL;
-      //   }
-      // }
-
-      // NAO SERVE PARA NADA????
-
-      // if (_simulation_)
-      // {
-      //   // cycle all obstacles (lines)
-      //   // ROS_INFO("vl size = %ld", vl.size());
-      //   for (size_t oo = 0; oo < vl.size(); ++oo) //para cada vetor da nuvem de pontos da linha
-      //   {
-      //     // if (vl[oo].x.size() > 1)
-      //     // {
-      //     //   ROS_INFO("vl x size = %ld", vl[oo].x.size());
-      //     // }
-
-      //     for (size_t ll = 0; ll < vl[oo].x.size(); ++ll) //para cada ponto do vetor
-      //     {
-      //       geometry_msgs::Point32 P;
-      //       P.x = vl[oo].x[ll];
-      //       P.y = vl[oo].y[ll];
-      //       P.z = 0; // pointPcl.z;
-
-      //       int wn = wn_PnPoly(P, &car_polygon, car_polygon_size); //verificação se o ponto está dentro
-
-      //       if (wn != 0) //se estiver dentro
-      //       {
-      //         t_point p;
-      //         p.x = P.x;
-      //         p.y = P.y;
-      //         if (trajectory->alpha[0] >= 0)
-      //         {
-      //           // ros::NodeHandle nh;
-      //           // double W_CL;
-      //           // nh.getParam("Param/W_CL", W_CL);
-      //           // ROS_INFO("CL = %ld", W_CL);
-      //           trajectory->score.CL = W_CL;
-      //         }
-      //       }
-      //     }
-      //   }
-      // }
     }
   }
   return SUCCESS;
@@ -942,13 +885,20 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
  */
 t_func_output c_manage_trajectory::compute_trajectories_scores(void)
 {
-  double maximum_admissible_to_DAP = 8.0;  // ATENTION to negative values if bigger than maximum
-  double maximum_admissible_to_DLO = 10.0; // ATENTION to negative values if bigger than maximum
+  // double maximum_admissible_to_DAP = 8.0;  // ATENTION to negative values if bigger than maximum
+  // double maximum_admissible_to_DLO = 10.0; // ATENTION to negative values if bigger than maximum
+
+  ros::NodeHandle nh;
+  double APdistMax; 
+  nh.getParam("Param/APdistMax", APdistMax);
+  double DLO_Max; 
+  nh.getParam("Param/DLO_Max", DLO_Max);
+
   for (int i = 0; i < (int)vt.size(); ++i)
   {
 
     // CheckOvertaking(vo);
-    CheckSituation(vo);
+    // CheckSituation(vo);
 
     // Compute DAP and ADAP
     compute_DAP(vt[i], AP);
@@ -957,13 +907,13 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
     compute_DLO(vt[i], vo);
 
     // normalize DAP
-    vt[i]->score.DAPnorm = max(0.0, (1 - (vt[i]->score.DAP) / maximum_admissible_to_DAP));
+    vt[i]->score.DAPnorm = max(0.0, (1 - (vt[i]->score.DAP) / APdistMax));
 
     // normalize ADAP
     vt[i]->score.ADAPnorm = max(0.0, (1 - (vt[i]->score.ADAP / (M_PI))));
 
     // normalize DLO
-    vt[i]->score.DLOnorm = (vt[i]->score.DLO) / maximum_admissible_to_DLO;
+    vt[i]->score.DLOnorm = (vt[i]->score.DLO) / DLO_Max;
   }
 
   // compute overall score for each traj
@@ -1003,7 +953,7 @@ t_func_output c_manage_trajectory::compute_DAP(c_trajectoryPtr &trajectory,
 
   if (trajectory->closest_node != -1)
   {
-    trajectory->score.ADAP = compute_ADAP(trajectory, AP, trajectory->closest_node);
+    // trajectory->score.ADAP = compute_ADAP(trajectory, AP, trajectory->closest_node);
     return SUCCESS;
   }
   else

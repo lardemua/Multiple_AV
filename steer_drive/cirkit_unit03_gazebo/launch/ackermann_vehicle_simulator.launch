@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- ackermann_vehicle.launch
+<!-- ackermann_vehicle_simulator.launch
 
 Use Gazebo to simulate a vehicle with Ackermann steering. -->
 <launch>
@@ -42,10 +42,8 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/SPEED_SAFFETY" value="1.0" />
     <param name="Param/TRAJECTORY_ANGLE" value="3" />
     <param name="Param/W_ADAP" value="0.00" />
-    <param name="Param/W_CL" value="1" />
     <param name="Param/W_DAP" value="0.40" />
     <param name="Param/W_DLO" value="0.90" />
-    <param name="Param/simul" value="true" />
     <param name="Param/LINES" value="true" />
     <param name="Param/WAYPOINTS" value="false" />
     <param name="Param/OVERTAKING" value="false" />
@@ -74,10 +72,8 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/SPEED_SAFFETY" value="1.0" />
     <param name="Param/TRAJECTORY_ANGLE" value="3" />
     <param name="Param/W_ADAP" value="0.00" />
-    <param name="Param/W_CL" value="1" />
     <param name="Param/W_DAP" value="0.40" />
     <param name="Param/W_DLO" value="0.90" />
-    <param name="Param/simul" value="true" />
     <param name="Param/LINES" value="true" />
     <param name="Param/WAYPOINTS" value="false" />
     <param name="Param/OVERTAKING" value="false" />
@@ -88,7 +84,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
   </group> -->
 
   <!-- Cruzamento -->
-  <group ns="h2">
+  <!-- <group ns="h2">
 
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
       <arg name="car_number" default="2" />
@@ -104,10 +100,8 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/SPEED_SAFFETY" value="1.0" />
     <param name="Param/TRAJECTORY_ANGLE" value="3" />
     <param name="Param/W_ADAP" value="0.00" />
-    <param name="Param/W_CL" value="1" />
     <param name="Param/W_DAP" value="0.40" />
     <param name="Param/W_DLO" value="0.90" />
-    <param name="Param/simul" value="true" />
     <param name="Param/LINES" value="true" />
     <param name="Param/WAYPOINTS" value="false" />
     <param name="Param/OVERTAKING" value="false" />
@@ -115,7 +109,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/APdistMin" value="5" />
     <param name="Param/APdistMax" value="10" />
 
-  </group>
+  </group> -->
 
   <!-- <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic" output="screen" /> -->
   <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen" />
