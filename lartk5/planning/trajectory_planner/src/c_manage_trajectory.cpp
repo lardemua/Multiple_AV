@@ -131,7 +131,7 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
 {
 
   ros::NodeHandle nh;
-  double DLO_Max; 
+  double DLO_Max;
   nh.getParam("Param/DLO_Max", DLO_Max);
 
   // delete all previous computed collision pts
@@ -142,7 +142,6 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
     ROS_ERROR("Error on node");
     return FAILURE;
   }
-  
 
   trajectory->score.DLO = DLO_Max; // Equal to DLO_Max
   trajectory->score.FS = 1;
@@ -889,9 +888,9 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
   // double maximum_admissible_to_DLO = 10.0; // ATENTION to negative values if bigger than maximum
 
   ros::NodeHandle nh;
-  double APdistMax; 
+  double APdistMax;
   nh.getParam("Param/APdistMax", APdistMax);
-  double DLO_Max; 
+  double DLO_Max;
   nh.getParam("Param/DLO_Max", DLO_Max);
 
   for (int i = 0; i < (int)vt.size(); ++i)
@@ -953,7 +952,7 @@ t_func_output c_manage_trajectory::compute_DAP(c_trajectoryPtr &trajectory,
 
   if (trajectory->closest_node != -1)
   {
-    // trajectory->score.ADAP = compute_ADAP(trajectory, AP, trajectory->closest_node);
+    trajectory->score.ADAP = compute_ADAP(trajectory, AP, trajectory->closest_node);
     return SUCCESS;
   }
   else
@@ -972,7 +971,10 @@ t_func_output c_manage_trajectory::compute_DAP(c_trajectoryPtr &trajectory,
 double c_manage_trajectory::compute_ADAP(c_trajectoryPtr &trajectory,
                                          t_desired_coordinates &AP, int i)
 {
-  double adap = abs(trajectory->theta[i] - AP.theta);
+  double ang_AP = atan2(AP.y, AP.x);                           //radians // ângulo do ponto atrator
+  double ang_node = atan2(trajectory->y[i], trajectory->x[i]); //radians // ângulo do nó
+  // double adap = abs(trajectory->theta[i] - AP.theta);
+  double adap = abs(ang_node - ang_AP);
   if (adap > M_PI)
     adap = 2 * M_PI - adap;
   return adap;

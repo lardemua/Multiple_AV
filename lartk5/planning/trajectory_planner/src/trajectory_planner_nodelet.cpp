@@ -59,6 +59,34 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptr(new pcl::PointCloud<pcl::PointXYZ>)
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
 pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
 
+double this_speed_new = 0;
+double this_pos_x = 0;
+double this_pos_y = 0;
+
+void ExtractVel(gazebo_msgs::ModelStates models)
+{
+  int pos_name = 0;
+  ros::NodeHandle n;
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "cirkit_unit03_h";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  for (int n = 1; n < models.name.size(); n++) //n=0 => track
+  {
+    if (models.name[n] == car_name)
+    {
+      this_pos_x = models.pose[n].position.x;
+      this_pos_y = models.pose[n].position.y;
+      this_speed_new = sqrt(pow(models.twist[n].linear.x, 2) + pow(models.twist[n].linear.y, 2));
+    }
+  }
+
+  // ROS_INFO("x= %f, y= %f", pose[0], pose[1]);
+}
+
 /**
  * @brief Set attractor point coordinates
  * @param trajectory_planner::coordinates msg
@@ -157,7 +185,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
  * @param vehicle speed
  * @return void
  */
-void velocity_callback(double speed)
+void velocity_callback(double speed) //speed = SPEED_SAFFETY
 {
 
   ros::NodeHandle n;
@@ -165,6 +193,8 @@ void velocity_callback(double speed)
   n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
   double TRAJECTORY_ANGLE;
   n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE); //3
+  double NUM_TRAJ;
+  n.getParam("Param/NUM_TRAJ", NUM_TRAJ);
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
 
@@ -178,6 +208,8 @@ void velocity_callback(double speed)
     max_dist = 4.5;
   }
 
+  double iter_value = MAX_STEERING_ANGLE / (pow(2, NUM_TRAJ));
+  int n_traj = 1;
   double i = 0.00000001;
   while (i < MAX_STEERING_ANGLE)
   {
@@ -185,21 +217,22 @@ void velocity_callback(double speed)
     {
       vector<double> v_a;
       vector<double> v_arc;
-      for (int j = 0; j < NUM_NODES; ++j)
+      for (int j = 0; j < NUM_NODES; ++j) //criar tantos quanto NUM_NODES
       {
-        v_a.push_back(M_PI / 180. * i);
-        v_arc.push_back(max_dist / NUM_NODES);
+        v_a.push_back(M_PI / 180. * i);        //sempre igual
+        v_arc.push_back(max_dist / NUM_NODES); //sempre igual
       }
       manage_vt->create_new_trajectory(v_a, v_arc, v_a);
+      i = iter_value;
     }
     else
     {
       vector<double> v_a1;
       vector<double> v_arc1;
-      for (int j = 0; j < NUM_NODES; ++j)
+      for (int j = 0; j < NUM_NODES; ++j) //criar tantos quanto NUM_NODES
       {
-        v_a1.push_back(M_PI / 180. * i);
-        v_arc1.push_back(max_dist / NUM_NODES);
+        v_a1.push_back(M_PI / 180. * i);        //sempre igual
+        v_arc1.push_back(max_dist / NUM_NODES); //sempre igual
       }
       manage_vt->create_new_trajectory(v_a1, v_arc1, v_a1);
 
@@ -211,10 +244,50 @@ void velocity_callback(double speed)
         v_arc2.push_back(max_dist / NUM_NODES);
       }
       manage_vt->create_new_trajectory(v_a2, v_arc2, v_a2);
+      i = i * 2;
     }
 
-    i = i + TRAJECTORY_ANGLE;
+    n_traj++;
   }
+
+  //----------------------------------------------------------
+
+  // while (i < MAX_STEERING_ANGLE)
+  // {
+  //   if (i == 0.00000001)
+  //   {
+  //     vector<double> v_a;
+  //     vector<double> v_arc;
+  //     for (int j = 0; j < NUM_NODES; ++j) //criar tantos quanto NUM_NODES
+  //     {
+  //       v_a.push_back(M_PI / 180. * i); //sempre igual
+  //       v_arc.push_back(max_dist / NUM_NODES); //sempre igual
+  //     }
+  //     manage_vt->create_new_trajectory(v_a, v_arc, v_a);
+  //   }
+  //   else
+  //   {
+  //     vector<double> v_a1;
+  //     vector<double> v_arc1;
+  //     for (int j = 0; j < NUM_NODES; ++j) //criar tantos quanto NUM_NODES
+  //     {
+  //       v_a1.push_back(M_PI / 180. * i); //sempre igual
+  //       v_arc1.push_back(max_dist / NUM_NODES); //sempre igual
+  //     }
+  //     manage_vt->create_new_trajectory(v_a1, v_arc1, v_a1);
+
+  //     vector<double> v_a2;
+  //     vector<double> v_arc2;
+  //     for (int j = 0; j < NUM_NODES; ++j)
+  //     {
+  //       v_a2.push_back(M_PI / 180. * (-i));
+  //       v_arc2.push_back(max_dist / NUM_NODES);
+  //     }
+  //     manage_vt->create_new_trajectory(v_a2, v_arc2, v_a2);
+  //   }
+
+  //   i = i + TRAJECTORY_ANGLE;
+  // }
   have_trajectory = true;
 }
 
@@ -229,12 +302,16 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
   ros::NodeHandle n;
   double MAX_STEERING_ANGLE;
   n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  double MIN_STEERING_ANGLE;
+  n.getParam("Param/MIN_STEERING_ANGLE", MIN_STEERING_ANGLE);
   double TRAJECTORY_ANGLE;
   n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
   double NUM_TRAJ;
   n.getParam("Param/NUM_TRAJ", NUM_TRAJ);
+  double SPEED_REQUIRED;
+  n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
 
   double max_dist = pow(speed * 3.6, 2) / 100; //3.6? -> tamanho do veiculo?
   if (max_dist > 20)
@@ -246,10 +323,16 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
     max_dist = 4.5;
   }
 
+  if (this_speed_new > speed) //speed=SPEED_SAFFETY
+  {
+    // MAX_STEERING_ANGLE = MAX_STEERING_ANGLE / (this_speed_new * 0.2);
+    MAX_STEERING_ANGLE = MAX_STEERING_ANGLE - (MAX_STEERING_ANGLE - MIN_STEERING_ANGLE) * (this_speed_new / SPEED_REQUIRED);
+  }
+
+  double iter_value = MAX_STEERING_ANGLE / (pow(2, NUM_TRAJ));
   double i = 0.00000001;
-
-
   int num_trajec = 0;
+
   while (i < MAX_STEERING_ANGLE)
   {
     if (i == 0.00000001)
@@ -263,6 +346,7 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
       }
       manage_vt->update_trajectory(v_a, v_arc, v_a, num_trajec);
       num_trajec = num_trajec + 1;
+      i = iter_value;
     }
     else
     {
@@ -286,9 +370,50 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
       }
       manage_vt->update_trajectory(v_a2, v_arc2, v_a2, num_trajec);
       num_trajec = num_trajec + 1;
+      i = i * 2;
     }
-    i = i + TRAJECTORY_ANGLE;
+    // i = i + TRAJECTORY_ANGLE;
   }
+
+  // while (i < MAX_STEERING_ANGLE)
+  // {
+  //   if (i == 0.00000001)
+  //   {
+  //     vector<double> v_a;
+  //     vector<double> v_arc;
+  //     for (int j = 0; j < NUM_NODES; ++j)
+  //     {
+  //       v_a.push_back(M_PI / 180. * i); //envio do angulo em radianos
+  //       v_arc.push_back(max_dist / NUM_NODES);
+  //     }
+  //     manage_vt->update_trajectory(v_a, v_arc, v_a, num_trajec);
+  //     num_trajec = num_trajec + 1;
+  //   }
+  //   else
+  //   {
+  //     vector<double> v_a1;
+  //     vector<double> v_arc1;
+  //     for (int j = 0; j < NUM_NODES; ++j)
+  //     {
+  //       v_a1.push_back(M_PI / 180. * i);
+  //       v_arc1.push_back(max_dist / NUM_NODES);
+  //     }
+  //     manage_vt->update_trajectory(v_a1, v_arc1, v_a1, num_trajec);
+  //     num_trajec = num_trajec + 1;
+
+  //     //angulo na outra direcao
+  //     vector<double> v_a2;
+  //     vector<double> v_arc2;
+  //     for (int j = 0; j < NUM_NODES; ++j)
+  //     {
+  //       v_a2.push_back(M_PI / 180. * (-i));
+  //       v_arc2.push_back(max_dist / NUM_NODES);
+  //     }
+  //     manage_vt->update_trajectory(v_a2, v_arc2, v_a2, num_trajec);
+  //     num_trajec = num_trajec + 1;
+  //   }
+  //   i = i + TRAJECTORY_ANGLE;
+  // }
   have_trajectory = true;
 }
 
@@ -307,8 +432,9 @@ double angle_to_speed(double angle)
   n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
   double MAX_STEERING_ANGLE;
   n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
-  double m = (SPEED_SAFFETY - SPEED_REQUIRED) / (MAX_STEERING_ANGLE * M_PI / 180);
-  return (m * abs(angle) + SPEED_REQUIRED);
+
+  double speed_out = SPEED_REQUIRED - ((SPEED_REQUIRED - SPEED_SAFFETY) / (MAX_STEERING_ANGLE * M_PI / 180)) * abs(angle);
+  return speed_out;
   // plan_trajectory = true;
 }
 
@@ -371,6 +497,8 @@ int main(int argc, char **argv)
   // {
   //   ros::Subscriber sub = n.subscribe("/msg_coordinates", 1, set_coordinates);
   // }
+
+  ros::Subscriber model_states_2 = n.subscribe("/gazebo/model_states", 1, ExtractVel);
 
   ros::Subscriber mtt_sub = n.subscribe("/mtt_targets", 1, mtt_callback);
   //----------------------------------------------------------------------------------------------------//
@@ -554,62 +682,62 @@ int main(int argc, char **argv)
         // -------------------------------------------------------------------------------------------------------------
         // if (_simulation_)
         // {
-          // ROS_INFO("pc_v2 size = %ld", pc_v2.size());
-          for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
+        // ROS_INFO("pc_v2 size = %ld", pc_v2.size());
+        for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
+        {
+          if (i == 0)
           {
-            if (i == 0)
+            try
             {
-              try
-              {
-                ros::Time time;
-                time.fromNSec(pc_v2[i].header.stamp);
+              ros::Time time;
+              time.fromNSec(pc_v2[i].header.stamp);
 
-                //Get the transform between two frames by frame ID.
-                //pc_v2[i].header.frame_id -> The frame to which data should be transformed
-                //"/vehicle_odometry" -> The frame where the data originated
-                // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
-                //transform_mtt -> The transform reference to fill.
-                p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
+              //Get the transform between two frames by frame ID.
+              //pc_v2[i].header.frame_id -> The frame to which data should be transformed
+              //"/vehicle_odometry" -> The frame where the data originated
+              // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
+              //transform_mtt -> The transform reference to fill.
+              p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
 
-                //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
-                // mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
+              //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
+              // mtt_broadcaster.sendTransform(tf::StampedTransform(transform_mtt, time, pc_v2[i].header.frame_id, "/vehicle_odometry"));
 
-                ros::spinOnce();
-              }
-              catch (tf::TransformException ex)
-              {
-                ROS_ERROR("%s", ex.what());
-              }
+              ros::spinOnce();
             }
-            //Apply a rigid transform defined by a 3D offset and a quaternion.
-            //pc_v2[i] -> cloud_in
-            //pct2 -> cloud_out
-            //transform_mtt.inverse() -> a rigid transformation from tf
-            pcl_ros::transformPointCloud(pc_v2[i], pct2, transform_mtt.inverse()); //transform_mtt -> tf entre "pc_v2[i].header.frame_id" e "/vehicle_odometry"
-
-            // This message holds a collection of N-dimensional points, which may
-            //contain additional information such as normals, intensity, etc. The
-            //point data is stored as a binary blob, its layout described by the
-            //contents of the "fields" array.
-            sensor_msgs::PointCloud2 pc_msg2;
-
-            pcl::toROSMsg(pct2, pc_msg2);
-            pc_msg2.header.frame_id = car_name;
-            pc_msg2.header.stamp = ros::Time(0);
-
-            bool _LINES_;
-            n.getParam("Param/LINES", _LINES_);
-
-            if (_LINES_)
+            catch (tf::TransformException ex)
             {
-              msg_transformed.obstacle_lines.push_back(pc_msg2); // adiciona a linha como obstaculo
+              ROS_ERROR("%s", ex.what());
             }
-
-            // msg_transformed.obstacle_lines.push_back(pc_msg2);
-            msg_transformed2.obstacle_lines.push_back(pc_msg2);
           }
-          manage_vt->set_obstacles(msg_transformed); //envia as paredes e outros obstaculos (linha caso _LINES_ seja true) como obstaculos
-          manage_vt->set_lines(msg_transformed2);    //ja nao faz nada
+          //Apply a rigid transform defined by a 3D offset and a quaternion.
+          //pc_v2[i] -> cloud_in
+          //pct2 -> cloud_out
+          //transform_mtt.inverse() -> a rigid transformation from tf
+          pcl_ros::transformPointCloud(pc_v2[i], pct2, transform_mtt.inverse()); //transform_mtt -> tf entre "pc_v2[i].header.frame_id" e "/vehicle_odometry"
+
+          // This message holds a collection of N-dimensional points, which may
+          //contain additional information such as normals, intensity, etc. The
+          //point data is stored as a binary blob, its layout described by the
+          //contents of the "fields" array.
+          sensor_msgs::PointCloud2 pc_msg2;
+
+          pcl::toROSMsg(pct2, pc_msg2);
+          pc_msg2.header.frame_id = car_name;
+          pc_msg2.header.stamp = ros::Time(0);
+
+          bool _LINES_;
+          n.getParam("Param/LINES", _LINES_);
+
+          if (_LINES_)
+          {
+            msg_transformed.obstacle_lines.push_back(pc_msg2); // adiciona a linha como obstaculo
+          }
+
+          // msg_transformed.obstacle_lines.push_back(pc_msg2);
+          msg_transformed2.obstacle_lines.push_back(pc_msg2);
+        }
+        manage_vt->set_obstacles(msg_transformed); //envia as paredes e outros obstaculos (linha caso _LINES_ seja true) como obstaculos
+        manage_vt->set_lines(msg_transformed2);    //ja nao faz nada
         // }
 
         //   ___________________________________

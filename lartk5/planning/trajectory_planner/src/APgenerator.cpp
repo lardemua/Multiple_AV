@@ -217,7 +217,6 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
   message_ap.y = ap_y;
   message_ap.theta = 0;
 
-  // !!!! Change this to some time
   message_ap.header.stamp = ros::Time(0);
   message_ap.header.frame_id = "/world";
 

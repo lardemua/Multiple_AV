@@ -71,6 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // #include <ackermann_msgs/AckermannDrive.h>
 #include <geometry_msgs/Twist.h>
+#include "gazebo_msgs/ModelStates.h"
 
 // Defines
 #define _D_ 2.550
@@ -114,6 +115,7 @@ void velocity_callback(double speed); //trajectory_planner_nodelet.cpp
 void velocity_update_callback(double speed); //trajectory_planner_nodelet.cpp
 double angle_to_speed(double angle); //trajectory_planner_nodelet.cpp
 double compute_last_dir(double angle); //trajectory_planner_nodelet.cpp
+void ExtractVel(gazebo_msgs::ModelStates models);
 
 // Global Vars
 _EXTERN_ ros::NodeHandle *p_n;
