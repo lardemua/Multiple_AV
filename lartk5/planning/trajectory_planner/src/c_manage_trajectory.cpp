@@ -45,30 +45,86 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void CheckOvertaking(std::vector<t_obstacle> &vo);
 void CheckSituation(std::vector<t_obstacle> &vo);
 
+double y_min_l_right;
+double y_max_w_right; //wall
+
+double y_min_l_left;
+double y_max_w_left; //wall
+
 void CheckSituation(std::vector<t_obstacle> &vo)
 {
+
   int count_points = 0;
 
   ros::NodeHandle n;
   double DetectDist = 0;
   n.getParam("Param/DetectDist", DetectDist);
 
+  bool OVERTAKING;
+  n.getParam("Param/OVERTAKING", OVERTAKING);
+
+  double Detection_Sensitivity;
+  n.getParam("Param/Detection_Sensitivity", Detection_Sensitivity);
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
+
+  // double points_detected[200][2];
+
+  //!!!! vo esta em relacao ao carro !!!!
+
+  double limit_left;
+  double limit_right;
+
+  if (y_min_l_left < y_min_l_right)
+  {
+    limit_left = y_min_l_left;
+  }
+  else
+  {
+    limit_left = y_min_l_right;
+  }
+
+  if (y_max_w_right > y_max_w_left)
+  {
+    limit_right = y_max_w_right;
+  }
+  else
+  {
+    limit_right = y_max_w_left;
+  }
+
+  PublishCollSpace(limit_left, limit_right, DetectDist);
+
   for (size_t o = 0; o < vo.size(); ++o)
   {
     // cycle all lines inside each obstacle
     for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
     {
-      if (vo[o].x[lo] > 1 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < (2.650925 - 1) && vo[o].y[lo] > (-2.650925 + 1))
-      {
-        // ROS_INFO("vo[o].x[lo]: %f,vo[o].y[lo]: %f",vo[o].x[lo],vo[o].y[lo]);
-        geometry_msgs::Point32 P;
-        P.x = vo[o].x[lo];
-        P.y = vo[o].y[lo];
-        P.z = 0; // pointPcl.z;
 
-        t_point p;
-        p.x = P.x;
-        p.y = P.y;
+      
+      if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
+      {
+
+        // t_obstacle o;
+
+        pcl::PointXYZRGBA new_point;
+        new_point.x = vo[o].x[lo];
+        new_point.y = vo[o].y[lo];
+        new_point.z = 0;
+
+        new_point.r = 100;
+        new_point.g = 100;
+        new_point.b = 100;
+        new_point.a = 1;
+
+        points_detected_2.push_back(new_point);
 
         count_points++;
       }
@@ -76,10 +132,25 @@ void CheckSituation(std::vector<t_obstacle> &vo)
       // ROS_INFO("FS = %lf",trajectory->score.FS);
     }
   }
-  if (count_points > 4)
+
+  PublishColl(points_detected_2);
+
+  // ROS_INFO("count= %d", count_points);
+
+  if (count_points > Detection_Sensitivity)
   {
-    // n.setParam("Param/OVERTAKING", true);
-    // ROS_INFO("count= %d", count_points);
+    if (OVERTAKING == false)
+    {
+      n.setParam("Param/OVERTAKING", true);
+    }
+    ROS_INFO("count= %d", count_points);
+  }
+  else
+  {
+    if (OVERTAKING == true)
+    {
+      n.setParam("Param/OVERTAKING", false);
+    }
   }
 }
 
@@ -355,6 +426,9 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
 {
   vo.erase(vo.begin(), vo.end()); //std::vector<t_obstacle> vo
 
+  y_max_w_right = -500;
+  y_max_w_left = -500;
+
   // ROS_INFO("msg_obstacles size = %ld", msg.obstacle_lines.size());
   for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines -> msg_transformed.obstacle_lines -> contem a nuvem de pontos
   {
@@ -367,6 +441,10 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
 
     t_obstacle o;
 
+    ros::NodeHandle n;
+    double DetectDist = 0;
+    n.getParam("Param/DetectDist", DetectDist);
+
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
@@ -374,6 +452,19 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
 
     for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
+      double min_x = 100;
+
+      if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].x < min_x && pc.points[j].y < 0)
+      {
+        min_x = pc.points[j].x;
+        y_max_w_right = pc.points[j].y;
+      }
+
+      if (pc.points[j].y > y_max_w_left && pc.points[j].y < 0 && pc.points[j].x > (DetectDist - DetectDist / 10) && pc.points[j].x < DetectDist)
+      {
+        y_max_w_left = pc.points[j].y;
+      }
+
       o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
       o.y.push_back(pc.points[j].y);
     }
@@ -391,6 +482,10 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
 t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
 {
   vl.erase(vl.begin(), vl.end());
+
+  y_min_l_right = 500;
+  y_min_l_left = 500;
+
   // ROS_INFO("msg_lines size = %ld", msg.obstacle_lines.size());
   for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines = msg_transformed2.obstacle_lines = pc_msg2 (pontos?)
   {
@@ -403,6 +498,10 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
 
     t_obstacle o;
 
+    ros::NodeHandle n;
+    double DetectDist = 0;
+    n.getParam("Param/DetectDist", DetectDist);
+
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
@@ -410,6 +509,17 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
 
     for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
+
+      if (pc.points[j].y < y_min_l_right && pc.points[j].x > (DetectDist - DetectDist / 10) && pc.points[j].x < DetectDist)
+      {
+        y_min_l_right = pc.points[j].y;
+      }
+
+      if (pc.points[j].y < y_min_l_left && pc.points[j].x > 0)
+      {
+        y_min_l_left = pc.points[j].y;
+      }
+
       o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
       o.y.push_back(pc.points[j].y);
     }
@@ -892,12 +1002,19 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
   nh.getParam("Param/APdistMax", APdistMax);
   double DLO_Max;
   nh.getParam("Param/DLO_Max", DLO_Max);
+  bool DETECTION;
+  nh.getParam("Param/DETECTION", DETECTION);
 
   for (int i = 0; i < (int)vt.size(); ++i)
   {
 
     // CheckOvertaking(vo);
-    // CheckSituation(vo);
+
+    if (DETECTION == true)
+    {
+      CheckSituation(vo); //!!!! Uncomment to detect objects
+    }
+    // CheckSituation(vo); //!!!! Uncomment to detect objects
 
     // Compute DAP and ADAP
     compute_DAP(vt[i], AP);

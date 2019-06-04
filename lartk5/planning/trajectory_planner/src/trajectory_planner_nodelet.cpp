@@ -59,6 +59,9 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptr(new pcl::PointCloud<pcl::PointXYZ>)
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
 pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
 
+ros::Publisher ap_marker_coll;
+ros::Publisher ap_marker_coll_space;
+
 double this_speed_new = 0;
 double this_pos_x = 0;
 double this_pos_y = 0;
@@ -459,6 +462,122 @@ double compute_last_dir(double angle)
   return mean;
 }
 
+void PublishCollSpace(double limit_left, double limit_right, double DetectDist)
+{
+
+  ros::NodeHandle n;
+  p_n = &n;
+  // n.getParam("Param/simul", _simulation_);
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  visualization_msgs::Marker line_strip;
+  line_strip.header.frame_id = car_name;
+  line_strip.ns = "colision_space";
+  line_strip.header.stamp = ros::Time::now();
+  line_strip.action = visualization_msgs::Marker::ADD;
+  line_strip.pose.orientation.w = 1.0;
+  line_strip.id = 1;
+  line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+  line_strip.scale.x = 0.1;
+  line_strip.color.b = 1.0;
+  line_strip.color.a = 1.0;
+
+  geometry_msgs::Point p1;
+  p1.x = 0;
+  p1.y = limit_left;
+  p1.z = 0;
+
+  geometry_msgs::Point p2;
+  p2.x = 0;
+  p2.y = limit_right;
+  p2.z = 0;
+
+  geometry_msgs::Point p3;
+  p3.x = DetectDist;
+  p3.y = limit_right;
+  p3.z = 0;
+
+  geometry_msgs::Point p4;
+  p4.x = DetectDist;
+  p4.y = limit_left;
+  p4.z = 0;
+
+  geometry_msgs::Point p5;
+  p5.x = 0;
+  p5.y = limit_left;
+  p5.z = 0;
+
+  line_strip.points.push_back(p1);
+  line_strip.points.push_back(p2);
+  line_strip.points.push_back(p3);
+  line_strip.points.push_back(p4);
+  line_strip.points.push_back(p5);
+
+  ap_marker_coll_space.publish(line_strip);
+}
+
+void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2)
+{
+
+  ros::NodeHandle n;
+  p_n = &n;
+  // n.getParam("Param/simul", _simulation_);
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  // visualization_msgs::Marker markerColl;
+  // markerColl.id = 0;
+  points_detected_2.header.frame_id = car_name;
+  // points_detected_2.header.stamp = ros::Time::now();
+  // markerColl.ns = "colision_points";
+  // markerColl.action = visualization_msgs::Marker::ADD;
+  // markerColl.type = visualization_msgs::Marker::CYLINDER;
+  // markerColl.scale.x = 0.12;
+  // markerColl.scale.y = 0.12;
+  // markerColl.scale.z = 0.1;
+  // markerColl.color.r = 0.0;
+  // markerColl.color.g = 1.0;
+  // markerColl.color.b = 0.0;
+  // markerColl.color.a = 1.0;
+
+  // int total = 0;
+
+  // int size_array = points_detected_2.points.size(); //!!!
+
+  // ROS_INFO("n_points: %d", size_array);
+
+  // for (int i = 0; i < size_array; ++i)
+  // {
+
+  //   geometry_msgs::Point p;
+  //   p.x = points_detected_2.points[i].x;
+  //   p.y = points_detected_2.points[i].y;
+  //   p.z = points_detected_2.points[i].z;
+
+  //   // markerColl.pose.position.x = p.x;
+  //   // markerColl.pose.position.y = p.y;
+  //   markerColl.points.push_back(p);
+  //   total++;
+  // }
+
+  sensor_msgs::PointCloud2 pc2;
+
+  pcl::toROSMsg(points_detected_2, pc2);
+
+  ap_marker_coll.publish(pc2);
+}
+
 /**
  * @brief Main code of the nodelet
  * @details Publishes the trajectories message and the command message
@@ -486,7 +605,12 @@ int main(int argc, char **argv)
   tf::TransformListener listener;
   p_listener = &listener;
 
+  ap_marker_coll = n.advertise<sensor_msgs::PointCloud2>("/coll_marker", 100);
+
+  ap_marker_coll_space = n.advertise<visualization_msgs::Marker>("/coll_space_marker", 100);
+
   ros::Publisher array_pub = n.advertise<visualization_msgs::MarkerArray>("/array_of_markers", 1);
+
   bool waypoints_bool;
   n.getParam("Param/WAYPOINTS", waypoints_bool);
   // if (waypoints_bool == true)

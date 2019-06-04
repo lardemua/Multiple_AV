@@ -79,7 +79,7 @@
     <!-- <include file="$(find free_space_detection)/launch/robotmodel.launch"/> -->
     <!-- <param name="ATLASCAR2" textfile="$(find free_space_detection)/urdf/atlas2.urdf" /> -->
 
-    <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen" >
+    <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen" launch-prefix="xterm -e gdb --args">
         <remap from="/array_of_markers" to="/$(arg namespace)/array_of_markers"/>
         <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
         <remap from="/mtt_targets" to="/$(arg namespace)/mtt_targets"/>

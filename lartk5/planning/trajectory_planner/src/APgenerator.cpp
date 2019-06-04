@@ -196,7 +196,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
 
   if (_OVERTAKING_ == true)
   {
-    ap_y = ap_y + 2.650925;
+    // ap_y = ap_y + 2.650925;
     nh.setParam("Param/LINES", false);
     // if (count_ap_y < 10)
     // {

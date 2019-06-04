@@ -116,6 +116,8 @@ void velocity_update_callback(double speed); //trajectory_planner_nodelet.cpp
 double angle_to_speed(double angle); //trajectory_planner_nodelet.cpp
 double compute_last_dir(double angle); //trajectory_planner_nodelet.cpp
 void ExtractVel(gazebo_msgs::ModelStates models);
+void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2);
+void PublishCollSpace(double limit_left, double limit_right, double DetectDist);
 
 // Global Vars
 _EXTERN_ ros::NodeHandle *p_n;
