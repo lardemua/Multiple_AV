@@ -52,6 +52,8 @@ vector<double> last_dir{0, 0, 0, 0, 0};
 geometry_msgs::PoseStamped pose_in;
 geometry_msgs::PoseStamped pose_transformed;
 
+double max_angle = 41.5;
+
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v;
 //-------------------------------------------------------------------------------------------//
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v1;
@@ -194,12 +196,16 @@ void velocity_callback(double speed) //speed = SPEED_SAFFETY
   ros::NodeHandle n;
   double MAX_STEERING_ANGLE;
   n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
-  double TRAJECTORY_ANGLE;
-  n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE); //3
+  double MIN_STEERING_ANGLE;
+  n.getParam("Param/MIN_STEERING_ANGLE", MIN_STEERING_ANGLE);
+  // double TRAJECTORY_ANGLE;
+  // n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE); //3
   double NUM_TRAJ;
   n.getParam("Param/NUM_TRAJ", NUM_TRAJ);
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
+  double SPEED_REQUIRED;
+  n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
 
   double max_dist = pow(speed * 3.6, 2) / 100; //distancia de travagem?
   if (max_dist > 20)
@@ -211,10 +217,15 @@ void velocity_callback(double speed) //speed = SPEED_SAFFETY
     max_dist = 4.5;
   }
 
-  double iter_value = MAX_STEERING_ANGLE / (pow(2, NUM_TRAJ));
+  if (this_speed_new > speed) //speed=SPEED_SAFFETY
+  {
+    max_angle = MAX_STEERING_ANGLE - (MAX_STEERING_ANGLE - MIN_STEERING_ANGLE) * (this_speed_new / SPEED_REQUIRED);
+  }
+
+  double iter_value = max_angle / (pow(2, NUM_TRAJ));
   int n_traj = 1;
   double i = 0.00000001;
-  while (i < MAX_STEERING_ANGLE)
+  while (i < max_angle)
   {
     if (i == 0.00000001)
     {
@@ -253,44 +264,6 @@ void velocity_callback(double speed) //speed = SPEED_SAFFETY
     n_traj++;
   }
 
-  //----------------------------------------------------------
-
-  // while (i < MAX_STEERING_ANGLE)
-  // {
-  //   if (i == 0.00000001)
-  //   {
-  //     vector<double> v_a;
-  //     vector<double> v_arc;
-  //     for (int j = 0; j < NUM_NODES; ++j) //criar tantos quanto NUM_NODES
-  //     {
-  //       v_a.push_back(M_PI / 180. * i); //sempre igual
-  //       v_arc.push_back(max_dist / NUM_NODES); //sempre igual
-  //     }
-  //     manage_vt->create_new_trajectory(v_a, v_arc, v_a);
-  //   }
-  //   else
-  //   {
-  //     vector<double> v_a1;
-  //     vector<double> v_arc1;
-  //     for (int j = 0; j < NUM_NODES; ++j) //criar tantos quanto NUM_NODES
-  //     {
-  //       v_a1.push_back(M_PI / 180. * i); //sempre igual
-  //       v_arc1.push_back(max_dist / NUM_NODES); //sempre igual
-  //     }
-  //     manage_vt->create_new_trajectory(v_a1, v_arc1, v_a1);
-
-  //     vector<double> v_a2;
-  //     vector<double> v_arc2;
-  //     for (int j = 0; j < NUM_NODES; ++j)
-  //     {
-  //       v_a2.push_back(M_PI / 180. * (-i));
-  //       v_arc2.push_back(max_dist / NUM_NODES);
-  //     }
-  //     manage_vt->create_new_trajectory(v_a2, v_arc2, v_a2);
-  //   }
-
-  //   i = i + TRAJECTORY_ANGLE;
-  // }
   have_trajectory = true;
 }
 
@@ -307,8 +280,8 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
   n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
   double MIN_STEERING_ANGLE;
   n.getParam("Param/MIN_STEERING_ANGLE", MIN_STEERING_ANGLE);
-  double TRAJECTORY_ANGLE;
-  n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
+  // double TRAJECTORY_ANGLE;
+  // n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
   double NUM_TRAJ;
@@ -326,17 +299,18 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
     max_dist = 4.5;
   }
 
+  
+
   if (this_speed_new > speed) //speed=SPEED_SAFFETY
   {
-    // MAX_STEERING_ANGLE = MAX_STEERING_ANGLE / (this_speed_new * 0.2);
-    MAX_STEERING_ANGLE = MAX_STEERING_ANGLE - (MAX_STEERING_ANGLE - MIN_STEERING_ANGLE) * (this_speed_new / SPEED_REQUIRED);
+    max_angle = MAX_STEERING_ANGLE - (MAX_STEERING_ANGLE - MIN_STEERING_ANGLE) * (this_speed_new / SPEED_REQUIRED);
   }
 
-  double iter_value = MAX_STEERING_ANGLE / (pow(2, NUM_TRAJ));
+  double iter_value = max_angle / (pow(2, NUM_TRAJ));
   double i = 0.00000001;
   int num_trajec = 0;
 
-  while (i < MAX_STEERING_ANGLE)
+  while (i < max_angle)
   {
     if (i == 0.00000001)
     {
@@ -378,45 +352,6 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
     // i = i + TRAJECTORY_ANGLE;
   }
 
-  // while (i < MAX_STEERING_ANGLE)
-  // {
-  //   if (i == 0.00000001)
-  //   {
-  //     vector<double> v_a;
-  //     vector<double> v_arc;
-  //     for (int j = 0; j < NUM_NODES; ++j)
-  //     {
-  //       v_a.push_back(M_PI / 180. * i); //envio do angulo em radianos
-  //       v_arc.push_back(max_dist / NUM_NODES);
-  //     }
-  //     manage_vt->update_trajectory(v_a, v_arc, v_a, num_trajec);
-  //     num_trajec = num_trajec + 1;
-  //   }
-  //   else
-  //   {
-  //     vector<double> v_a1;
-  //     vector<double> v_arc1;
-  //     for (int j = 0; j < NUM_NODES; ++j)
-  //     {
-  //       v_a1.push_back(M_PI / 180. * i);
-  //       v_arc1.push_back(max_dist / NUM_NODES);
-  //     }
-  //     manage_vt->update_trajectory(v_a1, v_arc1, v_a1, num_trajec);
-  //     num_trajec = num_trajec + 1;
-
-  //     //angulo na outra direcao
-  //     vector<double> v_a2;
-  //     vector<double> v_arc2;
-  //     for (int j = 0; j < NUM_NODES; ++j)
-  //     {
-  //       v_a2.push_back(M_PI / 180. * (-i));
-  //       v_arc2.push_back(max_dist / NUM_NODES);
-  //     }
-  //     manage_vt->update_trajectory(v_a2, v_arc2, v_a2, num_trajec);
-  //     num_trajec = num_trajec + 1;
-  //   }
-  //   i = i + TRAJECTORY_ANGLE;
-  // }
   have_trajectory = true;
 }
 
@@ -433,10 +368,10 @@ double angle_to_speed(double angle)
   double SPEED_SAFFETY;
   n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
   n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
-  double MAX_STEERING_ANGLE;
-  n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
+  // double MAX_STEERING_ANGLE;
+  // n.getParam("Param/MAX_STEERING_ANGLE", MAX_STEERING_ANGLE);
 
-  double speed_out = SPEED_REQUIRED - ((SPEED_REQUIRED - SPEED_SAFFETY) / (MAX_STEERING_ANGLE * M_PI / 180)) * abs(angle);
+  double speed_out = SPEED_REQUIRED - ((SPEED_REQUIRED - SPEED_SAFFETY) / (max_angle * M_PI / 180)) * abs(angle);
   return speed_out;
   // plan_trajectory = true;
 }
@@ -611,8 +546,8 @@ int main(int argc, char **argv)
 
   ros::Publisher array_pub = n.advertise<visualization_msgs::MarkerArray>("/array_of_markers", 1);
 
-  bool waypoints_bool;
-  n.getParam("Param/WAYPOINTS", waypoints_bool);
+  // bool waypoints_bool;
+  // n.getParam("Param/WAYPOINTS", waypoints_bool);
   // if (waypoints_bool == true)
   // {
   ros::Subscriber sub = n.subscribe("/Apoint", 1, set_coordinates);

@@ -42,8 +42,8 @@ void ExtractVel(gazebo_msgs::ModelStates models)
   double velX;
   double velY;
 
-  double pos_other[models.name.size()-2][2];
-  double vel_other[models.name.size()-2];
+  double pos_other[models.name.size() - 2][2];
+  double vel_other[models.name.size() - 2];
 
   for (int n = 1; n < models.name.size(); n++) //n=0 => track
   {
@@ -67,8 +67,6 @@ void ExtractVel(gazebo_msgs::ModelStates models)
       vel_other[n] = sqrt(pow(models.twist[n].linear.x, 2) + pow(models.twist[n].linear.y, 2));
     }
   }
-
-  
 
   // ROS_INFO("x= %f, y= %f", pose[0], pose[1]);
 }
@@ -191,22 +189,39 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
 
   bool _LINES_;
   bool _OVERTAKING_;
+  bool AP_right;
+  bool AP_left;
   nh.getParam("Param/LINES", _LINES_);
   nh.getParam("Param/OVERTAKING", _OVERTAKING_);
+  nh.getParam("Param/AP_right", AP_right);
+  nh.getParam("Param/AP_left", AP_left);
 
   if (_OVERTAKING_ == true)
   {
     // ap_y = ap_y + 2.650925;
-    nh.setParam("Param/LINES", false);
-    // if (count_ap_y < 10)
-    // {
-    //   ap_y = ap_y + (ap_y_temp * count_ap_y);
-    //   count_ap_y++;
-    // }
+
+    if (AP_right == true)
+    {
+      ap_y = ap_y - 2.650925;
+    }
+    else if (AP_left == true)
+    {
+      ap_y = ap_y + 2.650925;
+    }
   }
-  else if (_LINES_ == true)
+
+  // if (_LINES_ == true)
+  // {
+  //   ap_y = ap_y - 2.650925;
+  // }
+
+  if (AP_right == true)
   {
     ap_y = ap_y - 2.650925;
+  }
+  else if (AP_left == true)
+  {
+    ap_y = ap_y + 2.650925;
   }
 
   //------------------------------------------------------------------------------------------------------
