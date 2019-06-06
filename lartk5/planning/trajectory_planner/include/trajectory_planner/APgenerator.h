@@ -44,6 +44,7 @@ void ExtractVel(gazebo_msgs::ModelStates models);
 void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &input);
 // void ReadFile();
 void CreateAPMarker(trajectory_planner::coordinates message);
+void Create_CLP_Marker(trajectory_planner::coordinates message);
 
 
 #ifdef _APgenerator_CPP_

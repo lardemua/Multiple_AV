@@ -11,11 +11,14 @@ tf::TransformBroadcaster *mtt_broadcaster;
 
 // Global Vars
 ros::Publisher apoint_pub;
+ros::Publisher line_close_point_pub;
 ros::Subscriber line_sub;
 ros::Subscriber model_states_2;
 ros::Publisher ap_marker;
+ros::Publisher clp_marker;
 trajectory_planner::coordinates message;
 trajectory_planner::coordinates message_ap;
+trajectory_planner::coordinates message_clp;
 bool firstIter = true;
 int currentWaypoint = 0;
 double speed_min = 0.000000001;
@@ -115,10 +118,15 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
   }
 
   double dist_max_reached = APdistMin;
+  double dist_min_reached = 100;
   int point_chosen_AP;
+  int point_chosen_close;
 
   double ap_x = 6;
   double ap_y = 0;
+
+  double closest_line_x = 0;
+  double closest_line_y = 0;
 
   int count_ap = 0;
 
@@ -170,10 +178,18 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
         {
           dist_max_reached = point_dist;
           point_chosen_AP = i;
-          count_ap++;
+          // count_ap++;
 
           ap_x = pct2.points[i].x;
           ap_y = pct2.points[i].y;
+        }
+        if (point_dist < dist_min_reached)
+        {
+          dist_min_reached = point_dist;
+          point_chosen_close = i;
+
+          closest_line_x = pct2.points[i].x;
+          closest_line_y = pct2.points[i].y;
         }
       }
     }
@@ -237,7 +253,20 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
 
   apoint_pub.publish(message_ap);
 
+  //-----------------------------
+
+  message_clp.x =closest_line_x;
+  message_clp.y = closest_line_y;
+  message_clp.theta = 0;
+
+  message_clp.header.stamp = ros::Time(0);
+  message_clp.header.frame_id = "/world";
+
+  line_close_point_pub.publish(message_clp);
+
   CreateAPMarker(message_ap);
+
+  Create_CLP_Marker(message_clp);
 }
 
 void CreateAPMarker(trajectory_planner::coordinates message)
@@ -274,6 +303,40 @@ void CreateAPMarker(trajectory_planner::coordinates message)
   ap_marker.publish(marker);
 }
 
+void Create_CLP_Marker(trajectory_planner::coordinates message)
+{
+  ros::NodeHandle nh;
+  int car_number = 0;
+  nh.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = car_name;
+  marker.header.stamp = ros::Time(0);
+  marker.ns = "CLP";
+  marker.id = 0;
+  marker.type = visualization_msgs::Marker::SPHERE;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position.x = message.x;
+  marker.pose.position.y = message.y;
+  marker.pose.position.z = 1;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.5;
+  marker.scale.y = 0.5;
+  marker.scale.z = 0.01;
+  marker.color.a = 1; // Don't forget to set the alpha!
+  marker.color.r = 0.0;
+  marker.color.g = 0.0;
+  marker.color.b = 1.0;
+  clp_marker.publish(marker);
+}
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "APgenerator");
@@ -289,9 +352,14 @@ int main(int argc, char **argv)
 
   apoint_pub = n.advertise<trajectory_planner::coordinates>("/Apoint", 1000);
 
+  line_close_point_pub = n.advertise<trajectory_planner::coordinates>("/line_close_point", 1000);
+
   model_states_2 = n.subscribe("/gazebo/model_states", 1, ExtractVel);
 
   ap_marker = n.advertise<visualization_msgs::Marker>("/ap_marker", 0);
+
+  clp_marker = n.advertise<visualization_msgs::Marker>("/clp_marker", 0);
+
 
   ros::Duration(0.1).sleep();
 

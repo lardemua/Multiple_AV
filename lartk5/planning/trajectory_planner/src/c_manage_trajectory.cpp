@@ -51,6 +51,16 @@ double y_max_w_right; //wall
 double y_min_l_left;
 double y_max_w_left; //wall
 
+int count_move_to_left = 0;
+int count_stabilize = 0;
+
+bool still_overtaking = false;
+
+int overtaking_phase = 0;
+
+double pos_clp_x;
+double pos_clp_y;
+
 void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
 {
 
@@ -72,10 +82,11 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
   char car_number_string[2];
   sprintf(car_number_string, "%d", car_number);
   strcat(car_name, car_number_string);
-  bool still_overtaking = false;
 
   if (OVERTAKING == false)
   {
+    n.setParam("Param/AP_right", true);
+    n.setParam("Param/AP_left", false);
 
     pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
 
@@ -165,12 +176,9 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
 
     //AP_left
 
-    int count_move_to_left = 0;
-    int count_stabilize = 0;
-
     // ROS_INFO("vl.size(): %f", vl.size());
 
-    if (still_overtaking == true)
+    if (still_overtaking == true) //verifica se está em modo ultrapassagem (nao é igual ao param OVERTAKING?)
     {
       for (size_t o = 0; o < vl.size(); ++o)
       {
@@ -178,7 +186,7 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
         for (size_t lo = 0; lo < vl[o].x.size(); ++lo)
         {
           // ROS_INFO("Analisando a linha");
-          if (vl[o].y[lo] <= 0)
+          if (vl[o].y[lo] <= 0) // o veiculo esta a esquerda da linha
           {
 
             count_move_to_left++;
@@ -188,7 +196,7 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
               n.setParam("Param/AP_left", true);
             }
           }
-          else if (vl[o].y[lo] < 1)
+          else if (vl[o].y[lo] < 1) // o veiculo está a uma distancia sufuciente da linha para ativar o param LINES
           {
             if (count_stabilize == 0)
             {
@@ -199,6 +207,7 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
             {
               ROS_INFO("AP_right");
               n.setParam("Param/LINES", false);
+              n.setParam("Param/AP_left", false);
               n.setParam("Param/AP_right", true);
             }
           }
@@ -210,6 +219,8 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
             n.setParam("Param/OVERTAKING", false);
             n.setParam("Param/DETECTION", true);
             n.setParam("Param/LINES", true);
+            count_move_to_left = 0;
+            count_stabilize = 0;
           }
 
           // ROS_INFO("FS = %lf",trajectory->score.FS);
@@ -219,8 +230,251 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
   }
 }
 
-void CheckOvertaking(std::vector<t_obstacle> &vl)
+void CheckSituation_2try(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
 {
+
+  int count_points = 0;
+
+  ros::NodeHandle n;
+  double DetectDist = 0;
+  n.getParam("Param/DetectDist", DetectDist);
+
+  bool OVERTAKING;
+  n.getParam("Param/OVERTAKING", OVERTAKING);
+
+  double Detection_Sensitivity;
+  n.getParam("Param/Detection_Sensitivity", Detection_Sensitivity);
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  if (OVERTAKING == false)
+  {
+    n.setParam("Param/AP_right", true);
+    n.setParam("Param/AP_left", false);
+
+    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
+
+    // double points_detected[200][2];
+
+    //!!!! vo esta em relacao ao carro !!!!
+
+    double limit_left;
+    double limit_right;
+
+    if (y_min_l_left < y_min_l_right)
+    {
+      limit_left = y_min_l_left;
+    }
+    else
+    {
+      limit_left = y_min_l_right;
+    }
+
+    if (y_max_w_right > y_max_w_left)
+    {
+      limit_right = y_max_w_right;
+    }
+    else
+    {
+      limit_right = y_max_w_left;
+    }
+
+    PublishCollSpace(limit_left, limit_right, DetectDist);
+
+    for (size_t o = 0; o < vo.size(); ++o)
+    {
+      // cycle all lines inside each obstacle
+      for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
+      {
+
+        if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
+        {
+
+          // t_obstacle o;
+
+          pcl::PointXYZRGBA new_point;
+          new_point.x = vo[o].x[lo];
+          new_point.y = vo[o].y[lo];
+          new_point.z = 0;
+
+          new_point.r = 100;
+          new_point.g = 100;
+          new_point.b = 100;
+          new_point.a = 1;
+
+          points_detected_2.push_back(new_point);
+
+          count_points++;
+        }
+
+        // ROS_INFO("FS = %lf",trajectory->score.FS);
+      }
+    }
+
+    PublishColl(points_detected_2);
+
+    // ROS_INFO("count= %d", count_points);
+
+    if (count_points > Detection_Sensitivity)
+    {
+      n.setParam("Param/LINES", false);
+      n.setParam("Param/OVERTAKING", true);
+      n.setParam("Param/DETECTION", false);
+      n.setParam("Param/AP_right", false);
+      n.setParam("Param/AP_left", false);
+      still_overtaking = true;
+
+      // ROS_INFO("count= %d", count_points);
+    }
+    // else
+    // {
+    //   n.setParam("Param/OVERTAKING", false);
+    // }
+  }
+  else
+  {
+    //OVERTAKING ON
+
+    PublishCollSpace(0.0, 0.0, 0.0);
+    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+    PublishColl(points_detected_empty);
+
+    //AP_left
+
+    // ROS_INFO("vl.size(): %f", vl.size());
+
+    if (still_overtaking == true) //verifica se está em modo ultrapassagem (nao é igual ao param OVERTAKING?)
+    {
+
+      double dist_clp = sqrt(pow(pos_clp_x, 2) + pow(pos_clp_y, 2));
+
+      ROS_INFO("dist_clp: %f", dist_clp);
+
+      if (dist_clp < 1 && overtaking_phase == 1) // começou a curvar e perto da linha
+      {
+        n.setParam("Param/AP_left", true);
+        overtaking_phase = 2;
+        ROS_INFO("overtaking_phase: 2");
+      }
+
+      if (dist_clp > 1 && pos_clp_y < 0 && overtaking_phase == 2) // o veiculo esta a esquerda da linha
+      {
+        n.setParam("Param/LINES", true);
+        overtaking_phase = 3;
+        ROS_INFO("overtaking_phase: 3");
+      }
+
+      if (abs(pos_clp_x) < 0.2 && overtaking_phase == 3) //veiculo está paralelo à via
+      {
+
+        n.setParam("Param/LINES", false);
+        n.setParam("Param/AP_left", false);
+        n.setParam("Param/AP_right", false);
+        overtaking_phase = 4;
+        ROS_INFO("overtaking_phase: 4");
+      }
+
+      if (dist_clp < 1 && overtaking_phase == 4) // veiculo inclinado e perto da linha
+      {
+        n.setParam("Param/AP_right", true);
+        overtaking_phase = 5;
+        ROS_INFO("overtaking_phase: 5");
+      }
+
+      if (pos_clp_y > 0 && overtaking_phase == 5)
+      {
+        overtaking_phase = 6;
+        ROS_INFO("overtaking_phase: 6");
+        still_overtaking = false;
+        ROS_INFO("OVERTAKING OFF");
+        n.setParam("Param/OVERTAKING", false);
+        n.setParam("Param/DETECTION", true);
+        n.setParam("Param/LINES", true);
+      }
+
+      // ROS_INFO("FS = %lf",trajectory->score.FS);
+    }
+  }
+}
+
+void ExtractCLP2(trajectory_planner::coordinates msg)
+{
+  pos_clp_x = msg.x;
+  pos_clp_y = msg.y;
+
+  //check
+
+  // ROS_INFO("x: %f, y: %f", pos_clp_x, pos_clp_y);
+}
+
+void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
+{
+  ros::NodeHandle n;
+
+  if (overtaking_phase == 0)
+  {
+    n.setParam("Param/LINES", false);
+    n.setParam("Param/AP_right", false);
+    n.setParam("Param/AP_left", false);
+
+    overtaking_phase = 1;
+
+    ROS_INFO("overtaking_phase: 1");
+  }
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+
+  double dist_clp = sqrt(pow(pos_clp_x, 2) + pow(pos_clp_y, 2));
+
+  ROS_INFO("dist_clp: %f", dist_clp);
+
+  if (dist_clp < 1 && overtaking_phase == 1) // começou a curvar e perto da linha
+  {
+    n.setParam("Param/AP_left", true);
+    overtaking_phase = 2;
+    ROS_INFO("overtaking_phase: 2");
+  }
+
+  // ROS_INFO("Analisando a linha");
+  if (dist_clp > 1 && pos_clp_y < 0 && overtaking_phase == 2) // o veiculo esta a esquerda da linha
+  {
+    n.setParam("Param/LINES", true);
+    overtaking_phase = 3;
+    ROS_INFO("overtaking_phase: 3");
+  }
+
+  if (abs(pos_clp_x) < 0.2 && overtaking_phase == 3) //veiculo está paralelo à via
+  {
+
+    n.setParam("Param/LINES", false);
+    n.setParam("Param/AP_left", false);
+    n.setParam("Param/AP_right", false);
+    overtaking_phase = 4;
+    ROS_INFO("overtaking_phase: 4");
+  }
+
+  if (dist_clp < 1 && overtaking_phase == 4) // veiculo inclinado e perto da linha
+  {
+    n.setParam("Param/AP_right", true);
+    overtaking_phase = 5;
+    ROS_INFO("overtaking_phase: 5");
+  }
+
+  if (pos_clp_y > 0 && overtaking_phase == 5)
+  {
+    overtaking_phase = 6;
+    ROS_INFO("overtaking_phase: 6");
+  }
 }
 
 /**
@@ -236,6 +490,8 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
   ros::NodeHandle nh;
   double DLO_Max;
   nh.getParam("Param/DLO_Max", DLO_Max);
+
+  pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
 
   // delete all previous computed collision pts
   trajectory->collision_pts.erase(trajectory->collision_pts.begin(), trajectory->collision_pts.end());
@@ -293,9 +549,8 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
         for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
         {
           // ROS_INFO("vo[o].x[lo]: %f,vo[o].y[lo]: %f",vo[o].x[lo],vo[o].y[lo]);
-          double DLOprev =
-              sqrt(pow(trajectory->v_lines[n][l].x[0] - vo[o].x[lo], 2) +
-                   pow(trajectory->v_lines[n][l].y[0] - vo[o].y[lo], 2));
+          double DLOprev = sqrt(pow(trajectory->v_lines[n][l].x[0] - vo[o].x[lo], 2) + pow(trajectory->v_lines[n][l].y[0] - vo[o].y[lo], 2));
+          
           if (trajectory->score.DLO > DLOprev)
           {
             trajectory->score.DLO = DLOprev;
@@ -485,6 +740,7 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
     for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
       double min_x = 100;
+      // double min_x = DetectDist/10;
 
       if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].x < min_x && pc.points[j].y < 0)
       {
@@ -661,7 +917,7 @@ c_manage_trajectory::set_speed_vector(trajectory_planner::traj_info *info)
 int c_manage_trajectory::set_chosen_traj(int n)
 {
   chosen_traj.index = n;
-  cout << "Chosen trajectory index1: " << chosen_traj.index << endl;
+  // cout << "Chosen trajectory index1: " << chosen_traj.index << endl;
   return 1;
 }
 
@@ -772,7 +1028,7 @@ t_func_output c_manage_trajectory::compute_chosen_traj(void)
     if (vt[i]->score.overall_norm > max_val)
     {
       chosen_traj.index = i;
-      cout << "Chosen trajectory index2: " << chosen_traj.index << endl;
+      // cout << "Chosen trajectory index2: " << chosen_traj.index << endl;
       chosen_traj.min_dist = vt[i]->score.EVAL;
       chosen_traj.alpha = vt[i]->alpha[0];
       chosen_traj.score = vt[i]->score.overall_norm;
@@ -1038,6 +1294,8 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
   nh.getParam("Param/DETECTION", DETECTION);
   bool OVERTAKING;
   nh.getParam("Param/OVERTAKING", OVERTAKING);
+  bool MANUAL_OVERTAKING;
+  nh.getParam("Param/MANUAL_OVERTAKING", MANUAL_OVERTAKING);
 
   for (int i = 0; i < (int)vt.size(); ++i)
   {
@@ -1046,7 +1304,7 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
 
     if (DETECTION == true || OVERTAKING == true)
     {
-      CheckSituation(vo, vl); //!!!! Uncomment to detect objects
+      CheckSituation_2try(vo, vl); //!!!! Uncomment to detect objects
     }
     else
     {
@@ -1054,6 +1312,12 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
       pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
       PublishColl(points_detected_empty);
     }
+
+    if (MANUAL_OVERTAKING == true)
+    {
+      CheckSituation_done_manually(vo, vl);
+    }
+
     // CheckSituation(vo); //!!!! Uncomment to detect objects
 
     // Compute DAP and ADAP

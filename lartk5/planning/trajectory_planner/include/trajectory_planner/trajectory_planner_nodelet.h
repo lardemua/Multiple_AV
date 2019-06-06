@@ -118,6 +118,9 @@ double compute_last_dir(double angle); //trajectory_planner_nodelet.cpp
 void ExtractVel(gazebo_msgs::ModelStates models);
 void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2);
 void PublishCollSpace(double limit_left, double limit_right, double DetectDist);
+void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl);
+geometry_msgs::Point Retrieve_pos_clp();
+void ExtractCLP2(trajectory_planner::coordinates msg);
 
 // Global Vars
 _EXTERN_ ros::NodeHandle *p_n;

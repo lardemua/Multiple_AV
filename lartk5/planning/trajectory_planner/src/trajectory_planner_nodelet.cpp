@@ -68,6 +68,8 @@ double this_speed_new = 0;
 double this_pos_x = 0;
 double this_pos_y = 0;
 
+
+
 void ExtractVel(gazebo_msgs::ModelStates models)
 {
   int pos_name = 0;
@@ -298,8 +300,6 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
   {
     max_dist = 4.5;
   }
-
-  
 
   if (this_speed_new > speed) //speed=SPEED_SAFFETY
   {
@@ -558,6 +558,8 @@ int main(int argc, char **argv)
   // }
 
   ros::Subscriber model_states_2 = n.subscribe("/gazebo/model_states", 1, ExtractVel);
+
+  ros::Subscriber clp_sub = n.subscribe("/line_close_point", 1, ExtractCLP2);
 
   ros::Subscriber mtt_sub = n.subscribe("/mtt_targets", 1, mtt_callback);
   //----------------------------------------------------------------------------------------------------//

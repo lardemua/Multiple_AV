@@ -14,6 +14,7 @@ Panels:
         - /AP1
         - /Collision1
         - /CollSpace1
+        - /Closest_line_point1
       Splitter Ratio: 0.5965417623519897
     Tree Height: 823
   - Class: rviz/Selection
@@ -148,7 +149,6 @@ Visualization Manager:
         car_shadow: false
         chosen_trajectory: true
         closest_node: true
-        colision_points: true
         info: true
         lines: true
         node_number: true
@@ -172,9 +172,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 0; 0; 0
-      Max Intensity: 43.65892791748047
+      Max Intensity: 45.26165771484375
       Min Color: 0; 0; 0
-      Min Intensity: -8.17104434967041
+      Min Intensity: -7.6020989418029785
       Name: ReducedPointCloud2
       Position Transformer: XYZ
       Queue Size: 10
@@ -307,6 +307,14 @@ Visualization Manager:
       Name: CollSpace
       Namespaces:
         colision_space: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /clp_marker
+      Name: Closest_line_point
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
