@@ -212,19 +212,19 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
   nh.getParam("Param/AP_right", AP_right);
   nh.getParam("Param/AP_left", AP_left);
 
-  if (_OVERTAKING_ == true)
-  {
-    // ap_y = ap_y + 2.650925;
+  // if (_OVERTAKING_ == true)
+  // {
+  //   // ap_y = ap_y + 2.650925;
 
-    if (AP_right == true)
-    {
-      ap_y = ap_y - 2.650925;
-    }
-    else if (AP_left == true)
-    {
-      ap_y = ap_y + 2.650925;
-    }
-  }
+  //   if (AP_right == true)
+  //   {
+  //     ap_y = ap_y - 2.650925;
+  //   }
+  //   else if (AP_left == true)
+  //   {
+  //     ap_y = ap_y + 2.650925;
+  //   }
+  // }
 
   // if (_LINES_ == true)
   // {
