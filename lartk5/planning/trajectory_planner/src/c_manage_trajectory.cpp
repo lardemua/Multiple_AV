@@ -65,6 +65,11 @@ int overtaking_phase = 0;
 double pos_clp_x;
 double pos_clp_y;
 
+/**
+ * @brief check the current situation (overtaking, etc.)
+ * 
+ * @param vo -> obstacles from the walls
+ */
 void CheckSituation_2try(std::vector<t_obstacle> &vo)
 {
 
@@ -106,31 +111,31 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 
     if (y_min_l_left < y_min_l_right)
     {
-      limit_left = y_min_l_left-DETECT_SPACE_SENSIVITY;
+      limit_left = y_min_l_left - DETECT_SPACE_SENSIVITY;
       ROS_INFO("using limit_left: y_min_l_left");
     }
     else
     {
-      limit_left = y_min_l_right-DETECT_SPACE_SENSIVITY;
+      limit_left = y_min_l_right - DETECT_SPACE_SENSIVITY;
       ROS_INFO("using limit_left: y_min_l_right");
     }
 
     if (y_max_w_right > y_max_w_left)
     {
-      limit_right = y_max_w_right+DETECT_SPACE_SENSIVITY;
+      limit_right = y_max_w_right + DETECT_SPACE_SENSIVITY;
       ROS_INFO("using limit_right: y_max_w_right");
-      ROS_INFO("y_max_w_right: %f", y_max_w_right);
-      ROS_INFO("y_max_w_left: %f", y_max_w_left);
+      // ROS_INFO("y_max_w_right: %f", y_max_w_right);
+      // ROS_INFO("y_max_w_left: %f", y_max_w_left);
     }
     else
     {
-      limit_right = y_max_w_left+DETECT_SPACE_SENSIVITY;
+      limit_right = y_max_w_left + DETECT_SPACE_SENSIVITY;
       ROS_INFO("using limit_right: y_max_w_left");
-      ROS_INFO("y_max_w_right: %f", y_max_w_right);
-      ROS_INFO("y_max_w_left: %f", y_max_w_left);
+      // ROS_INFO("y_max_w_right: %f", y_max_w_right);
+      // ROS_INFO("y_max_w_left: %f", y_max_w_left);
     }
 
-    ROS_INFO("using limit_left: y_min_l_left");
+    // ROS_INFO("using limit_left: y_min_l_left");
 
     PublishCollSpace(limit_left, limit_right, DetectDist);
 
@@ -174,19 +179,23 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     if (y_max_l_left < y_max_l_right)
     {
       limit_left_back = y_max_l_left;
+      ROS_INFO("using limit_left_back: y_max_l_left");
     }
     else
     {
       limit_left_back = y_max_l_right;
+      ROS_INFO("using limit_left_back: y_max_l_right");
     }
 
     if (y_min_w_right > y_min_w_left)
     {
       limit_right_back = y_min_w_right;
+      ROS_INFO("using limit_right_back: y_min_w_right");
     }
     else
     {
       limit_right_back = y_min_w_left;
+      ROS_INFO("using limit_right_back: y_min_w_left");
     }
 
     PublishCollSpace_BACK(limit_left_back, limit_right_back, DetectDist);
@@ -283,7 +292,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     {
       n.setParam("Param/AP_left", true);
       overtaking_phase = 2;
-      ROS_INFO("overtaking_phase: 2");
+      ROS_INFO("---------overtaking_phase: 2");
     }
 
     if (dist_clp > 1 && pos_clp_y < 0 && overtaking_phase == 2) // o veiculo esta a esquerda da linha
@@ -291,7 +300,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       n.setParam("Param/LINES", true);
       n.setParam("Param/DETECTION_BACK", true);
       overtaking_phase = 3;
-      ROS_INFO("overtaking_phase: 3");
+      ROS_INFO("-------overtaking_phase: 3");
     }
 
     if (overtaking_phase == 3)
@@ -306,7 +315,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       // PublishColl(points_detected_empty);
 
       // overtaking_phase = 4;
-      // ROS_INFO("overtaking_phase: 4");
+      // ROS_INFO("-------------overtaking_phase: 4");
     }
 
     if (overtaking_phase == 4)
@@ -323,7 +332,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
         n.setParam("Param/AP_right", false);
 
         overtaking_phase = 5;
-        ROS_INFO("overtaking_phase: 5");
+        ROS_INFO("---------------overtaking_phase: 5");
       }
     }
 
@@ -350,6 +359,11 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
   }
 }
 
+/**
+ * @brief Extract posicion of the closest line points of the vehicle
+ * 
+ * @param msg -> message received from APgenerator
+ */
 void ExtractCLP2(trajectory_planner::coordinates msg)
 {
   pos_clp_x = msg.x;
@@ -360,6 +374,12 @@ void ExtractCLP2(trajectory_planner::coordinates msg)
   // ROS_INFO("x: %f, y: %f", pos_clp_x, pos_clp_y);
 }
 
+/**
+ * @brief manually create overtaking
+ * 
+ * @param vo -> obstacles from the walls
+ * @param vl -> obstacles from the line
+ */
 void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
 {
   ros::NodeHandle n;
@@ -730,21 +750,33 @@ void set_limits_walls(mtt::TargetListPC &msg)
   y_min_w_left = -500;
   double dist_min_reached_detect = 100;
 
+  double dist_y_right;
+  double dist_y_right_back;
+  double dist_y_right_front;
+  if (pos_clp_y < 0)
+  {
+    dist_y_right_back = abs(pos_clp_y) + 5;
+    dist_y_right_front = abs(pos_clp_y) + 5;
+  }
+  else
+  {
+    dist_y_right_back = 5 - pos_clp_y;
+    dist_y_right_front = 5 - pos_clp_y;
+  }
+
+  ros::NodeHandle n;
+  double DetectDist = 0;
+  n.getParam("Param/DetectDist", DetectDist);
+
+  double DETECT_SPACE_Dist = 0;
+  n.getParam("Param/DETECT_SPACE_Dist", DETECT_SPACE_Dist);
+
+  bool first_point_w_right = true;
+  bool first_point_w_right_back = true;
+
   // ROS_INFO("msg_obstacles size = %ld", msg.obstacle_lines.size());
   for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines -> msg_transformed.obstacle_lines -> contem a nuvem de pontos
   {
-    //typedef struct
-    // {
-    //   std::vector<double> x;
-    //   std::vector<double> y;
-    //   int id;
-    // } t_obstacle;
-
-    // t_obstacle o;
-
-    ros::NodeHandle n;
-    double DetectDist = 0;
-    n.getParam("Param/DetectDist", DetectDist);
 
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
@@ -759,7 +791,7 @@ void set_limits_walls(mtt::TargetListPC &msg)
       // double point_dist = sqrt(pow(pc.points[i].x, 2) + pow(pc.points[i].y, 2));
 
       // if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].y < 0)
-      if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].x < (DetectDist/10) && pc.points[j].y < 0)
+      if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].x < (DetectDist / 10) && pc.points[j].y < -(dist_y_right_front - 1))
       {
         // dist_min_reached_detect = point_dist;
         // min_x = pc.points[j].x;  //sera decessario?
@@ -767,22 +799,58 @@ void set_limits_walls(mtt::TargetListPC &msg)
         y_max_w_right = pc.points[j].y;
       }
 
-      if (pc.points[j].y > y_min_w_right && pc.points[j].x < 0 && pc.points[j].x > (-DetectDist) && pc.points[j].y < 0)
+      if (pc.points[j].y > y_min_w_right && pc.points[j].x < 0 && pc.points[j].x > (-(DetectDist / 2)) && pc.points[j].y < -(dist_y_right_back - 1))
       {
-        // dist_min_reached_detect = point_dist;
-        // min_x = pc.points[j].x;  //sera decessario?
+        ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
+        // if (first_point_w_right_back == true)
+        // {
+        //   y_min_w_right = pc.points[j].y;
+        //   first_point_w_right_back = false;
+        // }
+        // else
+        // {
+        // if (abs(pc.points[j].y - dist_y_right_back) < DETECT_SPACE_Dist)
+        // {
+        // dist_y_right_back = pc.points[j].y;
         y_min_w_right = pc.points[j].y;
+        // }
+        // }
       }
 
       if (pc.points[j].y > y_max_w_left && pc.points[j].y < 0 && pc.points[j].x > (DetectDist - (DetectDist / 2)) && pc.points[j].x < DetectDist)
       {
-        // ROS_INFO("xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
-        y_max_w_left = pc.points[j].y;
+        // ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
+        if (first_point_w_right == true)
+        {
+          dist_y_right = pc.points[j].y;
+          y_max_w_left = pc.points[j].y;
+          first_point_w_right = false;
+        }
+        else
+        {
+          if (abs(pc.points[j].y - dist_y_right) < DETECT_SPACE_Dist)
+          {
+            y_max_w_left = pc.points[j].y;
+          }
+        }
       }
 
       if (pc.points[j].y > y_min_w_left && pc.points[j].y < 0 && pc.points[j].x > (-DetectDist) && pc.points[j].x < (DetectDist / 10) - DetectDist)
       {
-        y_min_w_left = pc.points[j].y;
+        // ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
+        if (first_point_w_right_back == true)
+        {
+          dist_y_right_back = pc.points[j].y;
+          y_min_w_left = pc.points[j].y;
+          first_point_w_right_back = false;
+        }
+        else
+        {
+          if (abs(pc.points[j].y - dist_y_right_back) < DETECT_SPACE_Dist)
+          {
+            y_min_w_left = pc.points[j].y;
+          }
+        }
       }
 
       // o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos

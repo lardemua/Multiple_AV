@@ -31,6 +31,11 @@ double ap_y_temp = (2.650925) / 10;
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
 pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
 
+/**
+ * @brief 
+ * 
+ * @param models 
+ */
 void ExtractVel(gazebo_msgs::ModelStates models)
 {
   int pos_name = 0;

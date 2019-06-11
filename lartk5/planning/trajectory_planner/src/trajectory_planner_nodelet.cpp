@@ -70,6 +70,11 @@ double this_speed_new = 0;
 double this_pos_x = 0;
 double this_pos_y = 0;
 
+/**
+ * @brief extracts speed from model in Gazebo
+ * 
+ * @param models -> model in analysis
+ */
 void ExtractVel(gazebo_msgs::ModelStates models)
 {
   int pos_name = 0;
@@ -468,6 +473,13 @@ void PublishCollSpace(double limit_left, double limit_right, double DetectDist)
   ap_marker_coll_space.publish(line_strip);
 }
 
+/**
+ * @brief Publisher of the detection space (back)
+ * 
+ * @param limit_left -> max (y) pos for the space
+ * @param limit_right -> min (y) pos for the space
+ * @param DetectDist -> max dist of detection from Param
+ */
 void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectDist)
 {
 
@@ -505,12 +517,12 @@ void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectD
   p2.z = 0;
 
   geometry_msgs::Point p3;
-  p3.x = -DetectDist;
+  p3.x = -DetectDist/2;
   p3.y = limit_right;
   p3.z = 0;
 
   geometry_msgs::Point p4;
-  p4.x = -DetectDist;
+  p4.x = -DetectDist/2;
   p4.y = limit_left;
   p4.z = 0;
 
@@ -528,6 +540,11 @@ void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectD
   ap_marker_coll_space_back.publish(line_strip);
 }
 
+/**
+ * @brief Publisher of the detected points (front)
+ * 
+ * @param points_detected_2 -> PointCloud with the detected points
+ */
 void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2)
 {
 
@@ -549,6 +566,11 @@ void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2)
   ap_marker_coll.publish(pc2);
 }
 
+/**
+ * @brief Publisher of the detected points (back)
+ * 
+ * @param points_detected_3 -> PointCloud with the detected points
+ */
 void PublishColl_BACK(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_3)
 {
 
