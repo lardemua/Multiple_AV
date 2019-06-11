@@ -152,6 +152,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
         time.fromNSec(pc_v2[i].header.stamp);
 
         // p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", time, *transform_mtt);
+
         p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), *transform_mtt);
 
         //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
@@ -161,7 +162,8 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
       }
       catch (tf::TransformException ex)
       {
-        ROS_ERROR("%s", ex.what());
+        // ROS_INFO("ERRO NO APgenerator");
+        // ROS_ERROR("%s", ex.what());
       }
     }
 

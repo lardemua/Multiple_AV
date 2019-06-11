@@ -517,12 +517,12 @@ void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectD
   p2.z = 0;
 
   geometry_msgs::Point p3;
-  p3.x = -DetectDist/2;
+  p3.x = -DetectDist / 2;
   p3.y = limit_right;
   p3.z = 0;
 
   geometry_msgs::Point p4;
-  p4.x = -DetectDist/2;
+  p4.x = -DetectDist / 2;
   p4.y = limit_left;
   p4.z = 0;
 
@@ -718,10 +718,13 @@ int main(int argc, char **argv)
       try
       {
         // p_listener->lookupTransform("/world", "/vehicle_odometry", time, transformw);
+
         p_listener->lookupTransform("/world", car_name, ros::Time(0), transformw);
       }
       catch (tf::TransformException ex)
       {
+        ROS_INFO("ERRO NO traj2");
+
         ROS_ERROR("%s", ex.what());
         have_transform = false;
       }
@@ -784,6 +787,8 @@ int main(int argc, char **argv)
               //"/vehicle_odometry" -> The frame where the data originated
               // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
               //transform_mtt -> The transform reference to fill.
+              // std::cout << "pc_v1[i].header.frame_id: " << pc_v1[i].header.frame_id << std::endl;
+
               p_listener->lookupTransform(pc_v1[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
               // ROS_INFO("FFFFFFrame_id=%s ",
               // pc_v1[i].header.frame_id.c_str());
@@ -795,6 +800,8 @@ int main(int argc, char **argv)
             }
             catch (tf::TransformException ex)
             {
+              ROS_INFO("ERRO NO traj3");
+
               ROS_ERROR("%s", ex.what());
             }
           }
@@ -842,6 +849,8 @@ int main(int argc, char **argv)
               //"/vehicle_odometry" -> The frame where the data originated
               // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
               //transform_mtt -> The transform reference to fill.
+              // std::cout << "pc_v2[i].header.frame_id: " << pc_v2[i].header.frame_id << std::endl;
+
               p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
 
               //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
@@ -851,6 +860,7 @@ int main(int argc, char **argv)
             }
             catch (tf::TransformException ex)
             {
+              ROS_INFO("ERRO NO traj1");
               ROS_ERROR("%s", ex.what());
             }
           }

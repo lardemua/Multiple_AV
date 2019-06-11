@@ -354,7 +354,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       }
       else
       {
-        ROS_INFO("detecting: %d", count_points_detected);
+        // ROS_INFO("detecting: %d", count_points_detected);
         begin_time = true;
       }
     }
