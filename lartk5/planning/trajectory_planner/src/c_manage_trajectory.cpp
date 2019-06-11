@@ -65,6 +65,10 @@ int overtaking_phase = 0;
 double pos_clp_x;
 double pos_clp_y;
 
+bool begin_time = true;
+
+ros::Time begin_3;
+
 /**
  * @brief check the current situation (overtaking, etc.)
  * 
@@ -89,8 +93,17 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
   double Detection_Sensitivity;
   n.getParam("Param/Detection_Sensitivity", Detection_Sensitivity);
 
+  double W_DAP_prev;
+  n.getParam("Param/W_DAP", W_DAP_prev);
+
+  double W_DLO_prev;
+  n.getParam("Param/W_DLO", W_DLO_prev);
+
   double DETECT_SPACE_SENSIVITY;
   n.getParam("Param/DETECT_SPACE_SENSIVITY", DETECT_SPACE_SENSIVITY);
+
+  double WaitingTime;
+  n.getParam("Param/WaitingTime", WaitingTime);
 
   int car_number = 0;
   n.getParam("car_number", car_number);
@@ -106,31 +119,33 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
   double limit_right_back;
   int count_points_detected = 0;
 
+  
+
   if (DETECTION == true)
   {
 
     if (y_min_l_left < y_min_l_right)
     {
       limit_left = y_min_l_left - DETECT_SPACE_SENSIVITY;
-      ROS_INFO("using limit_left: y_min_l_left");
+      // ROS_INFO("using limit_left: y_min_l_left");
     }
     else
     {
       limit_left = y_min_l_right - DETECT_SPACE_SENSIVITY;
-      ROS_INFO("using limit_left: y_min_l_right");
+      // ROS_INFO("using limit_left: y_min_l_right");
     }
 
     if (y_max_w_right > y_max_w_left)
     {
       limit_right = y_max_w_right + DETECT_SPACE_SENSIVITY;
-      ROS_INFO("using limit_right: y_max_w_right");
+      // ROS_INFO("using limit_right: y_max_w_right");
       // ROS_INFO("y_max_w_right: %f", y_max_w_right);
       // ROS_INFO("y_max_w_left: %f", y_max_w_left);
     }
     else
     {
       limit_right = y_max_w_left + DETECT_SPACE_SENSIVITY;
-      ROS_INFO("using limit_right: y_max_w_left");
+      // ROS_INFO("using limit_right: y_max_w_left");
       // ROS_INFO("y_max_w_right: %f", y_max_w_right);
       // ROS_INFO("y_max_w_left: %f", y_max_w_left);
     }
@@ -179,23 +194,23 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     if (y_max_l_left < y_max_l_right)
     {
       limit_left_back = y_max_l_left;
-      ROS_INFO("using limit_left_back: y_max_l_left");
+      // ROS_INFO("using limit_left_back: y_max_l_left");
     }
     else
     {
       limit_left_back = y_max_l_right;
-      ROS_INFO("using limit_left_back: y_max_l_right");
+      // ROS_INFO("using limit_left_back: y_max_l_right");
     }
 
     if (y_min_w_right > y_min_w_left)
     {
       limit_right_back = y_min_w_right;
-      ROS_INFO("using limit_right_back: y_min_w_right");
+      // ROS_INFO("using limit_right_back: y_min_w_right");
     }
     else
     {
       limit_right_back = y_min_w_left;
-      ROS_INFO("using limit_right_back: y_min_w_left");
+      // ROS_INFO("using limit_right_back: y_min_w_left");
     }
 
     PublishCollSpace_BACK(limit_left_back, limit_right_back, DetectDist);
@@ -307,15 +322,41 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     {
       if (count_points_detected < Detection_Sensitivity)
       {
-        // n.setParam("Param/DETECTION", false);
-      }
-      ROS_INFO("detecting: %d", count_points_detected);
-      // PublishCollSpace(0.0, 0.0, 0.0);
-      // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-      // PublishColl(points_detected_empty);
+        ros::Time currtime = ros::Time::now();
+        // std::cout << "No points detected" << std::endl;
+        if (begin_time == true)
+        {
+          ROS_INFO("created timer");
 
-      // overtaking_phase = 4;
-      // ROS_INFO("-------------overtaking_phase: 4");
+          begin_3 = ros::Time::now();
+          std::cout << "begin_3: " << begin_3 << std::endl;
+          begin_time = false;
+        }
+        // else if ((currtime - begin_3) > ros::Duration(5.0))
+        else if (currtime > begin_3 + ros::Duration(WaitingTime))
+        {
+          //waiting_time
+          overtaking_phase = 4;
+          n.setParam("Param/DETECTION", false);
+          PublishCollSpace(0.0, 0.0, 0.0);
+          // std::cout << "begin_3: " << begin_3 << std::endl;
+          // std::cout << "(currtime - begin_3): " << (currtime - begin_3) << std::endl;
+          ROS_INFO("-------------overtaking_phase: 4");
+          // ROS_INFO("time: %f", begin_3);
+        }
+        // ROS_INFO("detecting: %d", count_points_detected);
+        // PublishCollSpace(0.0, 0.0, 0.0);
+        // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+        // PublishColl(points_detected_empty);
+
+        // overtaking_phase = 4;
+        // ROS_INFO("-------------overtaking_phase: 4");
+      }
+      else
+      {
+        ROS_INFO("detecting: %d", count_points_detected);
+        begin_time = true;
+      }
     }
 
     if (overtaking_phase == 4)
@@ -323,35 +364,54 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 
       if (count_points_detected < Detection_Sensitivity)
       {
-        // !!!timer here !!!!!
-      }
-      else
-      {
         n.setParam("Param/LINES", false);
         n.setParam("Param/AP_left", false);
         n.setParam("Param/AP_right", false);
 
-        overtaking_phase = 5;
-        ROS_INFO("---------------overtaking_phase: 5");
+        if (dist_clp < 1) // começou a curvar e perto da linha
+        {
+          overtaking_phase = 5;
+          ROS_INFO("---------overtaking_phase: 5");
+        }
+      }
+      else
+      {
+        n.setParam("Param/LINES", true);
+        n.setParam("Param/AP_left", true);
+        n.setParam("Param/AP_right", false);
+
+        overtaking_phase = 3;
+        ROS_INFO("Obstacle Detected");
+        ROS_INFO("---------------overtaking_phase: 3");
       }
     }
 
-    if (dist_clp < 1 && overtaking_phase == 5) // veiculo inclinado e perto da linha
+    if (overtaking_phase == 5) // veiculo inclinado e perto da linha
     {
       n.setParam("Param/AP_right", true);
-      overtaking_phase = 5;
-      ROS_INFO("overtaking_phase: 5");
+      n.setParam("Param/DETECTION_BACK", false);
+      PublishCollSpace_BACK(0.0, 0.0, 0.0);
+      overtaking_phase = 6;
+      ROS_INFO("--------------overtaking_phase: 6");
+      n.setParam("Param/W_DAP", 1);
+      n.setParam("Param/W_DLO", 0.1);
     }
 
-    if (pos_clp_y > 0 && overtaking_phase == 6)
+    if (overtaking_phase == 6) // o veiculo esta a esquerda da linha
     {
-      overtaking_phase = 6;
-      ROS_INFO("overtaking_phase: 6");
-      // still_overtaking = false;
-      ROS_INFO("OVERTAKING OFF");
-      n.setParam("Param/OVERTAKING", false);
-      n.setParam("Param/DETECTION", true);
-      n.setParam("Param/LINES", true);
+      // if (pos_clp_y > 0){
+        // n.setParam("Param/LINES", true);
+      // }
+      ROS_INFO("dist_clp: %f", dist_clp);
+      if (dist_clp > 1 && pos_clp_y > 0)
+      {
+        n.setParam("Param/W_DAP", W_DAP_prev);
+        n.setParam("Param/W_DLO", W_DLO_prev);
+        n.setParam("Param/LINES", true);
+        // n.setParam("Param/DETECTION", true);
+        n.setParam("Param/OVERTAKING", false);
+        ROS_INFO("!!!!!OVERTAKING DONE!!!!!!");
+      }
     }
 
     // ROS_INFO("FS = %lf",trajectory->score.FS);
@@ -801,7 +861,7 @@ void set_limits_walls(mtt::TargetListPC &msg)
 
       if (pc.points[j].y > y_min_w_right && pc.points[j].x < 0 && pc.points[j].x > (-(DetectDist / 2)) && pc.points[j].y < -(dist_y_right_back - 1))
       {
-        ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
+        // ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
         // if (first_point_w_right_back == true)
         // {
         //   y_min_w_right = pc.points[j].y;
@@ -1242,12 +1302,12 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   int marker_count = 0;
   for (int i = 0; i < (int)vt.size(); ++i)
   {
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
+    draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
 
     // draw_on_node(vt[i], &marker_vec, &marker_count, 2.5, vt[i]->score.DLO, vt[i]->score.DLOnorm, "DLO ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.CL, vt[i]->score.CL, "CL ");
-    draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
   }
 
   ros::NodeHandle nh;

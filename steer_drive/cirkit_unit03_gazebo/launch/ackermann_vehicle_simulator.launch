@@ -62,7 +62,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
   </group>
 
   <!-- Ultrapassagem -->
-  <!-- <group ns="h2">
+  <group ns="h2">
 
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
 
@@ -79,7 +79,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/TRAJ_DENSITY" value="2" />
 
 
-    <param name="Param/SPEED_REQUIRED" value="2.5" />
+    <param name="Param/SPEED_REQUIRED" value="1" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
     
     <param name="Param/DetectDist" value="20" />
@@ -98,7 +98,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/AP_right" value="true" />
     <param name="Param/AP_left" value="false" />
 
-  </group> -->
+  </group>
 
   <!-- Cruzamento -->
   <!-- <group ns="h3">
