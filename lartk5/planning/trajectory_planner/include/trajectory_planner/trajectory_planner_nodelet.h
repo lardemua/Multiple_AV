@@ -121,6 +121,10 @@ void PublishCollSpace(double limit_left, double limit_right, double DetectDist);
 void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl);
 geometry_msgs::Point Retrieve_pos_clp();
 void ExtractCLP2(trajectory_planner::coordinates msg);
+void PublishColl_BACK(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_3);
+void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectDist);
+void set_limits_walls(mtt::TargetListPC &msg);
+void set_limits_line(mtt::TargetListPC &msg);
 
 // Global Vars
 _EXTERN_ ros::NodeHandle *p_n;

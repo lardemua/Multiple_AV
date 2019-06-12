@@ -28,9 +28,16 @@ double this_pos_y = 0;
 int count_ap_y = 0;
 double ap_y_temp = (2.650925) / 10;
 
+int count_errors = 0;
+
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
 pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
 
+/**
+ * @brief 
+ * 
+ * @param models 
+ */
 void ExtractVel(gazebo_msgs::ModelStates models)
 {
   int pos_name = 0;
@@ -147,6 +154,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
         time.fromNSec(pc_v2[i].header.stamp);
 
         // p_listener->lookupTransform(pc_v2[i].header.frame_id, "/vehicle_odometry", time, *transform_mtt);
+
         p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), *transform_mtt);
 
         //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
@@ -156,6 +164,8 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
       }
       catch (tf::TransformException ex)
       {
+        count_errors++;
+        ROS_INFO("ERRO NO APgenerator, erro n: %d", count_errors);
         ROS_ERROR("%s", ex.what());
       }
     }
@@ -212,19 +222,19 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
   nh.getParam("Param/AP_right", AP_right);
   nh.getParam("Param/AP_left", AP_left);
 
-  if (_OVERTAKING_ == true)
-  {
-    // ap_y = ap_y + 2.650925;
+  // if (_OVERTAKING_ == true)
+  // {
+  //   // ap_y = ap_y + 2.650925;
 
-    if (AP_right == true)
-    {
-      ap_y = ap_y - 2.650925;
-    }
-    else if (AP_left == true)
-    {
-      ap_y = ap_y + 2.650925;
-    }
-  }
+  //   if (AP_right == true)
+  //   {
+  //     ap_y = ap_y - 2.650925;
+  //   }
+  //   else if (AP_left == true)
+  //   {
+  //     ap_y = ap_y + 2.650925;
+  //   }
+  // }
 
   // if (_LINES_ == true)
   // {

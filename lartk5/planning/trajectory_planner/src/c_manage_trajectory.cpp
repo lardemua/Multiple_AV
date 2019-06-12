@@ -45,26 +45,37 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void CheckOvertaking(std::vector<t_obstacle> &vo);
 void CheckSituation(std::vector<t_obstacle> &vo);
 
-double y_min_l_right;
 double y_max_w_right; //wall
+double y_max_w_left;  //wall
+double y_min_w_right; //wall
+double y_min_w_left;  //wall
 
-double y_min_l_left;
-double y_max_w_left; //wall
+double y_min_l_right; //line
+double y_min_l_left;  //line
+double y_max_l_right; //line
+double y_max_l_left;  //line
 
 int count_move_to_left = 0;
 int count_stabilize = 0;
 
-bool still_overtaking = false;
+// bool still_overtaking = false;
 
 int overtaking_phase = 0;
 
 double pos_clp_x;
 double pos_clp_y;
 
-void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
-{
+bool begin_time = true;
 
-  int count_points = 0;
+ros::Time begin_3;
+
+/**
+ * @brief check the current situation (overtaking, etc.)
+ * 
+ * @param vo -> obstacles from the walls
+ */
+void CheckSituation_2try(std::vector<t_obstacle> &vo)
+{
 
   ros::NodeHandle n;
   double DetectDist = 0;
@@ -73,8 +84,26 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
   bool OVERTAKING;
   n.getParam("Param/OVERTAKING", OVERTAKING);
 
+  bool DETECTION;
+  n.getParam("Param/DETECTION", DETECTION);
+
+  bool DETECTION_BACK;
+  n.getParam("Param/DETECTION_BACK", DETECTION_BACK);
+
   double Detection_Sensitivity;
   n.getParam("Param/Detection_Sensitivity", Detection_Sensitivity);
+
+  double W_DAP_prev;
+  n.getParam("Param/W_DAP", W_DAP_prev);
+
+  double W_DLO_prev;
+  n.getParam("Param/W_DLO", W_DLO_prev);
+
+  double DETECT_SPACE_SENSIVITY;
+  n.getParam("Param/DETECT_SPACE_SENSIVITY", DETECT_SPACE_SENSIVITY);
+
+  double WaitingTime;
+  n.getParam("Param/WaitingTime", WaitingTime);
 
   int car_number = 0;
   n.getParam("car_number", car_number);
@@ -83,39 +112,47 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
   sprintf(car_number_string, "%d", car_number);
   strcat(car_name, car_number_string);
 
-  if (OVERTAKING == false)
+  double limit_left;
+  double limit_right;
+
+  double limit_left_back;
+  double limit_right_back;
+  int count_points_detected = 0;
+
+  if (DETECTION == true)
   {
-    n.setParam("Param/AP_right", true);
-    n.setParam("Param/AP_left", false);
-
-    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
-
-    // double points_detected[200][2];
-
-    //!!!! vo esta em relacao ao carro !!!!
-
-    double limit_left;
-    double limit_right;
 
     if (y_min_l_left < y_min_l_right)
     {
-      limit_left = y_min_l_left;
+      limit_left = y_min_l_left - DETECT_SPACE_SENSIVITY;
+      // ROS_INFO("using limit_left: y_min_l_left");
     }
     else
     {
-      limit_left = y_min_l_right;
+      limit_left = y_min_l_right - DETECT_SPACE_SENSIVITY;
+      // ROS_INFO("using limit_left: y_min_l_right");
     }
 
     if (y_max_w_right > y_max_w_left)
     {
-      limit_right = y_max_w_right;
+      limit_right = y_max_w_right + DETECT_SPACE_SENSIVITY;
+      // ROS_INFO("using limit_right: y_max_w_right");
+      // ROS_INFO("y_max_w_right: %f", y_max_w_right);
+      // ROS_INFO("y_max_w_left: %f", y_max_w_left);
     }
     else
     {
-      limit_right = y_max_w_left;
+      limit_right = y_max_w_left + DETECT_SPACE_SENSIVITY;
+      // ROS_INFO("using limit_right: y_max_w_left");
+      // ROS_INFO("y_max_w_right: %f", y_max_w_right);
+      // ROS_INFO("y_max_w_left: %f", y_max_w_left);
     }
 
+    // ROS_INFO("using limit_left: y_min_l_left");
+
     PublishCollSpace(limit_left, limit_right, DetectDist);
+
+    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
 
     for (size_t o = 0; o < vo.size(); ++o)
     {
@@ -123,7 +160,7 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
       for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
       {
 
-        if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
+        if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left && vo[o].y[lo] > limit_right)
         {
 
           // t_obstacle o;
@@ -140,151 +177,43 @@ void CheckSituation(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
 
           points_detected_2.push_back(new_point);
 
-          count_points++;
+          count_points_detected++;
         }
-
-        // ROS_INFO("FS = %lf",trajectory->score.FS);
       }
     }
+
+    // ROS_INFO("points_detected_2: %f", points_detected_2.points);
 
     PublishColl(points_detected_2);
-
-    // ROS_INFO("count= %d", count_points);
-
-    if (count_points > Detection_Sensitivity)
-    {
-      n.setParam("Param/LINES", false);
-      n.setParam("Param/OVERTAKING", true);
-      n.setParam("Param/DETECTION", false);
-      n.setParam("Param/AP_right", false);
-      still_overtaking = true;
-
-      // ROS_INFO("count= %d", count_points);
-    }
-    // else
-    // {
-    //   n.setParam("Param/OVERTAKING", false);
-    // }
   }
-  else
+
+  if (DETECTION_BACK == true)
   {
-    //OVERTAKING ON
-
-    PublishCollSpace(0.0, 0.0, 0.0);
-    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-    PublishColl(points_detected_empty);
-
-    //AP_left
-
-    // ROS_INFO("vl.size(): %f", vl.size());
-
-    if (still_overtaking == true) //verifica se está em modo ultrapassagem (nao é igual ao param OVERTAKING?)
+    if (y_max_l_left < y_max_l_right)
     {
-      for (size_t o = 0; o < vl.size(); ++o)
-      {
-        // cycle all lines inside each obstacle
-        for (size_t lo = 0; lo < vl[o].x.size(); ++lo)
-        {
-          // ROS_INFO("Analisando a linha");
-          if (vl[o].y[lo] <= 0) // o veiculo esta a esquerda da linha
-          {
-
-            count_move_to_left++;
-            if (count_move_to_left == 5)
-            {
-              ROS_INFO("AP_left");
-              n.setParam("Param/AP_left", true);
-            }
-          }
-          else if (vl[o].y[lo] < 1) // o veiculo está a uma distancia sufuciente da linha para ativar o param LINES
-          {
-            if (count_stabilize == 0)
-            {
-              n.setParam("Param/LINES", true);
-            }
-            count_stabilize++;
-            if (count_stabilize == 5)
-            {
-              ROS_INFO("AP_right");
-              n.setParam("Param/LINES", false);
-              n.setParam("Param/AP_left", false);
-              n.setParam("Param/AP_right", true);
-            }
-          }
-
-          if (vl[o].y[lo] > 1 && count_stabilize >= 5)
-          {
-            still_overtaking = false;
-            ROS_INFO("OVERTAKING OFF");
-            n.setParam("Param/OVERTAKING", false);
-            n.setParam("Param/DETECTION", true);
-            n.setParam("Param/LINES", true);
-            count_move_to_left = 0;
-            count_stabilize = 0;
-          }
-
-          // ROS_INFO("FS = %lf",trajectory->score.FS);
-        }
-      }
-    }
-  }
-}
-
-void CheckSituation_2try(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
-{
-
-  int count_points = 0;
-
-  ros::NodeHandle n;
-  double DetectDist = 0;
-  n.getParam("Param/DetectDist", DetectDist);
-
-  bool OVERTAKING;
-  n.getParam("Param/OVERTAKING", OVERTAKING);
-
-  double Detection_Sensitivity;
-  n.getParam("Param/Detection_Sensitivity", Detection_Sensitivity);
-
-  int car_number = 0;
-  n.getParam("car_number", car_number);
-  char car_name[20] = "/vehicle_odometry_";
-  char car_number_string[2];
-  sprintf(car_number_string, "%d", car_number);
-  strcat(car_name, car_number_string);
-
-  if (OVERTAKING == false)
-  {
-    n.setParam("Param/AP_right", true);
-    n.setParam("Param/AP_left", false);
-
-    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
-
-    // double points_detected[200][2];
-
-    //!!!! vo esta em relacao ao carro !!!!
-
-    double limit_left;
-    double limit_right;
-
-    if (y_min_l_left < y_min_l_right)
-    {
-      limit_left = y_min_l_left;
+      limit_left_back = y_max_l_left;
+      // ROS_INFO("using limit_left_back: y_max_l_left");
     }
     else
     {
-      limit_left = y_min_l_right;
+      limit_left_back = y_max_l_right;
+      // ROS_INFO("using limit_left_back: y_max_l_right");
     }
 
-    if (y_max_w_right > y_max_w_left)
+    if (y_min_w_right > y_min_w_left)
     {
-      limit_right = y_max_w_right;
+      limit_right_back = y_min_w_right;
+      // ROS_INFO("using limit_right_back: y_min_w_right");
     }
     else
     {
-      limit_right = y_max_w_left;
+      limit_right_back = y_min_w_left;
+      // ROS_INFO("using limit_right_back: y_min_w_left");
     }
 
-    PublishCollSpace(limit_left, limit_right, DetectDist);
+    PublishCollSpace_BACK(limit_left_back, limit_right_back, DetectDist);
+
+    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_3;
 
     for (size_t o = 0; o < vo.size(); ++o)
     {
@@ -292,7 +221,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &v
       for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
       {
 
-        if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
+        if (vo[o].x[lo] < 0 && vo[o].x[lo] > (-DetectDist) && vo[o].y[lo] < limit_left_back - 0.01 && vo[o].y[lo] > limit_right_back + 0.01)
         {
 
           // t_obstacle o;
@@ -307,101 +236,196 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &v
           new_point.b = 100;
           new_point.a = 1;
 
-          points_detected_2.push_back(new_point);
+          points_detected_3.push_back(new_point);
 
-          count_points++;
+          count_points_detected++;
         }
-
-        // ROS_INFO("FS = %lf",trajectory->score.FS);
       }
     }
 
-    PublishColl(points_detected_2);
+    PublishColl_BACK(points_detected_3);
+  }
 
-    // ROS_INFO("count= %d", count_points);
+  if (OVERTAKING == false)
+  {
 
-    if (count_points > Detection_Sensitivity)
+    n.setParam("Param/AP_right", true);
+    n.setParam("Param/AP_left", false);
+
+    if (count_points_detected > Detection_Sensitivity)
     {
       n.setParam("Param/LINES", false);
       n.setParam("Param/OVERTAKING", true);
-      n.setParam("Param/DETECTION", false);
+      // n.setParam("Param/DETECTION", false);
       n.setParam("Param/AP_right", false);
       n.setParam("Param/AP_left", false);
-      still_overtaking = true;
+      // still_overtaking = true;
+      overtaking_phase = 1;
 
-      // ROS_INFO("count= %d", count_points);
+      // PUBLISH INFO ----------------------------------------
+
+      ROS_INFO("count_points_detected= %d", count_points_detected);
+
+      if (y_min_l_left < y_min_l_right)
+      {
+        ROS_INFO("limit_left= y_min_l_left");
+      }
+      else
+      {
+        ROS_INFO("limit_left= y_min_l_right");
+      }
+
+      if (y_max_w_right > y_max_w_left)
+      {
+        ROS_INFO("limit_right= y_max_w_right");
+      }
+      else
+      {
+        ROS_INFO("limit_right= y_max_w_left");
+      }
+
+      //-----------------------------------------------------------
     }
-    // else
-    // {
-    //   n.setParam("Param/OVERTAKING", false);
-    // }
   }
   else
   {
-    //OVERTAKING ON
 
-    PublishCollSpace(0.0, 0.0, 0.0);
-    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-    PublishColl(points_detected_empty);
+    // PublishCollSpace(0.0, 0.0, 0.0);
+    // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+    // PublishColl(points_detected_empty);
 
-    //AP_left
+    // if (still_overtaking == true) //verifica se está em modo ultrapassagem (nao é igual ao param OVERTAKING?)
+    // {
 
-    // ROS_INFO("vl.size(): %f", vl.size());
+    double dist_clp = sqrt(pow(pos_clp_x, 2) + pow(pos_clp_y, 2));
 
-    if (still_overtaking == true) //verifica se está em modo ultrapassagem (nao é igual ao param OVERTAKING?)
+    // ROS_INFO("dist_clp: %f", dist_clp);
+
+    if (dist_clp < 1 && overtaking_phase == 1) // começou a curvar e perto da linha
+    {
+      n.setParam("Param/AP_left", true);
+      overtaking_phase = 2;
+      ROS_INFO("---------overtaking_phase: 2");
+    }
+
+    if (dist_clp > 1 && pos_clp_y < 0 && overtaking_phase == 2) // o veiculo esta a esquerda da linha
+    {
+      n.setParam("Param/LINES", true);
+      n.setParam("Param/DETECTION_BACK", true);
+      overtaking_phase = 3;
+      ROS_INFO("-------overtaking_phase: 3");
+    }
+
+    if (overtaking_phase == 3)
+    {
+      if (count_points_detected < Detection_Sensitivity)
+      {
+        ros::Time currtime = ros::Time::now();
+        // std::cout << "No points detected" << std::endl;
+        if (begin_time == true)
+        {
+          ROS_INFO("created timer");
+
+          begin_3 = ros::Time::now();
+          std::cout << "begin_3: " << begin_3 << std::endl;
+          begin_time = false;
+        }
+        // else if ((currtime - begin_3) > ros::Duration(5.0))
+        else if (currtime > begin_3 + ros::Duration(WaitingTime))
+        {
+          //waiting_time
+          overtaking_phase = 4;
+          n.setParam("Param/DETECTION", false);
+          PublishCollSpace(0.0, 0.0, 0.0);
+          pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+          PublishColl(points_detected_empty);
+          // std::cout << "begin_3: " << begin_3 << std::endl;
+          // std::cout << "(currtime - begin_3): " << (currtime - begin_3) << std::endl;
+          ROS_INFO("-------------overtaking_phase: 4");
+          // ROS_INFO("time: %f", begin_3);
+        }
+        // ROS_INFO("detecting: %d", count_points_detected);
+        // PublishCollSpace(0.0, 0.0, 0.0);
+        // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+        // PublishColl(points_detected_empty);
+
+        // overtaking_phase = 4;
+        // ROS_INFO("-------------overtaking_phase: 4");
+      }
+      else
+      {
+        // ROS_INFO("detecting: %d", count_points_detected);
+        begin_time = true;
+      }
+    }
+
+    if (overtaking_phase == 4)
     {
 
-      double dist_clp = sqrt(pow(pos_clp_x, 2) + pow(pos_clp_y, 2));
-
-      ROS_INFO("dist_clp: %f", dist_clp);
-
-      if (dist_clp < 1 && overtaking_phase == 1) // começou a curvar e perto da linha
+      if (count_points_detected < Detection_Sensitivity)
       {
-        n.setParam("Param/AP_left", true);
-        overtaking_phase = 2;
-        ROS_INFO("overtaking_phase: 2");
-      }
-
-      if (dist_clp > 1 && pos_clp_y < 0 && overtaking_phase == 2) // o veiculo esta a esquerda da linha
-      {
-        n.setParam("Param/LINES", true);
-        overtaking_phase = 3;
-        ROS_INFO("overtaking_phase: 3");
-      }
-
-      if (abs(pos_clp_x) < 0.2 && overtaking_phase == 3) //veiculo está paralelo à via
-      {
-
         n.setParam("Param/LINES", false);
         n.setParam("Param/AP_left", false);
         n.setParam("Param/AP_right", false);
-        overtaking_phase = 4;
-        ROS_INFO("overtaking_phase: 4");
-      }
 
-      if (dist_clp < 1 && overtaking_phase == 4) // veiculo inclinado e perto da linha
-      {
-        n.setParam("Param/AP_right", true);
-        overtaking_phase = 5;
-        ROS_INFO("overtaking_phase: 5");
+        if (dist_clp < 1) // começou a curvar e perto da linha
+        {
+          overtaking_phase = 5;
+          ROS_INFO("---------overtaking_phase: 5");
+        }
       }
-
-      if (pos_clp_y > 0 && overtaking_phase == 5)
+      else
       {
-        overtaking_phase = 6;
-        ROS_INFO("overtaking_phase: 6");
-        still_overtaking = false;
-        ROS_INFO("OVERTAKING OFF");
-        n.setParam("Param/OVERTAKING", false);
-        n.setParam("Param/DETECTION", true);
         n.setParam("Param/LINES", true);
-      }
+        n.setParam("Param/AP_left", true);
+        n.setParam("Param/AP_right", false);
 
-      // ROS_INFO("FS = %lf",trajectory->score.FS);
+        overtaking_phase = 3;
+        ROS_INFO("Obstacle Detected");
+        ROS_INFO("---------------overtaking_phase: 3");
+      }
     }
+
+    if (overtaking_phase == 5) // veiculo inclinado e perto da linha
+    {
+      n.setParam("Param/AP_right", true);
+      n.setParam("Param/DETECTION_BACK", false);
+      PublishCollSpace_BACK(0.0, 0.0, 0.0);
+      pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+      PublishColl_BACK(points_detected_empty);
+      overtaking_phase = 6;
+      ROS_INFO("--------------overtaking_phase: 6");
+      n.setParam("Param/W_DAP", 1);
+      n.setParam("Param/W_DLO", 0.1);
+    }
+
+    if (overtaking_phase == 6) // o veiculo esta a esquerda da linha
+    {
+      // if (pos_clp_y > 0){
+      // n.setParam("Param/LINES", true);
+      // }
+      ROS_INFO("dist_clp: %f", dist_clp);
+      if (dist_clp > 1 && pos_clp_y > 0)
+      {
+        n.setParam("Param/W_DAP", W_DAP_prev);
+        n.setParam("Param/W_DLO", W_DLO_prev);
+        n.setParam("Param/LINES", true);
+        // n.setParam("Param/DETECTION", true);
+        n.setParam("Param/OVERTAKING", false);
+        ROS_INFO("!!!!!OVERTAKING DONE!!!!!!");
+      }
+    }
+
+    // ROS_INFO("FS = %lf",trajectory->score.FS);
+    // }
   }
 }
 
+/**
+ * @brief Extract posicion of the closest line points of the vehicle
+ * 
+ * @param msg -> message received from APgenerator
+ */
 void ExtractCLP2(trajectory_planner::coordinates msg)
 {
   pos_clp_x = msg.x;
@@ -412,9 +436,18 @@ void ExtractCLP2(trajectory_planner::coordinates msg)
   // ROS_INFO("x: %f, y: %f", pos_clp_x, pos_clp_y);
 }
 
+/**
+ * @brief manually create overtaking
+ * 
+ * @param vo -> obstacles from the walls
+ * @param vl -> obstacles from the line
+ */
 void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obstacle> &vl)
 {
   ros::NodeHandle n;
+
+  bool MANUAL_OVERTAKING;
+  n.getParam("Param/MANUAL_OVERTAKING", MANUAL_OVERTAKING);
 
   if (overtaking_phase == 0)
   {
@@ -436,7 +469,7 @@ void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obs
 
   double dist_clp = sqrt(pow(pos_clp_x, 2) + pow(pos_clp_y, 2));
 
-  ROS_INFO("dist_clp: %f", dist_clp);
+  // ROS_INFO("dist_clp: %f", dist_clp);
 
   if (dist_clp < 1 && overtaking_phase == 1) // começou a curvar e perto da linha
   {
@@ -453,27 +486,31 @@ void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obs
     ROS_INFO("overtaking_phase: 3");
   }
 
-  if (abs(pos_clp_x) < 0.2 && overtaking_phase == 3) //veiculo está paralelo à via
+  if (MANUAL_OVERTAKING == false)
   {
 
-    n.setParam("Param/LINES", false);
-    n.setParam("Param/AP_left", false);
-    n.setParam("Param/AP_right", false);
-    overtaking_phase = 4;
-    ROS_INFO("overtaking_phase: 4");
-  }
+    if (abs(pos_clp_x) < 0.2 && overtaking_phase == 3) //veiculo está paralelo à via
+    {
 
-  if (dist_clp < 1 && overtaking_phase == 4) // veiculo inclinado e perto da linha
-  {
-    n.setParam("Param/AP_right", true);
-    overtaking_phase = 5;
-    ROS_INFO("overtaking_phase: 5");
-  }
+      n.setParam("Param/LINES", false);
+      n.setParam("Param/AP_left", false);
+      n.setParam("Param/AP_right", false);
+      overtaking_phase = 4;
+      ROS_INFO("overtaking_phase: 4");
+    }
 
-  if (pos_clp_y > 0 && overtaking_phase == 5)
-  {
-    overtaking_phase = 6;
-    ROS_INFO("overtaking_phase: 6");
+    if (dist_clp < 1 && overtaking_phase == 4) // veiculo inclinado e perto da linha
+    {
+      n.setParam("Param/AP_right", true);
+      overtaking_phase = 5;
+      ROS_INFO("overtaking_phase: 5");
+    }
+
+    if (pos_clp_y > 0 && overtaking_phase == 5)
+    {
+      overtaking_phase = 6;
+      ROS_INFO("overtaking_phase: 6");
+    }
   }
 }
 
@@ -491,7 +528,39 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
   double DLO_Max;
   nh.getParam("Param/DLO_Max", DLO_Max);
 
-  pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
+  // bool DETECTION;
+  // nh.getParam("Param/DETECTION", DETECTION);
+
+  double DetectDist = 0;
+  nh.getParam("Param/DetectDist", DetectDist);
+
+  // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
+
+  // double limit_left;
+  // double limit_right;
+
+  // if (y_min_l_left < y_min_l_right)
+  // {
+  //   limit_left = y_min_l_left;
+  // }
+  // else
+  // {
+  //   limit_left = y_min_l_right;
+  // }
+
+  // if (y_max_w_right > y_max_w_left)
+  // {
+  //   limit_right = y_max_w_right;
+  // }
+  // else
+  // {
+  //   limit_right = y_max_w_left;
+  // }
+
+  // if (DETECTION == true)
+  // {
+  //   PublishCollSpace(limit_left, limit_right, DetectDist);
+  // }
 
   // delete all previous computed collision pts
   trajectory->collision_pts.erase(trajectory->collision_pts.begin(), trajectory->collision_pts.end());
@@ -548,9 +617,33 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
         // cycle all lines inside each obstacle
         for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
         {
+
+          // Detect obstacles
+          // if (DETECTION == true)
+          // {
+          //   if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
+          //   {
+
+          //     // t_obstacle o;
+
+          //     pcl::PointXYZRGBA new_point;
+          //     new_point.x = vo[o].x[lo];
+          //     new_point.y = vo[o].y[lo];
+          //     new_point.z = 0;
+
+          //     new_point.r = 100;
+          //     new_point.g = 100;
+          //     new_point.b = 100;
+          //     new_point.a = 1;
+
+          //     points_detected_2.push_back(new_point);
+
+          //     count_points_detected++;
+          //   }
+          // }
           // ROS_INFO("vo[o].x[lo]: %f,vo[o].y[lo]: %f",vo[o].x[lo],vo[o].y[lo]);
           double DLOprev = sqrt(pow(trajectory->v_lines[n][l].x[0] - vo[o].x[lo], 2) + pow(trajectory->v_lines[n][l].y[0] - vo[o].y[lo], 2));
-          
+
           if (trajectory->score.DLO > DLOprev)
           {
             trajectory->score.DLO = DLOprev;
@@ -581,6 +674,10 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
       }
     }
   }
+  // if (DETECTION == true)
+  // {
+  //   PublishColl(points_detected_2);
+  // }
   return SUCCESS;
 }
 
@@ -704,6 +801,174 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
   return DO_INTERSECT;
 }
 
+void set_limits_walls(mtt::TargetListPC &msg)
+{
+  // vo.erase(vo.begin(), vo.end()); //std::vector<t_obstacle> vo
+
+  y_max_w_right = -500;
+  y_max_w_left = -500;
+
+  y_min_w_right = -500;
+  y_min_w_left = -500;
+  double dist_min_reached_detect = 100;
+
+  double dist_y_right;
+  double dist_y_right_back;
+  double dist_y_right_front;
+  if (pos_clp_y < 0)
+  {
+    dist_y_right_back = abs(pos_clp_y) + 5;
+    dist_y_right_front = abs(pos_clp_y) + 5;
+  }
+  else
+  {
+    dist_y_right_back = 5 - pos_clp_y;
+    dist_y_right_front = 5 - pos_clp_y;
+  }
+
+  ros::NodeHandle n;
+  double DetectDist = 0;
+  n.getParam("Param/DetectDist", DetectDist);
+
+  double DETECT_SPACE_Dist = 0;
+  n.getParam("Param/DETECT_SPACE_Dist", DETECT_SPACE_Dist);
+
+  bool first_point_w_right = true;
+  bool first_point_w_right_back = true;
+
+  // ROS_INFO("msg_obstacles size = %ld", msg.obstacle_lines.size());
+  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines -> msg_transformed.obstacle_lines -> contem a nuvem de pontos
+  {
+
+    pcl::PointCloud<pcl::PointXYZ> pc;
+    pcl::PCLPointCloud2 pcl_pc;
+    pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
+    pcl::fromPCLPointCloud2(pcl_pc, pc); //nuvem de pontos dos obstaculos
+
+    for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
+    {
+
+      // double min_x = 100; //sera decessario?
+      // double min_x = DetectDist / 20;
+      // double point_dist = sqrt(pow(pc.points[i].x, 2) + pow(pc.points[i].y, 2));
+
+      // if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].y < 0)
+      if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].x < (DetectDist / 10) && pc.points[j].y < -(dist_y_right_front - 1))
+      {
+        // dist_min_reached_detect = point_dist;
+        // min_x = pc.points[j].x;  //sera decessario?
+        // ROS_INFO("xr: %f, yr: %f", pc.points[j].x, pc.points[j].y);
+        y_max_w_right = pc.points[j].y;
+      }
+
+      if (pc.points[j].y > y_min_w_right && pc.points[j].x < 0 && pc.points[j].x > (-(DetectDist / 2)) && pc.points[j].y < -(dist_y_right_back - 1))
+      {
+        // ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
+        // if (first_point_w_right_back == true)
+        // {
+        //   y_min_w_right = pc.points[j].y;
+        //   first_point_w_right_back = false;
+        // }
+        // else
+        // {
+        // if (abs(pc.points[j].y - dist_y_right_back) < DETECT_SPACE_Dist)
+        // {
+        // dist_y_right_back = pc.points[j].y;
+        y_min_w_right = pc.points[j].y;
+        // }
+        // }
+      }
+
+      if (pc.points[j].y > y_max_w_left && pc.points[j].y < 0 && pc.points[j].x > (DetectDist - (DetectDist / 2)) && pc.points[j].x < DetectDist)
+      {
+        // ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
+        if (first_point_w_right == true)
+        {
+          dist_y_right = pc.points[j].y;
+          y_max_w_left = pc.points[j].y;
+          first_point_w_right = false;
+        }
+        else
+        {
+          if (abs(pc.points[j].y - dist_y_right) < DETECT_SPACE_Dist)
+          {
+            y_max_w_left = pc.points[j].y;
+          }
+        }
+      }
+
+      if (pc.points[j].y > y_min_w_left && pc.points[j].y < 0 && pc.points[j].x > (-DetectDist) && pc.points[j].x < (DetectDist / 10) - DetectDist)
+      {
+        // ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
+        if (first_point_w_right_back == true)
+        {
+          dist_y_right_back = pc.points[j].y;
+          y_min_w_left = pc.points[j].y;
+          first_point_w_right_back = false;
+        }
+        else
+        {
+          if (abs(pc.points[j].y - dist_y_right_back) < DETECT_SPACE_Dist)
+          {
+            y_min_w_left = pc.points[j].y;
+          }
+        }
+      }
+
+      // o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
+      // o.y.push_back(pc.points[j].y);
+    }
+
+    // vo.push_back(o); //vo tem agora a nuvem de pontos
+  }
+}
+
+void set_limits_line(mtt::TargetListPC &msg)
+{
+
+  y_min_l_right = 500;
+  y_min_l_left = 500;
+  y_max_l_right = 500;
+  y_max_l_left = 500;
+
+  // ROS_INFO("msg_lines size = %ld", msg.obstacle_lines.size());
+  for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines = msg_transformed2.obstacle_lines = pc_msg2 (pontos?)
+  {
+    ros::NodeHandle n;
+    double DetectDist = 0;
+    n.getParam("Param/DetectDist", DetectDist);
+
+    pcl::PointCloud<pcl::PointXYZ> pc;
+    pcl::PCLPointCloud2 pcl_pc;
+    pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
+    pcl::fromPCLPointCloud2(pcl_pc, pc); //nuvem de pontos dos obstaculos
+
+    for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
+    {
+
+      if (pc.points[j].y < y_min_l_right && pc.points[j].x > (DetectDist - DetectDist / 10) && pc.points[j].x < DetectDist)
+      {
+        y_min_l_right = pc.points[j].y;
+      }
+
+      if (pc.points[j].y < y_max_l_right && pc.points[j].x < (DetectDist / 10 - DetectDist) && pc.points[j].x > (-DetectDist))
+      {
+        y_max_l_right = pc.points[j].y;
+      }
+
+      if (pc.points[j].y < y_min_l_left && pc.points[j].x > 0)
+      {
+        y_min_l_left = pc.points[j].y;
+      }
+
+      if (pc.points[j].y < y_max_l_left && pc.points[j].x < 0)
+      {
+        y_max_l_left = pc.points[j].y;
+      }
+    }
+  }
+}
+
 /**
  * @brief Sets the obstacles
  * @param mtt::TargetListPC& msg
@@ -712,9 +977,6 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
 t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -> msg_transformed
 {
   vo.erase(vo.begin(), vo.end()); //std::vector<t_obstacle> vo
-
-  y_max_w_right = -500;
-  y_max_w_left = -500;
 
   // ROS_INFO("msg_obstacles size = %ld", msg.obstacle_lines.size());
   for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines -> msg_transformed.obstacle_lines -> contem a nuvem de pontos
@@ -728,10 +990,6 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
 
     t_obstacle o;
 
-    ros::NodeHandle n;
-    double DetectDist = 0;
-    n.getParam("Param/DetectDist", DetectDist);
-
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
@@ -739,19 +997,6 @@ t_func_output c_manage_trajectory::set_obstacles(mtt::TargetListPC &msg) //msg -
 
     for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
-      double min_x = 100;
-      // double min_x = DetectDist/10;
-
-      if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].x < min_x && pc.points[j].y < 0)
-      {
-        min_x = pc.points[j].x;
-        y_max_w_right = pc.points[j].y;
-      }
-
-      if (pc.points[j].y > y_max_w_left && pc.points[j].y < 0 && pc.points[j].x > (DetectDist - DetectDist / 10) && pc.points[j].x < DetectDist)
-      {
-        y_max_w_left = pc.points[j].y;
-      }
 
       o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
       o.y.push_back(pc.points[j].y);
@@ -771,9 +1016,6 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
 {
   vl.erase(vl.begin(), vl.end());
 
-  y_min_l_right = 500;
-  y_min_l_left = 500;
-
   // ROS_INFO("msg_lines size = %ld", msg.obstacle_lines.size());
   for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines = msg_transformed2.obstacle_lines = pc_msg2 (pontos?)
   {
@@ -786,10 +1028,6 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
 
     t_obstacle o;
 
-    ros::NodeHandle n;
-    double DetectDist = 0;
-    n.getParam("Param/DetectDist", DetectDist);
-
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
     pcl_conversions::toPCL(msg.obstacle_lines[i], pcl_pc);
@@ -797,17 +1035,6 @@ t_func_output c_manage_trajectory::set_lines(mtt::TargetListPC &msg)
 
     for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
-
-      if (pc.points[j].y < y_min_l_right && pc.points[j].x > (DetectDist - DetectDist / 10) && pc.points[j].x < DetectDist)
-      {
-        y_min_l_right = pc.points[j].y;
-      }
-
-      if (pc.points[j].y < y_min_l_left && pc.points[j].x > 0)
-      {
-        y_min_l_left = pc.points[j].y;
-      }
-
       o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
       o.y.push_back(pc.points[j].y);
     }
@@ -1077,12 +1304,12 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   int marker_count = 0;
   for (int i = 0; i < (int)vt.size(); ++i)
   {
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
+    draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
 
     // draw_on_node(vt[i], &marker_vec, &marker_count, 2.5, vt[i]->score.DLO, vt[i]->score.DLOnorm, "DLO ");
     // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.CL, vt[i]->score.CL, "CL ");
-    draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
+    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
   }
 
   ros::NodeHandle nh;
@@ -1304,13 +1531,13 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
 
     if (DETECTION == true || OVERTAKING == true)
     {
-      CheckSituation_2try(vo, vl); //!!!! Uncomment to detect objects
+      CheckSituation_2try(vo); //!!!! Uncomment to detect objects
     }
     else
     {
       PublishCollSpace(0.0, 0.0, 0.0);
       pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-      PublishColl(points_detected_empty);
+      // PublishColl(points_detected_empty);
     }
 
     if (MANUAL_OVERTAKING == true)

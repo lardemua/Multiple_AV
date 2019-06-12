@@ -62,14 +62,19 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
 pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
 
 ros::Publisher ap_marker_coll;
+ros::Publisher ap_marker_coll_back;
 ros::Publisher ap_marker_coll_space;
+ros::Publisher ap_marker_coll_space_back;
 
 double this_speed_new = 0;
 double this_pos_x = 0;
 double this_pos_y = 0;
 
-
-
+/**
+ * @brief extracts speed from model in Gazebo
+ * 
+ * @param models -> model in analysis
+ */
 void ExtractVel(gazebo_msgs::ModelStates models)
 {
   int pos_name = 0;
@@ -202,12 +207,14 @@ void velocity_callback(double speed) //speed = SPEED_SAFFETY
   n.getParam("Param/MIN_STEERING_ANGLE", MIN_STEERING_ANGLE);
   // double TRAJECTORY_ANGLE;
   // n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE); //3
-  double NUM_TRAJ;
+  int NUM_TRAJ;
   n.getParam("Param/NUM_TRAJ", NUM_TRAJ);
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
   double SPEED_REQUIRED;
   n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
+  double TRAJ_DENSITY;
+  n.getParam("Param/TRAJ_DENSITY", TRAJ_DENSITY);
 
   double max_dist = pow(speed * 3.6, 2) / 100; //distancia de travagem?
   if (max_dist > 20)
@@ -224,7 +231,7 @@ void velocity_callback(double speed) //speed = SPEED_SAFFETY
     max_angle = MAX_STEERING_ANGLE - (MAX_STEERING_ANGLE - MIN_STEERING_ANGLE) * (this_speed_new / SPEED_REQUIRED);
   }
 
-  double iter_value = max_angle / (pow(2, NUM_TRAJ));
+  double iter_value = max_angle / (pow(TRAJ_DENSITY, NUM_TRAJ));
   int n_traj = 1;
   double i = 0.00000001;
   while (i < max_angle)
@@ -260,7 +267,7 @@ void velocity_callback(double speed) //speed = SPEED_SAFFETY
         v_arc2.push_back(max_dist / NUM_NODES);
       }
       manage_vt->create_new_trajectory(v_a2, v_arc2, v_a2);
-      i = i * 2;
+      i = i * TRAJ_DENSITY;
     }
 
     n_traj++;
@@ -286,10 +293,12 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
   // n.getParam("Param/TRAJECTORY_ANGLE", TRAJECTORY_ANGLE);
   double NUM_NODES;
   n.getParam("Param/NUM_NODES", NUM_NODES);
-  double NUM_TRAJ;
+  int NUM_TRAJ;
   n.getParam("Param/NUM_TRAJ", NUM_TRAJ);
   double SPEED_REQUIRED;
   n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
+  double TRAJ_DENSITY;
+  n.getParam("Param/TRAJ_DENSITY", TRAJ_DENSITY);
 
   double max_dist = pow(speed * 3.6, 2) / 100; //3.6? -> tamanho do veiculo?
   if (max_dist > 20)
@@ -306,7 +315,7 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
     max_angle = MAX_STEERING_ANGLE - (MAX_STEERING_ANGLE - MIN_STEERING_ANGLE) * (this_speed_new / SPEED_REQUIRED);
   }
 
-  double iter_value = max_angle / (pow(2, NUM_TRAJ));
+  double iter_value = max_angle / (pow(TRAJ_DENSITY, NUM_TRAJ));
   double i = 0.00000001;
   int num_trajec = 0;
 
@@ -347,7 +356,7 @@ void velocity_update_callback(double speed) //speed=SPEED_SAFFETY
       }
       manage_vt->update_trajectory(v_a2, v_arc2, v_a2, num_trajec);
       num_trajec = num_trajec + 1;
-      i = i * 2;
+      i = i * TRAJ_DENSITY;
     }
     // i = i + TRAJECTORY_ANGLE;
   }
@@ -397,6 +406,13 @@ double compute_last_dir(double angle)
   return mean;
 }
 
+/**
+ * @brief Publisher of the detection space (front)
+ * 
+ * @param limit_left -> max (y) pos for the space
+ * @param limit_right -> min (y) pos for the space
+ * @param DetectDist -> max dist of detection from Param
+ */
 void PublishCollSpace(double limit_left, double limit_right, double DetectDist)
 {
 
@@ -457,7 +473,14 @@ void PublishCollSpace(double limit_left, double limit_right, double DetectDist)
   ap_marker_coll_space.publish(line_strip);
 }
 
-void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2)
+/**
+ * @brief Publisher of the detection space (back)
+ * 
+ * @param limit_left -> max (y) pos for the space
+ * @param limit_right -> min (y) pos for the space
+ * @param DetectDist -> max dist of detection from Param
+ */
+void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectDist)
 {
 
   ros::NodeHandle n;
@@ -471,46 +494,104 @@ void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2)
   sprintf(car_number_string, "%d", car_number);
   strcat(car_name, car_number_string);
 
-  // visualization_msgs::Marker markerColl;
-  // markerColl.id = 0;
+  visualization_msgs::Marker line_strip;
+  line_strip.header.frame_id = car_name;
+  line_strip.ns = "colision_space";
+  line_strip.header.stamp = ros::Time::now();
+  line_strip.action = visualization_msgs::Marker::ADD;
+  line_strip.pose.orientation.w = 1.0;
+  line_strip.id = 1;
+  line_strip.type = visualization_msgs::Marker::LINE_STRIP;
+  line_strip.scale.x = 0.1;
+  line_strip.color.r = 0.5;
+  line_strip.color.g = 0.0;
+  line_strip.color.b = 0.5;
+  line_strip.color.a = 1.0;
+
+  geometry_msgs::Point p1;
+  p1.x = 0;
+  p1.y = limit_left;
+  p1.z = 0;
+
+  geometry_msgs::Point p2;
+  p2.x = 0;
+  p2.y = limit_right;
+  p2.z = 0;
+
+  geometry_msgs::Point p3;
+  p3.x = -DetectDist / 2;
+  p3.y = limit_right;
+  p3.z = 0;
+
+  geometry_msgs::Point p4;
+  p4.x = -DetectDist / 2;
+  p4.y = limit_left;
+  p4.z = 0;
+
+  geometry_msgs::Point p5;
+  p5.x = 0;
+  p5.y = limit_left;
+  p5.z = 0;
+
+  line_strip.points.push_back(p1);
+  line_strip.points.push_back(p2);
+  line_strip.points.push_back(p3);
+  line_strip.points.push_back(p4);
+  line_strip.points.push_back(p5);
+
+  ap_marker_coll_space_back.publish(line_strip);
+}
+
+/**
+ * @brief Publisher of the detected points (front)
+ * 
+ * @param points_detected_2 -> PointCloud with the detected points
+ */
+void PublishColl(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2)
+{
+
+  ros::NodeHandle n;
+  p_n = &n;
+  // n.getParam("Param/simul", _simulation_);
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
   points_detected_2.header.frame_id = car_name;
-  // points_detected_2.header.stamp = ros::Time::now();
-  // markerColl.ns = "colision_points";
-  // markerColl.action = visualization_msgs::Marker::ADD;
-  // markerColl.type = visualization_msgs::Marker::CYLINDER;
-  // markerColl.scale.x = 0.12;
-  // markerColl.scale.y = 0.12;
-  // markerColl.scale.z = 0.1;
-  // markerColl.color.r = 0.0;
-  // markerColl.color.g = 1.0;
-  // markerColl.color.b = 0.0;
-  // markerColl.color.a = 1.0;
-
-  // int total = 0;
-
-  // int size_array = points_detected_2.points.size(); //!!!
-
-  // ROS_INFO("n_points: %d", size_array);
-
-  // for (int i = 0; i < size_array; ++i)
-  // {
-
-  //   geometry_msgs::Point p;
-  //   p.x = points_detected_2.points[i].x;
-  //   p.y = points_detected_2.points[i].y;
-  //   p.z = points_detected_2.points[i].z;
-
-  //   // markerColl.pose.position.x = p.x;
-  //   // markerColl.pose.position.y = p.y;
-  //   markerColl.points.push_back(p);
-  //   total++;
-  // }
 
   sensor_msgs::PointCloud2 pc2;
-
   pcl::toROSMsg(points_detected_2, pc2);
 
   ap_marker_coll.publish(pc2);
+}
+
+/**
+ * @brief Publisher of the detected points (back)
+ * 
+ * @param points_detected_3 -> PointCloud with the detected points
+ */
+void PublishColl_BACK(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_3)
+{
+
+  ros::NodeHandle n;
+  p_n = &n;
+  // n.getParam("Param/simul", _simulation_);
+
+  int car_number = 0;
+  n.getParam("car_number", car_number);
+  char car_name[20] = "/vehicle_odometry_";
+  char car_number_string[2];
+  sprintf(car_number_string, "%d", car_number);
+  strcat(car_name, car_number_string);
+  points_detected_3.header.frame_id = car_name;
+
+  sensor_msgs::PointCloud2 pc2;
+  pcl::toROSMsg(points_detected_3, pc2);
+
+  ap_marker_coll_back.publish(pc2);
 }
 
 /**
@@ -542,7 +623,11 @@ int main(int argc, char **argv)
 
   ap_marker_coll = n.advertise<sensor_msgs::PointCloud2>("/coll_marker", 100);
 
+  ap_marker_coll_back = n.advertise<sensor_msgs::PointCloud2>("/coll_marker_back", 100);
+
   ap_marker_coll_space = n.advertise<visualization_msgs::Marker>("/coll_space_marker", 100);
+
+  ap_marker_coll_space_back = n.advertise<visualization_msgs::Marker>("/coll_space_marker_back", 100);
 
   ros::Publisher array_pub = n.advertise<visualization_msgs::MarkerArray>("/array_of_markers", 1);
 
@@ -635,10 +720,13 @@ int main(int argc, char **argv)
       try
       {
         // p_listener->lookupTransform("/world", "/vehicle_odometry", time, transformw);
+
         p_listener->lookupTransform("/world", car_name, ros::Time(0), transformw);
       }
       catch (tf::TransformException ex)
       {
+        ROS_INFO("ERRO NO traj2");
+
         ROS_ERROR("%s", ex.what());
         have_transform = false;
       }
@@ -653,7 +741,7 @@ int main(int argc, char **argv)
         // mw_broadcaster.sendTransform(tf::StampedTransform(transformw, time + ros::Duration(5), "/world",
         //                                                   "/vehicle_"
         //                                                   "odometry"));
-        ros::spinOnce();
+        // ros::spinOnce();
         // 				cout<<"stat Publishing transform"<<endl;
 
         ros::Duration(0.1).sleep();
@@ -701,6 +789,8 @@ int main(int argc, char **argv)
               //"/vehicle_odometry" -> The frame where the data originated
               // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
               //transform_mtt -> The transform reference to fill.
+              // std::cout << "pc_v1[i].header.frame_id: " << pc_v1[i].header.frame_id << std::endl;
+
               p_listener->lookupTransform(pc_v1[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
               // ROS_INFO("FFFFFFrame_id=%s ",
               // pc_v1[i].header.frame_id.c_str());
@@ -712,6 +802,8 @@ int main(int argc, char **argv)
             }
             catch (tf::TransformException ex)
             {
+              ROS_INFO("ERRO NO traj3");
+
               ROS_ERROR("%s", ex.what());
             }
           }
@@ -735,6 +827,7 @@ int main(int argc, char **argv)
           pc_msg.header.frame_id = car_name;
           pc_msg.header.stamp = ros::Time(0);
           msg_transformed.obstacle_lines.push_back(pc_msg); //insere o ponto na mensagem
+          set_limits_walls(msg_transformed);
         }
         // manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
 
@@ -758,6 +851,8 @@ int main(int argc, char **argv)
               //"/vehicle_odometry" -> The frame where the data originated
               // ros::Time(0) -> The time at which the value of the transform is desired. (0 will get the latest)
               //transform_mtt -> The transform reference to fill.
+              // std::cout << "pc_v2[i].header.frame_id: " << pc_v2[i].header.frame_id << std::endl;
+
               p_listener->lookupTransform(pc_v2[i].header.frame_id, car_name, ros::Time(0), transform_mtt);
 
               //Send a StampedTransform The stamped data structure includes frame_id, and time, and parent_id already.
@@ -767,6 +862,7 @@ int main(int argc, char **argv)
             }
             catch (tf::TransformException ex)
             {
+              ROS_INFO("ERRO NO traj1");
               ROS_ERROR("%s", ex.what());
             }
           }
@@ -796,6 +892,7 @@ int main(int argc, char **argv)
 
           // msg_transformed.obstacle_lines.push_back(pc_msg2);
           msg_transformed2.obstacle_lines.push_back(pc_msg2);
+          set_limits_line(msg_transformed2);
         }
         manage_vt->set_obstacles(msg_transformed); //envia as paredes e outros obstaculos (linha caso _LINES_ seja true) como obstaculos
         manage_vt->set_lines(msg_transformed2);    //ja nao faz nada
@@ -886,14 +983,14 @@ int main(int argc, char **argv)
       }
     }
 
-    if (have_plan == true)
-    {
-      // !!!! The previous 'if' must have a weight evaluation !!!!  if ... &&
-      // GlobalScore>=0.74
+    // if (have_plan == true)
+    // {
+    // !!!! The previous 'if' must have a weight evaluation !!!!  if ... &&
+    // GlobalScore>=0.74
 
-      // mw_broadcaster.sendTransform(tf::StampedTransform(transformw,  ros::Time(0), "/world", "/vehicle_odometry"));
-      // cout << "stat Publishing transform" << endl;
-    }
+    // mw_broadcaster.sendTransform(tf::StampedTransform(transformw,  ros::Time(0), "/world", "/vehicle_odometry"));
+    // cout << "stat Publishing transform" << endl;
+    // }
 
     // printf("CURRENT NODE-> %d\n",node);
     // printf("Distance Travelled-> %f\n",base_status.distance_traveled);

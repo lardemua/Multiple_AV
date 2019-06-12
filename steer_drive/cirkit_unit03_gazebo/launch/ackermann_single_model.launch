@@ -91,7 +91,10 @@
         <!-- <remap from="/vehicle_odometry" to="/$(arg namespace)/vehicle_odometry"/> -->
         <remap from="/Apoint" to="/$(arg namespace)/Apoint"/>
         <remap from="/coll_marker" to="/$(arg namespace)/coll_marker"/>
+        <remap from="/coll_marker_back" to="/$(arg namespace)/coll_marker_back"/>
         <remap from="/coll_space_marker" to="/$(arg namespace)/coll_space_marker"/>
+        <remap from="/coll_space_marker_back" to="/$(arg namespace)/coll_space_marker_back"/>
+        <remap from="/line_close_point" to="/$(arg namespace)/line_close_point"/>
     </node>
 
     <param name="car_number" value="$(arg car_number)"/>
@@ -103,7 +106,8 @@
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
         <remap from="/ap_marker" to="/$(arg namespace)/ap_marker"/>
         <remap from="/Apoint" to="/$(arg namespace)/Apoint"/>
-        <!-- <param name="car_number" value="$(arg car_number)"/> -->
+        <remap from="/clp_marker" to="/$(arg namespace)/clp_marker"/>
+        <remap from="/line_close_point" to="/$(arg namespace)/line_close_point"/>
     </node>
     <!-- </group> -->
 
@@ -128,6 +132,9 @@
         <remap from="/ap_marker" to="/$(arg namespace)/ap_marker"/>
         <remap from="/coll_marker" to="/$(arg namespace)/coll_marker"/>
         <remap from="/coll_space_marker" to="/$(arg namespace)/coll_space_marker"/>
+        <remap from="/coll_space_marker_back" to="/$(arg namespace)/coll_space_marker_back"/>
+        <remap from="/clp_marker" to="/$(arg namespace)/clp_marker"/>
+        <remap from="/coll_marker_back" to="/$(arg namespace)/coll_marker_back"/>
     </node>
 
 
@@ -143,7 +150,7 @@
     <node name="tf_generator6_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator6" />
 
     <!--  cirkit_unit03_gazebo_line_$(arg namespace) = ackermann_vehicle_gazebo_line.cpp -->
-    <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node">
+    <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node" >
         <remap from="/line_laser_scan" to="/$(arg namespace)/line_laser_scan"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
     </node>
