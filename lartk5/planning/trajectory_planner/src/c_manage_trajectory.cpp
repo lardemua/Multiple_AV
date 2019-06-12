@@ -119,8 +119,6 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
   double limit_right_back;
   int count_points_detected = 0;
 
-  
-
   if (DETECTION == true)
   {
 
@@ -339,6 +337,8 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           overtaking_phase = 4;
           n.setParam("Param/DETECTION", false);
           PublishCollSpace(0.0, 0.0, 0.0);
+          pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+          PublishColl(points_detected_empty);
           // std::cout << "begin_3: " << begin_3 << std::endl;
           // std::cout << "(currtime - begin_3): " << (currtime - begin_3) << std::endl;
           ROS_INFO("-------------overtaking_phase: 4");
@@ -391,6 +391,8 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       n.setParam("Param/AP_right", true);
       n.setParam("Param/DETECTION_BACK", false);
       PublishCollSpace_BACK(0.0, 0.0, 0.0);
+      pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+      PublishColl_BACK(points_detected_empty);
       overtaking_phase = 6;
       ROS_INFO("--------------overtaking_phase: 6");
       n.setParam("Param/W_DAP", 1);
@@ -400,7 +402,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     if (overtaking_phase == 6) // o veiculo esta a esquerda da linha
     {
       // if (pos_clp_y > 0){
-        // n.setParam("Param/LINES", true);
+      // n.setParam("Param/LINES", true);
       // }
       ROS_INFO("dist_clp: %f", dist_clp);
       if (dist_clp > 1 && pos_clp_y > 0)

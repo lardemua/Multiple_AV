@@ -100,7 +100,7 @@
     <param name="car_number" value="$(arg car_number)"/>
 
     <!-- <group ns="$(arg namespace)"> -->
-    <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen" launch-prefix="xterm -e gdb --args">
+    <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen" >
         <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
         <remap from="APgenerator/im" to="/$(arg namespace)/APgenerator/im"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
@@ -132,6 +132,9 @@
         <remap from="/ap_marker" to="/$(arg namespace)/ap_marker"/>
         <remap from="/coll_marker" to="/$(arg namespace)/coll_marker"/>
         <remap from="/coll_space_marker" to="/$(arg namespace)/coll_space_marker"/>
+        <remap from="/coll_space_marker_back" to="/$(arg namespace)/coll_space_marker_back"/>
+        <remap from="/clp_marker" to="/$(arg namespace)/clp_marker"/>
+        <remap from="/coll_marker_back" to="/$(arg namespace)/coll_marker_back"/>
     </node>
 
 

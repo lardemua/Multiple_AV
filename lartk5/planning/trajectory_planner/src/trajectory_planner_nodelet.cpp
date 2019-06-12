@@ -503,7 +503,9 @@ void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectD
   line_strip.id = 1;
   line_strip.type = visualization_msgs::Marker::LINE_STRIP;
   line_strip.scale.x = 0.1;
-  line_strip.color.b = 1.0;
+  line_strip.color.r = 0.5;
+  line_strip.color.g = 0.0;
+  line_strip.color.b = 0.5;
   line_strip.color.a = 1.0;
 
   geometry_msgs::Point p1;

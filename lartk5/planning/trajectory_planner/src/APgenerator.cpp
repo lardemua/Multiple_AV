@@ -28,6 +28,8 @@ double this_pos_y = 0;
 int count_ap_y = 0;
 double ap_y_temp = (2.650925) / 10;
 
+int count_errors = 0;
+
 std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2;
 pcl::PointCloud<pcl::PointXYZ>::Ptr pc_v_ptrl(new pcl::PointCloud<pcl::PointXYZ>);
 
@@ -162,8 +164,9 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
       }
       catch (tf::TransformException ex)
       {
-        // ROS_INFO("ERRO NO APgenerator");
-        // ROS_ERROR("%s", ex.what());
+        count_errors++;
+        ROS_INFO("ERRO NO APgenerator, erro n: %d", count_errors);
+        ROS_ERROR("%s", ex.what());
       }
     }
 
