@@ -75,9 +75,10 @@ void lineFilter::lineCallback(const sensor_msgs::LaserScan::ConstPtr &line)
   ros::NodeHandle n;
   int car_number = 0;
   n.getParam("car_number", car_number);
-  char link_name[20] = "line_link_";
   char car_number_string[2];
   sprintf(car_number_string, "%d", car_number);
+
+  char link_name[20] = "line_link_";
   strcat(link_name, car_number_string);
 
   char laser_name[20] = "laser_link_";

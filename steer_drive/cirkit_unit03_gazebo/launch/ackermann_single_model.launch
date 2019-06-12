@@ -150,7 +150,7 @@
     <node name="tf_generator6_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator6" />
 
     <!--  cirkit_unit03_gazebo_line_$(arg namespace) = ackermann_vehicle_gazebo_line.cpp -->
-    <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node">
+    <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node" >
         <remap from="/line_laser_scan" to="/$(arg namespace)/line_laser_scan"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
     </node>
