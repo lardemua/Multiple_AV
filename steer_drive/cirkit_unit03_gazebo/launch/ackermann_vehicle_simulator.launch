@@ -81,7 +81,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
 
     <param name="Param/SPEED_REQUIRED" value="1" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
-    
+
     <param name="Param/DetectDist" value="20" />
 
     <param name="Param/APdistMin" value="5" />
