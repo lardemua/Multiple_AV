@@ -67,6 +67,10 @@ double pos_clp_y;
 
 bool begin_time = true;
 
+ros::Time begin_overtaking;
+
+ros::Duration time_overtaking;
+
 ros::Time begin_3;
 
 /**
@@ -261,6 +265,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       n.setParam("Param/AP_left", false);
       // still_overtaking = true;
       overtaking_phase = 1;
+      begin_overtaking = ros::Time::now();
 
       // PUBLISH INFO ----------------------------------------
 
@@ -413,6 +418,8 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
         // n.setParam("Param/DETECTION", true);
         n.setParam("Param/OVERTAKING", false);
         ROS_INFO("!!!!!OVERTAKING DONE!!!!!!");
+        time_overtaking = ros::Time::now() - begin_overtaking;
+        std::cout << "time taken to overtake: " << time_overtaking << std::endl;
       }
     }
 
@@ -1268,6 +1275,10 @@ t_func_output c_manage_trajectory::compute_chosen_traj(void)
   else
     return FAILURE;
 }
+
+// double getAlpha (){
+//   return chosen_traj.alpha;
+// }
 
 /**
  * @brief Create a static marker

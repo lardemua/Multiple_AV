@@ -651,7 +651,7 @@ int main(int argc, char **argv)
   // Polygon stuff
   ros::Subscriber pcl_sub = n.subscribe("/reduced_pcl", 1000, pcl_callback);
   ros::Publisher twist_pub = n.advertise<geometry_msgs::Twist>("/steer_drive_controller/cmd_vel", 1);
-  ros::Publisher mindist_pub = n.advertise<std_msgs::Float64MultiArray>("/min_dist_to_obstacles", 1);
+  ros::Publisher mindist_pub = n.advertise<std_msgs::Float64MultiArray>("/analysis_data", 1);
 
   // road lines
   ros::Subscriber line_sub;
@@ -952,9 +952,11 @@ int main(int argc, char **argv)
 
         if (manage_vt->chosen_traj.index != -1)
         {
-          vector<double> vec1 = {ros::Time(0).toSec(), manage_vt->chosen_traj.min_dist};
+          double alpha_degrees = manage_vt->chosen_traj.alpha * (180/M_PI);
+          vector<double> vec1 = {ros::Time(0).toSec(), manage_vt->chosen_traj.min_dist,alpha_degrees,manage_vt->chosen_traj.index};
           mindist_msg.data.clear();
           mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
+          // mindist_msg.data.insert(chosen_traj.alpha);
           mindist_pub.publish(mindist_msg);
         }
 

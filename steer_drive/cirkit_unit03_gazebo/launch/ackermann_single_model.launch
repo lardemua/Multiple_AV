@@ -85,7 +85,7 @@
         <remap from="/mtt_targets" to="/$(arg namespace)/mtt_targets"/>
         <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
         <remap from="/steer_drive_controller/cmd_vel" to="/$(arg namespace)/steer_drive_controller/cmd_vel"/>
-        <remap from="/min_dist_to_obstacles" to="/$(arg namespace)/min_dist_to_obstacles"/>
+        <remap from="/analysis_data" to="/$(arg namespace)/analysis_data"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
         <remap from="/trajectory_information" to="/$(arg namespace)/trajectory_information"/>
         <!-- <remap from="/vehicle_odometry" to="/$(arg namespace)/vehicle_odometry"/> -->
