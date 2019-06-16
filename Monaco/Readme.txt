@@ -1,4 +1,4 @@
-no catkin_ws:
+no catkin_ws/src:
 
 sudo cp -r Monaco /opt/ros/melodic/share/gazebo_ros/launch
 
