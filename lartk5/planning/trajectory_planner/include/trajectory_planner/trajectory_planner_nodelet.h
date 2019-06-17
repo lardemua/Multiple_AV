@@ -45,6 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @date 2018-06-06
  */
 
+#include <chrono>
+
 #include <atlasmv_base/AtlasmvMotionCommand.h>
 #include <atlasmv_base/AtlasmvStatus.h>
 #include <geometry_msgs/Polygon.h>
@@ -68,6 +70,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/transforms.h>
+
+
+template <typename T, typename... Args>
+void benchmark_fn(std::string name, T fn)
+{
+  auto before = std::chrono::high_resolution_clock::now();
+  fn();
+  auto after = std::chrono::high_resolution_clock::now();
+
+  std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
+
+  std::cout << name << " took " << duration.count() << "ms." << std::endl;
+}
+
 
 // #include <ackermann_msgs/AckermannDrive.h>
 #include <geometry_msgs/Twist.h>

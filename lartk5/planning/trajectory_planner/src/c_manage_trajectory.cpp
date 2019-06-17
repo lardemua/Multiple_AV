@@ -1535,21 +1535,34 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
   bool MANUAL_OVERTAKING;
   nh.getParam("Param/MANUAL_OVERTAKING", MANUAL_OVERTAKING);
 
+  if (DETECTION == true || OVERTAKING == true)
+  {
+    benchmark_fn("CheckSituation_2try", [&]() { CheckSituation_2try(vo); });
+    // CheckSituation_2try(vo); //!!!! Uncomment to detect objects
+  }
+  else
+  {
+    PublishCollSpace(0.0, 0.0, 0.0);
+    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+    // PublishColl(points_detected_empty);
+  }
+
   for (int i = 0; i < (int)vt.size(); ++i)
   {
 
     // CheckOvertaking(vo);
 
-    if (DETECTION == true || OVERTAKING == true)
-    {
-      CheckSituation_2try(vo); //!!!! Uncomment to detect objects
-    }
-    else
-    {
-      PublishCollSpace(0.0, 0.0, 0.0);
-      pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-      // PublishColl(points_detected_empty);
-    }
+    // if (DETECTION == true || OVERTAKING == true)
+    // {
+    //   benchmark_fn("CheckSituation_2try", [&]() { CheckSituation_2try(vo); });
+    //   // CheckSituation_2try(vo); //!!!! Uncomment to detect objects
+    // }
+    // else
+    // {
+    //   PublishCollSpace(0.0, 0.0, 0.0);
+    //   pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+    //   // PublishColl(points_detected_empty);
+    // }
 
     if (MANUAL_OVERTAKING == true)
     {
