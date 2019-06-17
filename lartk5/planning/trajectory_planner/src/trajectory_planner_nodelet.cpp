@@ -837,6 +837,10 @@ int main(int argc, char **argv)
         // if (_simulation_)
         // {
         // ROS_INFO("pc_v2 size = %ld", pc_v2.size());
+
+        bool _LINES_;
+        n.getParam("Param/LINES", _LINES_);
+
         for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
         {
           if (i == 0)
@@ -881,9 +885,6 @@ int main(int argc, char **argv)
           pcl::toROSMsg(pct2, pc_msg2);
           pc_msg2.header.frame_id = car_name;
           pc_msg2.header.stamp = ros::Time(0);
-
-          bool _LINES_;
-          n.getParam("Param/LINES", _LINES_);
 
           if (_LINES_)
           {
@@ -952,8 +953,8 @@ int main(int argc, char **argv)
 
         if (manage_vt->chosen_traj.index != -1)
         {
-          double alpha_degrees = manage_vt->chosen_traj.alpha * (180/M_PI);
-          vector<double> vec1 = {ros::Time(0).toSec(), manage_vt->chosen_traj.min_dist,alpha_degrees,manage_vt->chosen_traj.index,speed};
+          double alpha_degrees = manage_vt->chosen_traj.alpha * (180 / M_PI);
+          vector<double> vec1 = {manage_vt->chosen_traj.min_dist, alpha_degrees, manage_vt->chosen_traj.index, speed, max_angle};
           mindist_msg.data.clear();
           mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
           // mindist_msg.data.insert(chosen_traj.alpha);

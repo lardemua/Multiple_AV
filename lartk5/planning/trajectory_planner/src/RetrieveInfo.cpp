@@ -5,11 +5,19 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64MultiArray.h>
 #include "gazebo_msgs/ModelStates.h"
-
+#include <trajectory_planner/coordinates.h>
 //-----------------------------------
 
 ros::Subscriber min_dist_sub;
 ros::Subscriber vel_sub;
+ros::Subscriber clp_sub;
+
+double pos_clp_x;
+double pos_clp_y;
+int lane;
+
+// std::ofstream file_min_dist;
+// std::ofstream file_speed;
 
 void ExtractVel(gazebo_msgs::ModelStates models)
 {
@@ -20,7 +28,7 @@ void ExtractVel(gazebo_msgs::ModelStates models)
 
     if (RECORDING == true)
     {
-        std::ofstream file_speed("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/speed.csv");
+        std::ofstream file_speed("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/csv/speed.csv", std::ios_base::app);
 
         int pos_name = 0;
 
@@ -49,9 +57,9 @@ void ExtractVel(gazebo_msgs::ModelStates models)
             }
         }
 
-        std::cout << ros::Time::now() << ",speed: " << this_speed_new << std::endl;
+        // std::cout << ros::Time::now() << ",speed: " << this_speed_new << std::endl;
 
-        // file_speed << ros::Time::now() << "," << this_speed_new << "\n";
+        file_speed << ros::Time::now() << "," << this_speed_new << "\n";
     }
 }
 
@@ -60,17 +68,48 @@ void Extract_min_dist(std_msgs::Float64MultiArray msg)
     ros::NodeHandle n;
     bool RECORDING;
     n.getParam("Param/RECORDING", RECORDING);
+    // bool _LINES_;
+    // n.getParam("Param/LINES", _LINES_);
+    // bool AP_right;
+    // bool AP_left;
+    // n.getParam("Param/AP_right", AP_right);
+    // n.getParam("Param/AP_left", AP_left);
+    // bool _OVERTAKING_;
+    // n.getParam("Param/OVERTAKING", _OVERTAKING_);
 
     if (RECORDING == true)
     {
-        std::ofstream file_min_dist("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/min_dist.csv");
+        std::ofstream file_min_dist("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/csv/analysis_data.csv", std::ios_base::app);
 
-        double DLO = msg.data[1];
+        // double DLO = msg.data[1];
 
-        std::cout << ros::Time::now() << ",DLO: " << DLO << std::endl;
+        // 0 -> time::now()
+        // 1 -> DLO
+        // 2 -> alpha
+        // 3 -> index
+        // 4 -> speed
+        // 5 -> max_angle
 
-        // file_min_dist << ros::Time::now() << "," << DLO << "\n";
+        // std::cout << ros::Time::now() << ",DLO: " << DLO << std::endl;
+
+        file_min_dist << ros::Time::now() << "," << msg.data[0] << "," << msg.data[1] << "," << msg.data[2] << "," << msg.data[3] << "," << msg.data[4] << "," << lane << "\n";
     }
+}
+
+void ExtractCLP2(trajectory_planner::coordinates msg)
+{
+    pos_clp_y = msg.y;
+    if (pos_clp_y > 0)
+    {
+        lane = 1; //right lane
+    }
+    else
+    {
+        lane = 0; //left lane
+    }
+    //check
+
+    // ROS_INFO("x: %f, y: %f", pos_clp_x, pos_clp_y);
 }
 
 int main(int argc, char **argv)
@@ -79,9 +118,23 @@ int main(int argc, char **argv)
     ros::NodeHandle n("~");
     ros::Rate loop_rate(10);
 
+    std::ofstream file_speed("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/csv/speed.csv", std::ios_base::app);
+
+    file_speed << "\n"
+               << "new test"
+               << "\n";
+
+    std::ofstream file_min_dist("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/csv/analysis_data.csv", std::ios_base::app);
+
+    file_min_dist << "\n"
+                  << "new test"
+                  << "\n";
+
     min_dist_sub = n.subscribe("/analysis_data", 1, Extract_min_dist);
 
     vel_sub = n.subscribe("/gazebo/model_states", 1, ExtractVel);
+
+    clp_sub = n.subscribe("/line_close_point", 1, ExtractCLP2);
 
     while (ros::ok())
     {

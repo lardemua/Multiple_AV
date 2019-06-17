@@ -155,8 +155,10 @@
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
     </node>
 
-    <node name="RetrieveInfo" pkg="trajectory_planner" type="RetrieveInfo" launch-prefix="xterm -e gdb --args">
+    <node name="RetrieveInfo" pkg="trajectory_planner" type="RetrieveInfo">
         <remap from="/analysis_data" to="/$(arg namespace)/analysis_data"/>
+        <remap from="/line_close_point" to="/$(arg namespace)/line_close_point"/>
+
     </node>
 
     <!-- Twister server for rviz control-->
