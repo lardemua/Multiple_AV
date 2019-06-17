@@ -528,18 +528,18 @@ void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obs
  * @param vo
  * @return t_func_output
  */
-t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std::vector<t_obstacle> &vo)
+t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std::vector<t_obstacle> &vo, double DLO_Max, double DetectDist)
 {
 
-  ros::NodeHandle nh;
-  double DLO_Max;
-  nh.getParam("Param/DLO_Max", DLO_Max);
+  // ros::NodeHandle nh;
+  // double DLO_Max;
+  // nh.getParam("Param/DLO_Max", DLO_Max);
 
   // bool DETECTION;
   // nh.getParam("Param/DETECTION", DETECTION);
 
-  double DetectDist = 0;
-  nh.getParam("Param/DetectDist", DetectDist);
+  // double DetectDist = 0;
+  // nh.getParam("Param/DetectDist", DetectDist);
 
   // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
 
@@ -938,12 +938,13 @@ void set_limits_line(mtt::TargetListPC &msg)
   y_max_l_right = 500;
   y_max_l_left = 500;
 
+  ros::NodeHandle n;
+  double DetectDist = 0;
+  n.getParam("Param/DetectDist", DetectDist);
+
   // ROS_INFO("msg_lines size = %ld", msg.obstacle_lines.size());
   for (size_t i = 0; i < msg.obstacle_lines.size(); ++i) //msg.obstacle_lines = msg_transformed2.obstacle_lines = pc_msg2 (pontos?)
   {
-    ros::NodeHandle n;
-    double DetectDist = 0;
-    n.getParam("Param/DetectDist", DetectDist);
 
     pcl::PointCloud<pcl::PointXYZ> pc;
     pcl::PCLPointCloud2 pcl_pc;
@@ -1177,19 +1178,19 @@ t_func_output c_manage_trajectory::set_attractor_point(double x, double y,
  * @return t_func_output
  */
 t_func_output
-c_manage_trajectory::compute_global_traj_score(c_trajectoryPtr &trajectory)
+c_manage_trajectory::compute_global_traj_score(c_trajectoryPtr &trajectory, double W_DAP, double W_ADAP, double W_DLO)
 {
   // double W_DAP = 0.40;
   // double W_ADAP = 0.35;
   // double W_DLO = 0.25;
 
-  ros::NodeHandle n;
-  double W_DAP;
-  n.getParam("Param/W_DAP", W_DAP);
-  double W_ADAP;
-  n.getParam("Param/W_ADAP", W_ADAP);
-  double W_DLO;
-  n.getParam("Param/W_DLO", W_DLO);
+  // ros::NodeHandle n;
+  // double W_DAP;
+  // n.getParam("Param/W_DAP", W_DAP);
+  // double W_ADAP;
+  // n.getParam("Param/W_ADAP", W_ADAP);
+  // double W_DLO;
+  // n.getParam("Param/W_DLO", W_DLO);
 
   trajectory->score.overall_norm =
       (W_DAP * trajectory->score.DAPnorm + W_ADAP * trajectory->score.ADAPnorm +
@@ -1537,8 +1538,8 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
 
   if (DETECTION == true || OVERTAKING == true)
   {
-    benchmark_fn("CheckSituation_2try", [&]() { CheckSituation_2try(vo); });
-    // CheckSituation_2try(vo); //!!!! Uncomment to detect objects
+    // benchmark_fn("CheckSituation_2try", [&]() { CheckSituation_2try(vo); });
+    CheckSituation_2try(vo); //!!!! Uncomment to detect objects
   }
   else
   {
@@ -1547,35 +1548,28 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
     // PublishColl(points_detected_empty);
   }
 
+  if (MANUAL_OVERTAKING == true)
+  {
+    CheckSituation_done_manually(vo, vl);
+  }
+
+  double DetectDist = 0;
+  nh.getParam("Param/DetectDist", DetectDist);
+
+  auto before_for = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < (int)vt.size(); ++i)
   {
-
-    // CheckOvertaking(vo);
-
-    // if (DETECTION == true || OVERTAKING == true)
-    // {
-    //   benchmark_fn("CheckSituation_2try", [&]() { CheckSituation_2try(vo); });
-    //   // CheckSituation_2try(vo); //!!!! Uncomment to detect objects
-    // }
-    // else
-    // {
-    //   PublishCollSpace(0.0, 0.0, 0.0);
-    //   pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-    //   // PublishColl(points_detected_empty);
-    // }
-
-    if (MANUAL_OVERTAKING == true)
-    {
-      CheckSituation_done_manually(vo, vl);
-    }
 
     // CheckSituation(vo); //!!!! Uncomment to detect objects
 
     // Compute DAP and ADAP
+    // benchmark_fn("compute_DAP", [&]() { compute_DAP(vt[i], AP); });
+
     compute_DAP(vt[i], AP);
 
     // Compute DLO
-    compute_DLO(vt[i], vo);
+    // benchmark_fn("compute_DLO", [&]() { compute_DLO(vt[i], vo); });
+    compute_DLO(vt[i], vo, DLO_Max, DetectDist);
 
     // normalize DAP
     vt[i]->score.DAPnorm = max(0.0, (1 - (vt[i]->score.DAP) / APdistMax));
@@ -1586,12 +1580,27 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
     // normalize DLO
     vt[i]->score.DLOnorm = (vt[i]->score.DLO) / DLO_Max;
   }
+  auto after_for = std::chrono::high_resolution_clock::now();
+
+  std::chrono::milliseconds duration_for = std::chrono::duration_cast<std::chrono::milliseconds>(after_for - before_for);
+
+  std::cout << " for cicle took " << duration_for.count() << "ms." << std::endl;
+
+  double W_DAP;
+  nh.getParam("Param/W_DAP", W_DAP);
+  double W_ADAP;
+  nh.getParam("Param/W_ADAP", W_ADAP);
+  double W_DLO;
+  nh.getParam("Param/W_DLO", W_DLO);
 
   // compute overall score for each traj
   for (size_t i = 0; i < vt.size(); ++i)
   {
-    compute_global_traj_score(vt[i]);
+    // benchmark_fn("compute_global_traj_score", [&]() { compute_global_traj_score(vt[i], W_DAP, W_ADAP, W_DLO); });
+    compute_global_traj_score(vt[i], W_DAP, W_ADAP, W_DLO);
   }
+
+  // benchmark_fn("compute_chosen_traj", [&]() { compute_chosen_traj(); });
 
   compute_chosen_traj();
 

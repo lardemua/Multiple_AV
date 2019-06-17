@@ -691,7 +691,10 @@ int main(int argc, char **argv)
   line_sub = n.subscribe("/line_pcl", 1000, line_callback);
   // }
 
-  ros::Rate loop_rate(10);
+  int RefreshRate = 30;
+  n.getParam("RefreshRate", RefreshRate);
+
+  ros::Rate loop_rate(RefreshRate);
 
   //   ___________________________________
   //   |                                 |
@@ -725,6 +728,7 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
+    auto before_traj = std::chrono::high_resolution_clock::now();
 
     n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
 
@@ -735,7 +739,10 @@ int main(int argc, char **argv)
       // cout << "plan_trajectory=true" << endl;
       // aqui recebi um comando para defenir uma trajectoria
       have_trajectory = false;
-      velocity_update_callback(speed);
+
+      // benchmark_fn("velocity_update_callback", [&]() { velocity_update_callback(speed); });
+
+      velocity_update_callback(speed); //takes 3ms max
 
       //-------------------------------------------------------------------------//
       // plan_trajectory = false;
@@ -750,6 +757,7 @@ int main(int argc, char **argv)
       // ros::Time time = ros::Time::now();
       ros::Time time = ros::Time(0);
       // while(!p_listener->canTransform("/world", "/vehicle_odometry", time));
+      // auto before_try = std::chrono::high_resolution_clock::now();
 
       try
       {
@@ -765,12 +773,18 @@ int main(int argc, char **argv)
         have_transform = false;
       }
 
+      // auto after_try = std::chrono::high_resolution_clock::now();
+
+      // std::chrono::milliseconds duration_try = std::chrono::duration_cast<std::chrono::milliseconds>(after_try - before_try);
+
+      // std::cout << " try cicle took " << duration_try.count() << "ms." << std::endl;
+
       if (have_transform & have_trajectory)
       {
         ros::Time time = ros::Time(0);
         ros::spinOnce(); //will call all the callbacks waiting to be called at that point in time.
 
-        ros::Duration(0.1).sleep();
+        // ros::Duration(0.1).sleep();
 
         //   ___________________________________
         //   |                                 |
@@ -798,6 +812,9 @@ int main(int argc, char **argv)
 
         //--------------------------------------------------------------------------------------------------------//
         // ROS_INFO("pc_v1 size = %ld", pc_v1.size());
+        // auto before_for3 = std::chrono::high_resolution_clock::now();
+
+        // takes 2 ms max
         for (size_t i = 0; i < pc_v1.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v1 -> contem a nuvem de pontos com as paredes
         {
           if (i == 0)
@@ -849,8 +866,19 @@ int main(int argc, char **argv)
           pc_msg.header.frame_id = car_name;
           pc_msg.header.stamp = ros::Time(0);
           msg_transformed.obstacle_lines.push_back(pc_msg); //insere o ponto na mensagem
+
+          // benchmark_fn("set_limits_walls", [&]() { set_limits_walls(msg_transformed); });
+
+          //takes 1 ms max
           set_limits_walls(msg_transformed);
         }
+
+        // auto after_for3 = std::chrono::high_resolution_clock::now();
+
+        // std::chrono::milliseconds duration_for3 = std::chrono::duration_cast<std::chrono::milliseconds>(after_for3 - before_for3);
+
+        // std::cout << " for cicle 3 took " << duration_for3.count() << "ms." << std::endl;
+
         // manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
 
         // -------------------------------------------------------------------------------------------------------------
@@ -863,6 +891,7 @@ int main(int argc, char **argv)
         bool _LINES_;
         n.getParam("Param/LINES", _LINES_);
 
+        // takes 2 ms max
         for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
         {
           if (i == 0)
@@ -917,6 +946,7 @@ int main(int argc, char **argv)
           msg_transformed2.obstacle_lines.push_back(pc_msg2);
           set_limits_line(msg_transformed2);
         }
+
         manage_vt->set_obstacles(msg_transformed); //envia as paredes e outros obstaculos (linha caso _LINES_ seja true) como obstaculos
         manage_vt->set_lines(msg_transformed2);    //ja nao faz nada
         // }
@@ -930,9 +960,9 @@ int main(int argc, char **argv)
         ros::Time st = ros::Time(0);
 
         // auto before = std::chrono::high_resolution_clock::now();
-        // manage_vt->compute_trajectories_scores();
+        manage_vt->compute_trajectories_scores();
 
-        benchmark_fn("compute_trajectories_scores", []() { manage_vt->compute_trajectories_scores(); });
+        // benchmark_fn("compute_trajectories_scores", []() { manage_vt->compute_trajectories_scores(); });
 
         // auto after = std::chrono::high_resolution_clock::now();
 
@@ -1019,6 +1049,12 @@ int main(int argc, char **argv)
         have_plan = true;
       }
     }
+
+    auto after_traj = std::chrono::high_resolution_clock::now();
+
+    std::chrono::milliseconds duration_traj = std::chrono::duration_cast<std::chrono::milliseconds>(after_traj - before_traj);
+
+    std::cout << "----- traj took " << duration_traj.count() << "ms." << std::endl;
 
     loop_rate.sleep();
     ros::spinOnce();
