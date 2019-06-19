@@ -67,6 +67,9 @@ ros::Publisher ap_marker_coll_space;
 ros::Publisher ap_marker_coll_space_back;
 
 ros::Publisher mindist_pub;
+ros::Publisher traj_pub;
+ros::Publisher ap_pub;
+ros::Publisher DS_pub;
 
 double this_speed_new = 0;
 double this_pos_x = 0;
@@ -612,12 +615,86 @@ void Publish_analysis_data(c_manage_trajectoryPtr &manage_vt)
   if (manage_vt->chosen_traj.index != -1)
   {
     double alpha_degrees = manage_vt->chosen_traj.alpha * (180 / M_PI);
-    // vector<double> vec1 = {manage_vt->chosen_traj.min_dist, alpha_degrees, manage_vt->chosen_traj.index, speed, max_angle};
-    vector<double> vec1 = {max_angle};
+    vector<double> vec1 = {manage_vt->chosen_traj.min_dist, alpha_degrees, manage_vt->chosen_traj.index, this_speed_new, max_angle};
+    // vector<double> vec1 = {max_angle};
     mindist_msg.data.clear();
     mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
     // mindist_msg.data.insert(chosen_traj.alpha);
     mindist_pub.publish(mindist_msg);
+  }
+
+  // ros::Time end = ros::Time::now();
+
+  // std::cout << "end" << end << std::endl;
+}
+
+void Publish_ap_data(c_manage_trajectoryPtr &manage_vt)
+{
+
+  std_msgs::Float64MultiArray mindist_msg;
+  mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  mindist_msg.layout.dim[0].label = "sim";
+  mindist_msg.layout.dim[0].size = 2;
+  mindist_msg.layout.dim[0].stride = 2;
+  mindist_msg.layout.data_offset = 0;
+
+  if (manage_vt->chosen_traj.index != -1)
+  {
+    vector<double> vec2 = {this_speed_new};
+    mindist_msg.data.clear();
+    mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
+    // mindist_msg.data.insert(chosen_traj.alpha);
+    ap_pub.publish(mindist_msg);
+  }
+
+  // ros::Time end = ros::Time::now();
+
+  // std::cout << "end" << end << std::endl;
+}
+
+void Publish_DS_data(int count_points_detected_front, int count_points_detected_back, double limit_left, double limit_right, double limit_left_back, double limit_right_back, int detect_front, int detect_back)
+{
+
+  std_msgs::Float64MultiArray mindist_msg;
+  mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  mindist_msg.layout.dim[0].label = "sim";
+  mindist_msg.layout.dim[0].size = 2;
+  mindist_msg.layout.dim[0].stride = 2;
+  mindist_msg.layout.data_offset = 0;
+
+  vector<double> vec2 = {count_points_detected_front,count_points_detected_back,limit_left,limit_right,limit_left_back,limit_right_back,detect_front,detect_back};
+  mindist_msg.data.clear();
+  mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
+  // mindist_msg.data.insert(chosen_traj.alpha);
+  DS_pub.publish(mindist_msg);
+
+  // ros::Time end = ros::Time::now();
+
+  // std::cout << "end" << end << std::endl;
+}
+
+void Publish_traj_data(c_manage_trajectoryPtr &manage_vt)
+{
+
+  // ros::Time begin = ros::Time::now();
+  // std::cout << "begin" << begin << std::endl;
+
+  std_msgs::Float64MultiArray mindist_msg;
+  mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  mindist_msg.layout.dim[0].label = "sim";
+  mindist_msg.layout.dim[0].size = 2;
+  mindist_msg.layout.dim[0].stride = 2;
+  mindist_msg.layout.data_offset = 0;
+
+  if (manage_vt->chosen_traj.index != -1)
+  {
+    double alpha_degrees = manage_vt->chosen_traj.alpha * (180 / M_PI);
+    // vector<int> vec1 = {manage_vt->chosen_traj.index};
+    vector<double> vec2 = {manage_vt->chosen_traj.index, alpha_degrees, max_angle, this_speed_new};
+    mindist_msg.data.clear();
+    mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
+    // mindist_msg.data.insert(chosen_traj.alpha);
+    traj_pub.publish(mindist_msg);
   }
 
   // ros::Time end = ros::Time::now();
@@ -684,6 +761,12 @@ int main(int argc, char **argv)
   ros::Publisher twist_pub = n.advertise<geometry_msgs::Twist>("/steer_drive_controller/cmd_vel", 1);
   mindist_pub = n.advertise<std_msgs::Float64MultiArray>("/analysis_data", 100);
 
+  traj_pub = n.advertise<std_msgs::Float64MultiArray>("/traj_data", 100);
+
+  ap_pub = n.advertise<std_msgs::Float64MultiArray>("/ap_data", 100);
+
+  DS_pub = n.advertise<std_msgs::Float64MultiArray>("/DS_data", 100);
+
   // road lines
   ros::Subscriber line_sub;
   // if (_simulation_)
@@ -728,7 +811,7 @@ int main(int argc, char **argv)
 
   while (ros::ok())
   {
-    auto before_traj = std::chrono::high_resolution_clock::now();
+    // auto before_traj = std::chrono::high_resolution_clock::now();
 
     n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
 
@@ -1023,6 +1106,10 @@ int main(int argc, char **argv)
         //   mindist_pub.publish(mindist_msg);
         // }
 
+        Publish_traj_data(manage_vt);
+
+        Publish_ap_data(manage_vt);
+
         Publish_analysis_data(manage_vt);
 
         //   ___________________________________
@@ -1050,11 +1137,11 @@ int main(int argc, char **argv)
       }
     }
 
-    auto after_traj = std::chrono::high_resolution_clock::now();
+    // auto after_traj = std::chrono::high_resolution_clock::now();
 
-    std::chrono::milliseconds duration_traj = std::chrono::duration_cast<std::chrono::milliseconds>(after_traj - before_traj);
+    // std::chrono::milliseconds duration_traj = std::chrono::duration_cast<std::chrono::milliseconds>(after_traj - before_traj);
 
-    std::cout << "----- traj took " << duration_traj.count() << "ms." << std::endl;
+    // std::cout << "----- traj took " << duration_traj.count() << "ms." << std::endl;
 
     loop_rate.sleep();
     ros::spinOnce();

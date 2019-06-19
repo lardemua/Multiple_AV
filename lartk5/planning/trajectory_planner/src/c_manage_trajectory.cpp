@@ -61,6 +61,7 @@ int count_stabilize = 0;
 // bool still_overtaking = false;
 
 int overtaking_phase = 0;
+int detection_times = 0;
 
 double pos_clp_x;
 double pos_clp_y;
@@ -122,10 +123,15 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
   double limit_left_back;
   double limit_right_back;
   int count_points_detected = 0;
+  int count_points_detected_front = 0;
+  int count_points_detected_back = 0;
+
+  int detect_front = 0;
+  int detect_back = 0;
 
   if (DETECTION == true)
   {
-
+    detect_front = 1;
     if (y_min_l_left < y_min_l_right)
     {
       limit_left = y_min_l_left - DETECT_SPACE_SENSIVITY;
@@ -136,6 +142,8 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       limit_left = y_min_l_right - DETECT_SPACE_SENSIVITY;
       // ROS_INFO("using limit_left: y_min_l_right");
     }
+
+    
 
     if (y_max_w_right > y_max_w_left)
     {
@@ -152,6 +160,12 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       // ROS_INFO("y_max_w_left: %f", y_max_w_left);
     }
 
+    //EVITAR ERROS DO LIDAR
+    if (limit_right < -100 || limit_left > 100){
+      limit_right=0;
+      limit_left=0;
+    }
+
     // ROS_INFO("using limit_left: y_min_l_left");
 
     PublishCollSpace(limit_left, limit_right, DetectDist);
@@ -164,7 +178,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
       {
 
-        if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left && vo[o].y[lo] > limit_right)
+        if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
         {
 
           // t_obstacle o;
@@ -182,6 +196,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           points_detected_2.push_back(new_point);
 
           count_points_detected++;
+          count_points_detected_front++;
         }
       }
     }
@@ -193,6 +208,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 
   if (DETECTION_BACK == true)
   {
+    detect_back = 1;
     if (y_max_l_left < y_max_l_right)
     {
       limit_left_back = y_max_l_left;
@@ -213,6 +229,12 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     {
       limit_right_back = y_min_w_left;
       // ROS_INFO("using limit_right_back: y_min_w_left");
+    }
+
+    //EVITAR ERROS DO LIDAR
+    if (limit_right_back < -100 || limit_left_back > 100){
+      limit_right_back=0;
+      limit_left_back=0;
     }
 
     PublishCollSpace_BACK(limit_left_back, limit_right_back, DetectDist);
@@ -243,12 +265,15 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           points_detected_3.push_back(new_point);
 
           count_points_detected++;
+          count_points_detected_back++;
         }
       }
     }
 
     PublishColl_BACK(points_detected_3);
   }
+
+  Publish_DS_data(count_points_detected_front, count_points_detected_back, limit_left, limit_right, limit_left_back, limit_right_back, detect_front, detect_back);
 
   if (OVERTAKING == false)
   {
@@ -258,35 +283,45 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 
     if (count_points_detected > Detection_Sensitivity)
     {
-      n.setParam("Param/LINES", false);
-      n.setParam("Param/OVERTAKING", true);
-      // n.setParam("Param/DETECTION", false);
-      n.setParam("Param/AP_right", false);
-      n.setParam("Param/AP_left", false);
-      // still_overtaking = true;
-      overtaking_phase = 1;
-      begin_overtaking = ros::Time::now();
-
-      // PUBLISH INFO ----------------------------------------
-
-      ROS_INFO("count_points_detected= %d", count_points_detected);
-
-      if (y_min_l_left < y_min_l_right)
+      ROS_INFO("detection_times= %d", detection_times);
+      if (detection_times < Detection_Sensitivity)
       {
-        ROS_INFO("limit_left= y_min_l_left");
+        detection_times++;
       }
       else
       {
-        ROS_INFO("limit_left= y_min_l_right");
-      }
+        detection_times = 0;
+        ROS_INFO("detection_times= %d", detection_times);
+        n.setParam("Param/LINES", false);
+        n.setParam("Param/OVERTAKING", true);
+        // n.setParam("Param/DETECTION", false);
+        n.setParam("Param/AP_right", false);
+        n.setParam("Param/AP_left", false);
+        // still_overtaking = true;
+        overtaking_phase = 1;
+        begin_overtaking = ros::Time::now();
 
-      if (y_max_w_right > y_max_w_left)
-      {
-        ROS_INFO("limit_right= y_max_w_right");
-      }
-      else
-      {
-        ROS_INFO("limit_right= y_max_w_left");
+        // PUBLISH INFO ----------------------------------------
+
+        ROS_INFO("count_points_detected= %d", count_points_detected);
+
+        if (y_min_l_left < y_min_l_right)
+        {
+          ROS_INFO("limit_left= y_min_l_left");
+        }
+        else
+        {
+          ROS_INFO("limit_left= y_min_l_right");
+        }
+
+        if (y_max_w_right > y_max_w_left)
+        {
+          ROS_INFO("limit_right= y_max_w_right");
+        }
+        else
+        {
+          ROS_INFO("limit_right= y_max_w_left");
+        }
       }
 
       //-----------------------------------------------------------
@@ -928,6 +963,26 @@ void set_limits_walls(mtt::TargetListPC &msg)
 
     // vo.push_back(o); //vo tem agora a nuvem de pontos
   }
+
+  // bool DETECTION_BACK;
+  // n.getParam("Param/DETECTION_BACK", DETECTION_BACK);
+
+  // if (DETECTION_BACK == true)
+  // {
+  //EVITAR ERROS DE DETACAO DOS LIDAR
+  // if (y_min_w_right < -100 && y_min_w_left < -100) //-------
+  // {
+  //   ROS_INFO("------ y_min_w_right: %f", y_min_w_right);
+  //   ROS_INFO("------ y_min_w_left: %f", y_min_w_left);
+  //   // y_max_w_right = 0;
+  // }
+  // if (y_max_w_right < -100 && y_max_w_left < -100)
+  // {
+  //   ROS_INFO("------ y_max_w_right: %f", y_max_w_right);
+  //   ROS_INFO("------ y_max_w_left: %f", y_max_w_left);
+  //   // y_min_w_right = 0;
+  // }
+  // }
 }
 
 void set_limits_line(mtt::TargetListPC &msg)
@@ -973,6 +1028,24 @@ void set_limits_line(mtt::TargetListPC &msg)
       {
         y_max_l_left = pc.points[j].y;
       }
+    }
+
+    //EVITAR ERROS DE DETACAO DOS LIDAR
+    if (y_min_l_right > 100)
+    {
+      y_min_l_right = 0;
+    }
+    if (y_max_l_right > 100)
+    {
+      y_max_l_right = 0;
+    }
+    if (y_min_l_left > 100)
+    {
+      y_min_l_left = 0;
+    }
+    if (y_max_l_left > 100)
+    {
+      y_max_l_left = 0;
     }
   }
 }
@@ -1556,7 +1629,7 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
   double DetectDist = 0;
   nh.getParam("Param/DetectDist", DetectDist);
 
-  auto before_for = std::chrono::high_resolution_clock::now();
+  // auto before_for = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < (int)vt.size(); ++i)
   {
 
@@ -1580,11 +1653,11 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
     // normalize DLO
     vt[i]->score.DLOnorm = (vt[i]->score.DLO) / DLO_Max;
   }
-  auto after_for = std::chrono::high_resolution_clock::now();
+  // auto after_for = std::chrono::high_resolution_clock::now();
 
-  std::chrono::milliseconds duration_for = std::chrono::duration_cast<std::chrono::milliseconds>(after_for - before_for);
+  // std::chrono::milliseconds duration_for = std::chrono::duration_cast<std::chrono::milliseconds>(after_for - before_for);
 
-  std::cout << " for cicle took " << duration_for.count() << "ms." << std::endl;
+  // std::cout << " for cicle took " << duration_for.count() << "ms." << std::endl;
 
   double W_DAP;
   nh.getParam("Param/W_DAP", W_DAP);

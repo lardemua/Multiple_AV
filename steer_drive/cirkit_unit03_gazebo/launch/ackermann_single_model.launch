@@ -86,6 +86,7 @@
         <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
         <remap from="/steer_drive_controller/cmd_vel" to="/$(arg namespace)/steer_drive_controller/cmd_vel"/>
         <remap from="/analysis_data" to="/$(arg namespace)/analysis_data"/>
+        <remap from="/traj_data" to="/$(arg namespace)/traj_data"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
         <remap from="/trajectory_information" to="/$(arg namespace)/trajectory_information"/>
         <!-- <remap from="/vehicle_odometry" to="/$(arg namespace)/vehicle_odometry"/> -->
@@ -95,6 +96,9 @@
         <remap from="/coll_space_marker" to="/$(arg namespace)/coll_space_marker"/>
         <remap from="/coll_space_marker_back" to="/$(arg namespace)/coll_space_marker_back"/>
         <remap from="/line_close_point" to="/$(arg namespace)/line_close_point"/>
+        <remap from="/ap_data" to="/$(arg namespace)/ap_data"/>
+        <remap from="/DS_data" to="/$(arg namespace)/DS_data"/>
+
     </node>
 
     <param name="car_number" value="$(arg car_number)"/>
@@ -158,7 +162,10 @@
     <node name="RetrieveInfo" pkg="trajectory_planner" type="RetrieveInfo">
         <remap from="/analysis_data" to="/$(arg namespace)/analysis_data"/>
         <remap from="/line_close_point" to="/$(arg namespace)/line_close_point"/>
-
+        <remap from="/traj_data" to="/$(arg namespace)/traj_data"/>
+        <remap from="/ap_data" to="/$(arg namespace)/ap_data"/>
+        <remap from="/Apoint" to="/$(arg namespace)/Apoint"/>
+        <remap from="/DS_data" to="/$(arg namespace)/DS_data"/>
     </node>
 
     <!-- Twister server for rviz control-->
