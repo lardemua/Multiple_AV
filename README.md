@@ -52,7 +52,7 @@ Copy everything inside to the src folder (catkin_ws/src)
 
 # Rosdep
 
-So that you install all the packages required, in catkin_wn run:
+So that you install all the packages required, in catkin_ws run:
 
 ```
 rosdep install --from-paths src --ignore-src -r -y
