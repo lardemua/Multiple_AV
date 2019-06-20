@@ -45,6 +45,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @date 2018-06-06
  */
 
+#include <chrono>
+
 #include <atlasmv_base/AtlasmvMotionCommand.h>
 #include <atlasmv_base/AtlasmvStatus.h>
 #include <geometry_msgs/Polygon.h>
@@ -68,6 +70,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/transforms.h>
+
+
+template <typename T, typename... Args>
+void benchmark_fn(std::string name, T fn)
+{
+  auto before = std::chrono::high_resolution_clock::now();
+  fn();
+  auto after = std::chrono::high_resolution_clock::now();
+
+  std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
+
+  std::cout << name << " took " << duration.count() << "ms." << std::endl;
+}
+
 
 // #include <ackermann_msgs/AckermannDrive.h>
 #include <geometry_msgs/Twist.h>
@@ -125,6 +141,7 @@ void PublishColl_BACK(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_3);
 void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectDist);
 void set_limits_walls(mtt::TargetListPC &msg);
 void set_limits_line(mtt::TargetListPC &msg);
+void Publish_DS_data(int count_points_detected_front, int count_points_detected_back, double limit_left, double limit_right, double limit_left_back, double limit_right_back, int detect_front, int detect_back);
 
 // Global Vars
 _EXTERN_ ros::NodeHandle *p_n;

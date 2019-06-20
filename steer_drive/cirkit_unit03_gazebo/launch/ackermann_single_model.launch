@@ -79,13 +79,14 @@
     <!-- <include file="$(find free_space_detection)/launch/robotmodel.launch"/> -->
     <!-- <param name="ATLASCAR2" textfile="$(find free_space_detection)/urdf/atlas2.urdf" /> -->
 
-    <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen" >
+    <node name="trajectory_planner_nodelet_$(arg namespace)" pkg="trajectory_planner" type="trajectory_planner_nodelet" required="true" output="screen">
         <remap from="/array_of_markers" to="/$(arg namespace)/array_of_markers"/>
         <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
         <remap from="/mtt_targets" to="/$(arg namespace)/mtt_targets"/>
         <remap from="/reduced_pcl" to="/$(arg namespace)/reduced_pcl"/>
         <remap from="/steer_drive_controller/cmd_vel" to="/$(arg namespace)/steer_drive_controller/cmd_vel"/>
-        <remap from="/min_dist_to_obstacles" to="/$(arg namespace)/min_dist_to_obstacles"/>
+        <remap from="/analysis_data" to="/$(arg namespace)/analysis_data"/>
+        <remap from="/traj_data" to="/$(arg namespace)/traj_data"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
         <remap from="/trajectory_information" to="/$(arg namespace)/trajectory_information"/>
         <!-- <remap from="/vehicle_odometry" to="/$(arg namespace)/vehicle_odometry"/> -->
@@ -95,12 +96,15 @@
         <remap from="/coll_space_marker" to="/$(arg namespace)/coll_space_marker"/>
         <remap from="/coll_space_marker_back" to="/$(arg namespace)/coll_space_marker_back"/>
         <remap from="/line_close_point" to="/$(arg namespace)/line_close_point"/>
+        <remap from="/ap_data" to="/$(arg namespace)/ap_data"/>
+        <remap from="/DS_data" to="/$(arg namespace)/DS_data"/>
+
     </node>
 
     <param name="car_number" value="$(arg car_number)"/>
 
     <!-- <group ns="$(arg namespace)"> -->
-    <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen" >
+    <node name="APgenerator_$(arg namespace)" pkg="trajectory_planner" type="APgenerator" required="true" output="screen">
         <remap from="/msg_coordinates" to="/$(arg namespace)/msg_coordinates"/>
         <remap from="APgenerator/im" to="/$(arg namespace)/APgenerator/im"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
@@ -150,9 +154,18 @@
     <node name="tf_generator6_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="tf_generator6" />
 
     <!--  cirkit_unit03_gazebo_line_$(arg namespace) = ackermann_vehicle_gazebo_line.cpp -->
-    <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node" >
+    <node name="cirkit_unit03_gazebo_line_$(arg namespace)" pkg="cirkit_unit03_gazebo" type="cirkit_unit03_gazebo_line_node">
         <remap from="/line_laser_scan" to="/$(arg namespace)/line_laser_scan"/>
         <remap from="/line_pcl" to="/$(arg namespace)/line_pcl"/>
+    </node>
+
+    <node name="RetrieveInfo" pkg="trajectory_planner" type="RetrieveInfo">
+        <remap from="/analysis_data" to="/$(arg namespace)/analysis_data"/>
+        <remap from="/line_close_point" to="/$(arg namespace)/line_close_point"/>
+        <remap from="/traj_data" to="/$(arg namespace)/traj_data"/>
+        <remap from="/ap_data" to="/$(arg namespace)/ap_data"/>
+        <remap from="/Apoint" to="/$(arg namespace)/Apoint"/>
+        <remap from="/DS_data" to="/$(arg namespace)/DS_data"/>
     </node>
 
     <!-- Twister server for rviz control-->

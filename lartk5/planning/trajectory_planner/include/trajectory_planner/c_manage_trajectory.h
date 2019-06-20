@@ -96,7 +96,6 @@ typedef struct
 #define _USE_MATH_DEFINES
 #define _TRAJECTORY_LIB_DEBUG_ 1
 
-
 // Namespaces
 using namespace std;
 
@@ -153,7 +152,7 @@ public:
                               double Cx, double Cy, double Dx, double Dy,
                               double *X, double *Y);
   t_func_output compute_DLO(c_trajectoryPtr &trajectory,
-                            std::vector<t_obstacle> &vo);
+                            std::vector<t_obstacle> &vo, double DLO_Max, double DetectDist);
   t_func_output compute_trajectories_scores();
   t_func_output
   compute_vis_marker_array(visualization_msgs::MarkerArray *marker_array);
@@ -171,7 +170,7 @@ public:
   double compute_ADAP(c_trajectoryPtr &trajectory, t_desired_coordinates &AP,
                       int i);
   t_func_output set_attractor_point(double x, double y, double theta);
-  t_func_output compute_global_traj_score(c_trajectoryPtr &trajectory);
+  t_func_output compute_global_traj_score(c_trajectoryPtr &trajectory, double W_DAP, double W_ADAP, double W_DLO);
   t_func_output compute_chosen_traj();
   int set_chosen_traj(int n);
   int wn_PnPoly(geometry_msgs::Point32 P, geometry_msgs::Polygon *V, int n);

@@ -113,6 +113,7 @@ add_executable(tf_generator src/tf_generator.cpp)
 add_executable(tf_generator2 src/tf_generator2.cpp)
 add_executable(tracking_frame_generator src/tracking_frame_generator.cpp)
 add_executable(trajectory_executive src/trajectory_executive.cpp)
+add_executable(RetrieveInfo src/RetrieveInfo.cpp)
 
 add_dependencies(trajectory trajectory_planner_generate_messages_cpp)
 add_dependencies(trajectory_planner_nodelet trajectory_planner_generate_messages_cpp)
@@ -122,7 +123,7 @@ add_dependencies(mtt_target_generator trajectory_planner_generate_messages_cpp)
 add_dependencies(tf_generator trajectory_planner_generate_messages_cpp)
 add_dependencies(tf_generator2 trajectory_planner_generate_messages_cpp)
 add_dependencies(tracking_frame_generator trajectory_planner_generate_messages_cpp)
-add_dependencies(trajectory_executive trajectory_planner_generate_messages_cpp)
+add_dependencies(RetrieveInfo trajectory_planner_generate_messages_cpp)
 
 target_link_libraries(trajectory_planner_nodelet trajectory ${catkin_LIBRARIES})
 target_link_libraries(APgenerator  ${catkin_LIBRARIES})
@@ -132,6 +133,7 @@ target_link_libraries(tf_generator ${catkin_LIBRARIES})
 target_link_libraries(tf_generator2 ${catkin_LIBRARIES})
 target_link_libraries(tracking_frame_generator ${catkin_LIBRARIES})
 target_link_libraries(trajectory_executive ${catkin_LIBRARIES})
+target_link_libraries(RetrieveInfo ${catkin_LIBRARIES})
 
 ## Declare a cpp library
 # add_library(trajectory_planner

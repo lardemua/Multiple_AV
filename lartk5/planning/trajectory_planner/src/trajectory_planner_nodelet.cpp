@@ -66,6 +66,11 @@ ros::Publisher ap_marker_coll_back;
 ros::Publisher ap_marker_coll_space;
 ros::Publisher ap_marker_coll_space_back;
 
+ros::Publisher mindist_pub;
+ros::Publisher traj_pub;
+ros::Publisher ap_pub;
+ros::Publisher DS_pub;
+
 double this_speed_new = 0;
 double this_pos_x = 0;
 double this_pos_y = 0;
@@ -594,6 +599,109 @@ void PublishColl_BACK(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_3)
   ap_marker_coll_back.publish(pc2);
 }
 
+void Publish_analysis_data(c_manage_trajectoryPtr &manage_vt)
+{
+
+  // ros::Time begin = ros::Time::now();
+  // std::cout << "begin" << begin << std::endl;
+
+  std_msgs::Float64MultiArray mindist_msg;
+  mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  mindist_msg.layout.dim[0].label = "sim";
+  mindist_msg.layout.dim[0].size = 2;
+  mindist_msg.layout.dim[0].stride = 2;
+  mindist_msg.layout.data_offset = 0;
+
+  if (manage_vt->chosen_traj.index != -1)
+  {
+    double alpha_degrees = manage_vt->chosen_traj.alpha * (180 / M_PI);
+    vector<double> vec1 = {manage_vt->chosen_traj.min_dist, alpha_degrees, manage_vt->chosen_traj.index, this_speed_new, max_angle};
+    // vector<double> vec1 = {max_angle};
+    mindist_msg.data.clear();
+    mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
+    // mindist_msg.data.insert(chosen_traj.alpha);
+    mindist_pub.publish(mindist_msg);
+  }
+
+  // ros::Time end = ros::Time::now();
+
+  // std::cout << "end" << end << std::endl;
+}
+
+void Publish_ap_data(c_manage_trajectoryPtr &manage_vt)
+{
+
+  std_msgs::Float64MultiArray mindist_msg;
+  mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  mindist_msg.layout.dim[0].label = "sim";
+  mindist_msg.layout.dim[0].size = 2;
+  mindist_msg.layout.dim[0].stride = 2;
+  mindist_msg.layout.data_offset = 0;
+
+  if (manage_vt->chosen_traj.index != -1)
+  {
+    vector<double> vec2 = {this_speed_new};
+    mindist_msg.data.clear();
+    mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
+    // mindist_msg.data.insert(chosen_traj.alpha);
+    ap_pub.publish(mindist_msg);
+  }
+
+  // ros::Time end = ros::Time::now();
+
+  // std::cout << "end" << end << std::endl;
+}
+
+void Publish_DS_data(int count_points_detected_front, int count_points_detected_back, double limit_left, double limit_right, double limit_left_back, double limit_right_back, int detect_front, int detect_back)
+{
+
+  std_msgs::Float64MultiArray mindist_msg;
+  mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  mindist_msg.layout.dim[0].label = "sim";
+  mindist_msg.layout.dim[0].size = 2;
+  mindist_msg.layout.dim[0].stride = 2;
+  mindist_msg.layout.data_offset = 0;
+
+  vector<double> vec2 = {count_points_detected_front,count_points_detected_back,limit_left,limit_right,limit_left_back,limit_right_back,detect_front,detect_back};
+  mindist_msg.data.clear();
+  mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
+  // mindist_msg.data.insert(chosen_traj.alpha);
+  DS_pub.publish(mindist_msg);
+
+  // ros::Time end = ros::Time::now();
+
+  // std::cout << "end" << end << std::endl;
+}
+
+void Publish_traj_data(c_manage_trajectoryPtr &manage_vt)
+{
+
+  // ros::Time begin = ros::Time::now();
+  // std::cout << "begin" << begin << std::endl;
+
+  std_msgs::Float64MultiArray mindist_msg;
+  mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+  mindist_msg.layout.dim[0].label = "sim";
+  mindist_msg.layout.dim[0].size = 2;
+  mindist_msg.layout.dim[0].stride = 2;
+  mindist_msg.layout.data_offset = 0;
+
+  if (manage_vt->chosen_traj.index != -1)
+  {
+    double alpha_degrees = manage_vt->chosen_traj.alpha * (180 / M_PI);
+    // vector<int> vec1 = {manage_vt->chosen_traj.index};
+    vector<double> vec2 = {manage_vt->chosen_traj.index, alpha_degrees, max_angle, this_speed_new};
+    mindist_msg.data.clear();
+    mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
+    // mindist_msg.data.insert(chosen_traj.alpha);
+    traj_pub.publish(mindist_msg);
+  }
+
+  // ros::Time end = ros::Time::now();
+
+  // std::cout << "end" << end << std::endl;
+}
+
 /**
  * @brief Main code of the nodelet
  * @details Publishes the trajectories message and the command message
@@ -651,7 +759,13 @@ int main(int argc, char **argv)
   // Polygon stuff
   ros::Subscriber pcl_sub = n.subscribe("/reduced_pcl", 1000, pcl_callback);
   ros::Publisher twist_pub = n.advertise<geometry_msgs::Twist>("/steer_drive_controller/cmd_vel", 1);
-  ros::Publisher mindist_pub = n.advertise<std_msgs::Float64MultiArray>("/min_dist_to_obstacles", 1);
+  mindist_pub = n.advertise<std_msgs::Float64MultiArray>("/analysis_data", 100);
+
+  traj_pub = n.advertise<std_msgs::Float64MultiArray>("/traj_data", 100);
+
+  ap_pub = n.advertise<std_msgs::Float64MultiArray>("/ap_data", 100);
+
+  DS_pub = n.advertise<std_msgs::Float64MultiArray>("/DS_data", 100);
 
   // road lines
   ros::Subscriber line_sub;
@@ -660,7 +774,10 @@ int main(int argc, char **argv)
   line_sub = n.subscribe("/line_pcl", 1000, line_callback);
   // }
 
-  ros::Rate loop_rate(10);
+  int RefreshRate = 30;
+  n.getParam("RefreshRate", RefreshRate);
+
+  ros::Rate loop_rate(RefreshRate);
 
   //   ___________________________________
   //   |                                 |
@@ -690,18 +807,25 @@ int main(int argc, char **argv)
   velocity_callback(SPEED_SAFFETY);
 
   //  trajectory information
-  commandPublisher = n.advertise<trajectory_planner::traj_info>("/trajectory_information", 1000);
+  // commandPublisher = n.advertise<trajectory_planner::traj_info>("/trajectory_information", 1000);
 
-  double speed = SPEED_SAFFETY;
   while (ros::ok())
   {
+    // auto before_traj = std::chrono::high_resolution_clock::now();
+
+    n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
+
+    double speed = SPEED_SAFFETY;
     // cout << "ros::ok" << endl;
     if (plan_trajectory == true)
     {
       // cout << "plan_trajectory=true" << endl;
       // aqui recebi um comando para defenir uma trajectoria
       have_trajectory = false;
-      velocity_update_callback(speed);
+
+      // benchmark_fn("velocity_update_callback", [&]() { velocity_update_callback(speed); });
+
+      velocity_update_callback(speed); //takes 3ms max
 
       //-------------------------------------------------------------------------//
       // plan_trajectory = false;
@@ -716,6 +840,7 @@ int main(int argc, char **argv)
       // ros::Time time = ros::Time::now();
       ros::Time time = ros::Time(0);
       // while(!p_listener->canTransform("/world", "/vehicle_odometry", time));
+      // auto before_try = std::chrono::high_resolution_clock::now();
 
       try
       {
@@ -731,20 +856,18 @@ int main(int argc, char **argv)
         have_transform = false;
       }
 
+      // auto after_try = std::chrono::high_resolution_clock::now();
+
+      // std::chrono::milliseconds duration_try = std::chrono::duration_cast<std::chrono::milliseconds>(after_try - before_try);
+
+      // std::cout << " try cicle took " << duration_try.count() << "ms." << std::endl;
+
       if (have_transform & have_trajectory)
       {
-        // cout << "have_transform: " << endl;
-        // ros::Time time = ros::Time::now();
         ros::Time time = ros::Time(0);
-        // mw_broadcaster.sendTransform(tf::StampedTransform(transformw, time, "/world", "/vehicle_odometry"));
-        ros::spinOnce();
-        // mw_broadcaster.sendTransform(tf::StampedTransform(transformw, time + ros::Duration(5), "/world",
-        //                                                   "/vehicle_"
-        //                                                   "odometry"));
-        // ros::spinOnce();
-        // 				cout<<"stat Publishing transform"<<endl;
+        ros::spinOnce(); //will call all the callbacks waiting to be called at that point in time.
 
-        ros::Duration(0.1).sleep();
+        // ros::Duration(0.1).sleep();
 
         //   ___________________________________
         //   |                                 |
@@ -753,19 +876,15 @@ int main(int argc, char **argv)
 
         // Transform attractor point to /vehicle_odometry
         tf::Transformer tt;
-        // pose_in.header.stamp = time + ros::Duration(0.1);
         pose_in.header.stamp = time;
 
         p_listener->transformPose(car_name, pose_in, pose_transformed);
 
-        // ROS_INFO("pose_in frame_id=%s pose_transformed frame_id=%s",
-        // pose_in.header.frame_id.c_str(),
-        //  pose_transformed.header.frame_id.c_str());
         // Set transformed attractor point
-        manage_vt->set_attractor_point(
-            pose_transformed.pose.position.x, pose_transformed.pose.position.y,
-            atan2(2.0 * (pose_transformed.pose.orientation.w * pose_transformed.pose.orientation.z),
-                  1 - (2 * (pose_transformed.pose.orientation.z * pose_transformed.pose.orientation.z))));
+        // manage_vt->set_attractor_point(
+        //     pose_transformed.pose.position.x, pose_transformed.pose.position.y,
+        //     atan2(2.0 * (pose_transformed.pose.orientation.w * pose_transformed.pose.orientation.z),
+        //           1 - (2 * (pose_transformed.pose.orientation.z * pose_transformed.pose.orientation.z))));
 
         // transform mtt to /vehicle_odometry
         pcl::PointCloud<pcl::PointXYZ> pct;
@@ -776,14 +895,17 @@ int main(int argc, char **argv)
 
         //--------------------------------------------------------------------------------------------------------//
         // ROS_INFO("pc_v1 size = %ld", pc_v1.size());
+        // auto before_for3 = std::chrono::high_resolution_clock::now();
+
+        // takes 2 ms max
         for (size_t i = 0; i < pc_v1.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v1 -> contem a nuvem de pontos com as paredes
         {
           if (i == 0)
           {
             try
             {
-              ros::Time time;
-              time.fromNSec(pc_v1[i].header.stamp);
+              // ros::Time time;
+              // time.fromNSec(pc_v1[i].header.stamp);
               //Get the transform between two frames by frame ID.
               //pc_v1[i].header.frame_id -> The frame to which data should be transformed
               //"/vehicle_odometry" -> The frame where the data originated
@@ -827,8 +949,19 @@ int main(int argc, char **argv)
           pc_msg.header.frame_id = car_name;
           pc_msg.header.stamp = ros::Time(0);
           msg_transformed.obstacle_lines.push_back(pc_msg); //insere o ponto na mensagem
+
+          // benchmark_fn("set_limits_walls", [&]() { set_limits_walls(msg_transformed); });
+
+          //takes 1 ms max
           set_limits_walls(msg_transformed);
         }
+
+        // auto after_for3 = std::chrono::high_resolution_clock::now();
+
+        // std::chrono::milliseconds duration_for3 = std::chrono::duration_cast<std::chrono::milliseconds>(after_for3 - before_for3);
+
+        // std::cout << " for cicle 3 took " << duration_for3.count() << "ms." << std::endl;
+
         // manage_vt->set_obstacles(msg_transformed); //envia as paredes como obstaculos
 
         // -------------------------------------------------------------------------------------------------------------
@@ -837,14 +970,19 @@ int main(int argc, char **argv)
         // if (_simulation_)
         // {
         // ROS_INFO("pc_v2 size = %ld", pc_v2.size());
+
+        bool _LINES_;
+        n.getParam("Param/LINES", _LINES_);
+
+        // takes 2 ms max
         for (size_t i = 0; i < pc_v2.size(); ++i) //std::vector<pcl::PointCloud<pcl::PointXYZ>> pc_v2 -> contem a linha central;
         {
           if (i == 0)
           {
             try
             {
-              ros::Time time;
-              time.fromNSec(pc_v2[i].header.stamp);
+              // ros::Time time;
+              // time.fromNSec(pc_v2[i].header.stamp);
 
               //Get the transform between two frames by frame ID.
               //pc_v2[i].header.frame_id -> The frame to which data should be transformed
@@ -882,9 +1020,6 @@ int main(int argc, char **argv)
           pc_msg2.header.frame_id = car_name;
           pc_msg2.header.stamp = ros::Time(0);
 
-          bool _LINES_;
-          n.getParam("Param/LINES", _LINES_);
-
           if (_LINES_)
           {
             msg_transformed.obstacle_lines.push_back(pc_msg2); // adiciona a linha como obstaculo
@@ -894,6 +1029,7 @@ int main(int argc, char **argv)
           msg_transformed2.obstacle_lines.push_back(pc_msg2);
           set_limits_line(msg_transformed2);
         }
+
         manage_vt->set_obstacles(msg_transformed); //envia as paredes e outros obstaculos (linha caso _LINES_ seja true) como obstaculos
         manage_vt->set_lines(msg_transformed2);    //ja nao faz nada
         // }
@@ -906,7 +1042,16 @@ int main(int argc, char **argv)
 
         ros::Time st = ros::Time(0);
 
+        // auto before = std::chrono::high_resolution_clock::now();
         manage_vt->compute_trajectories_scores();
+
+        // benchmark_fn("compute_trajectories_scores", []() { manage_vt->compute_trajectories_scores(); });
+
+        // auto after = std::chrono::high_resolution_clock::now();
+
+        // std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
+
+        // std::cout << "compute_trajectories_scores: time = " << duration.count() << std::endl;
 
         // change speed in function of steering angle
         if (manage_vt->chosen_traj.index != -1)
@@ -943,20 +1088,29 @@ int main(int argc, char **argv)
         //   |     Publish distance            |
         //   |_________________________________|
 
-        std_msgs::Float64MultiArray mindist_msg;
-        mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
-        mindist_msg.layout.dim[0].label = "sim";
-        mindist_msg.layout.dim[0].size = 2;
-        mindist_msg.layout.dim[0].stride = 2;
-        mindist_msg.layout.data_offset = 0;
+        // std_msgs::Float64MultiArray mindist_msg;
+        // mindist_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+        // mindist_msg.layout.dim[0].label = "sim";
+        // mindist_msg.layout.dim[0].size = 2;
+        // mindist_msg.layout.dim[0].stride = 2;
+        // mindist_msg.layout.data_offset = 0;
 
-        if (manage_vt->chosen_traj.index != -1)
-        {
-          vector<double> vec1 = {ros::Time(0).toSec(), manage_vt->chosen_traj.min_dist};
-          mindist_msg.data.clear();
-          mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
-          mindist_pub.publish(mindist_msg);
-        }
+        // if (manage_vt->chosen_traj.index != -1)
+        // {
+        //   double alpha_degrees = manage_vt->chosen_traj.alpha * (180 / M_PI);
+        //   // vector<double> vec1 = {manage_vt->chosen_traj.min_dist, alpha_degrees, manage_vt->chosen_traj.index, speed, max_angle};
+        //   vector<double> vec1 = {max_angle};
+        //   mindist_msg.data.clear();
+        //   mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
+        //   // mindist_msg.data.insert(chosen_traj.alpha);
+        //   mindist_pub.publish(mindist_msg);
+        // }
+
+        Publish_traj_data(manage_vt);
+
+        Publish_ap_data(manage_vt);
+
+        Publish_analysis_data(manage_vt);
 
         //   ___________________________________
         //   |                                 |
@@ -968,11 +1122,11 @@ int main(int argc, char **argv)
         // ROS_INFO("manage_vt chosen traj= %f", manage_vt->chosen_traj.alpha);
         // ROS_INFO("chosen traj min dist= %f", manage_vt->chosen_traj.min_dist);
 
-        trajectory_planner::traj_info info;
+        // trajectory_planner::traj_info info;
 
-        manage_vt->get_traj_info_msg_from_chosen(&info);
+        // manage_vt->get_traj_info_msg_from_chosen(&info);
 
-        commandPublisher.publish(info);
+        // commandPublisher.publish(info);
 
         visualization_msgs::MarkerArray marker_array;
         manage_vt->compute_vis_marker_array(&marker_array);
@@ -983,17 +1137,11 @@ int main(int argc, char **argv)
       }
     }
 
-    // if (have_plan == true)
-    // {
-    // !!!! The previous 'if' must have a weight evaluation !!!!  if ... &&
-    // GlobalScore>=0.74
+    // auto after_traj = std::chrono::high_resolution_clock::now();
 
-    // mw_broadcaster.sendTransform(tf::StampedTransform(transformw,  ros::Time(0), "/world", "/vehicle_odometry"));
-    // cout << "stat Publishing transform" << endl;
-    // }
+    // std::chrono::milliseconds duration_traj = std::chrono::duration_cast<std::chrono::milliseconds>(after_traj - before_traj);
 
-    // printf("CURRENT NODE-> %d\n",node);
-    // printf("Distance Travelled-> %f\n",base_status.distance_traveled);
+    // std::cout << "----- traj took " << duration_traj.count() << "ms." << std::endl;
 
     loop_rate.sleep();
     ros::spinOnce();
