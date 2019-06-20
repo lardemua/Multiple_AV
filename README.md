@@ -16,23 +16,23 @@ University of Aveiro
 
 # Requirements
 
-[ROS (Melodic)](http://wiki.ros.org/melodic/Installation/Ubuntu)
+* [ROS (Melodic)](http://wiki.ros.org/melodic/Installation/Ubuntu)
 
-Gazebo:
+* Gazebo:
 
 ```
 sudo apt install gazebo9*
 ```
 
-Gazebo (ROS):
+* Gazebo (ROS):
 
 ```
 sudo apt install ros-melodic-gazebo-*
 ```
 
-[Creating a workspace for catkin](http://wiki.ros.org/catkin/Tutorials/create_a_workspace)
+* [Creating a workspace for catkin](http://wiki.ros.org/catkin/Tutorials/create_a_workspace)
 
-Git:
+* Git:
 
 ```
 sudo apt install git
@@ -111,6 +111,7 @@ In the ackermann_vehicle_simulator.launch file you can specify the parameters va
 # Information:
 
 [My Blog](https://planeamentotrajetorias.wordpress.com/)
+
 [My GitHub](https://github.com/ManuelTFerreira)
 
 
