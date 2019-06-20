@@ -40,7 +40,7 @@
           <geometry>
             <mesh>
               <scale>100 100 100</scale>
-              <uri>file://models/CircuitoMonacoLinea.dae</uri>
+              <uri>/opt/ros/melodic/share/gazebo_ros/launch/Monaco/models/CircuitoMonacoLinea.dae</uri>
             </mesh>
           </geometry>
         </visual>
@@ -48,7 +48,7 @@
           <geometry>
             <mesh>
               <scale>100 100 100</scale>
-              <uri>file://models/CircuitoMonacoLinea.dae</uri>
+              <uri>/opt/ros/melodic/share/gazebo_ros/launch/Monaco/models/CircuitoMonacoLinea.dae</uri>
             </mesh>
           </geometry>
         </collision>
