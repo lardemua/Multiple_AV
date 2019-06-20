@@ -9,20 +9,34 @@ Mechanical Engineering Master's Thesis
 * Author: **Manuel Teles Ferreira**
 
 Laboratory of Automation and Robotics (LAR)
+
 Department of Mechanical Engineering
+
 University of Aveiro
 
 # Requirements
 
 [ROS (Melodic)](http://wiki.ros.org/melodic/Installation/Ubuntu)
 
-Gazebo -> sudo apt install gazebo9*
+Gazebo:
 
-Gazebo (ROS) -> sudo apt install ros-melodic-gazebo-*
+```
+sudo apt install gazebo9*
+```
+
+Gazebo (ROS):
+
+```
+sudo apt install ros-melodic-gazebo-*
+```
 
 [Creating a workspace for catkin](http://wiki.ros.org/catkin/Tutorials/create_a_workspace)
 
-Git -> sudo apt install git
+Git:
+
+```
+sudo apt install git
+```
 
 # Setup the packages
 
@@ -41,7 +55,7 @@ Copy everything inside to the src folder (catkin_ws/src)
 So that you install all the packages required, in catkin_wn run:
 
 ```
-* rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths src --ignore-src -r -y
 ```
 
 This will search the src folder for all the dependencies and install everything required.
@@ -61,8 +75,10 @@ catkin_make atlasmv_base
 Now just run:
 
 ```
-catkin_make (Depending on the number of threads used, there may occur errors for missing packages. If this is the case just run catkin_make again).
+catkin_make
 ```
+
+(Depending on the number of threads used, there may occur errors for missing packages. If this is the case just run catkin_make again).
 
 # Map placement
 
@@ -95,5 +111,6 @@ In the ackermann_vehicle_simulator.launch file you can specify the parameters va
 # Information:
 
 [My Blog](https://planeamentotrajetorias.wordpress.com/)
+[My GitHub](https://github.com/ManuelTFerreira)
 
 
