@@ -41,7 +41,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/NUM_TRAJ" value="15" />
     <param name="Param/TRAJ_DENSITY" value="2" />
 
-    <param name="Param/SPEED_REQUIRED" value="10.0" />
+    <param name="Param/SPEED_REQUIRED" value="8.0" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
 
     <param name="Param/DetectDist" value="20" />

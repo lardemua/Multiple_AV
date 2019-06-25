@@ -30,18 +30,18 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
 
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
       <arg name="car_number" default="1" />
-      <arg name="initX" value="-21" />
-      <arg name="initY" value="-3" />
-      <arg name="initYaw" value="0" />
+      <arg name="initX" value="285" />
+      <arg name="initY" value="232" />
+      <arg name="initYaw" value="-1.65" />
     </include>
 
     <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
     <param name="Param/MIN_STEERING_ANGLE" value="20" />
     <param name="Param/NUM_NODES" value="10" />
     <param name="Param/NUM_TRAJ" value="15" />
-    <param name="Param/TRAJ_DENSITY" value="2" />
+    <param name="Param/TRAJ_DENSITY" value="1.4" />
 
-    <param name="Param/SPEED_REQUIRED" value="10.0" />
+    <param name="Param/SPEED_REQUIRED" value="4.0" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
 
     <param name="Param/DetectDist" value="20" />
@@ -68,19 +68,19 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
 
       <arg name="car_number" default="2" />
-      <arg name="initX" value="7" />
-      <arg name="initY" value="-2" />
-      <arg name="initYaw" value="0" />
+      <arg name="initX" value="284" />
+      <arg name="initY" value="203" />
+      <arg name="initYaw" value="-1.65" />
     </include>
 
     <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
     <param name="Param/MIN_STEERING_ANGLE" value="20" />
     <param name="Param/NUM_NODES" value="10" />
     <param name="Param/NUM_TRAJ" value="15" />
-    <param name="Param/TRAJ_DENSITY" value="2" />
+    <param name="Param/TRAJ_DENSITY" value="1.4" />
 
 
-    <param name="Param/SPEED_REQUIRED" value="5.0" />
+    <param name="Param/SPEED_REQUIRED" value="2.0" />
     <param name="Param/SPEED_SAFFETY" value="1.0" />
 
     <param name="Param/DetectDist" value="20" />
@@ -101,7 +101,7 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
 
   </group>
 
-  <!-- <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic" output="screen" /> -->
+    <!-- <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic" output="screen" /> -->
   <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen" />
   <!-- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" output="screen" /> -->
   <!-- <node name="rqt_bag" pkg="rqt_bag" type="rqt_bag" output="screen" /> -->

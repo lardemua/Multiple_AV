@@ -55,6 +55,8 @@ double y_min_l_left;  //line
 double y_max_l_right; //line
 double y_max_l_left;  //line
 
+double WaitingTime;
+
 int count_move_to_left = 0;
 int count_stabilize = 0;
 
@@ -67,6 +69,7 @@ double pos_clp_x;
 double pos_clp_y;
 
 bool begin_time = true;
+bool end_time = true;
 
 ros::Time begin_overtaking;
 
@@ -106,9 +109,6 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 
   double DETECT_SPACE_SENSIVITY;
   n.getParam("Param/DETECT_SPACE_SENSIVITY", DETECT_SPACE_SENSIVITY);
-
-  double WaitingTime;
-  n.getParam("Param/WaitingTime", WaitingTime);
 
   int car_number = 0;
   n.getParam("car_number", car_number);
@@ -297,6 +297,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
         // n.setParam("Param/DETECTION", false);
         n.setParam("Param/AP_right", false);
         n.setParam("Param/AP_left", false);
+        // n.setParam("Param/Vel_Ang", false);
         // still_overtaking = true;
         overtaking_phase = 1;
         begin_overtaking = ros::Time::now();
@@ -361,11 +362,18 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       if (count_points_detected < Detection_Sensitivity)
       {
         ros::Time currtime = ros::Time::now();
-        // std::cout << "No points detected" << std::endl;
+
         if (begin_time == true)
         {
           ROS_INFO("created timer");
+          double SPEED_REQUIRED;
+          double SPEED_SAFFETY;
+          n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
+          n.getParam("Param/SPEED_SAFFETY", SPEED_SAFFETY);
 
+          n.getParam("Param/WaitingTime", WaitingTime);
+          WaitingTime = WaitingTime * (SPEED_SAFFETY / SPEED_REQUIRED);
+          std::cout << "WaitingTime: " << WaitingTime << std::endl;
           begin_3 = ros::Time::now();
           std::cout << "begin_3: " << begin_3 << std::endl;
           begin_time = false;
@@ -454,19 +462,33 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       ROS_INFO("dist_clp: %f", dist_clp);
       if (dist_clp > 1 && pos_clp_y > 0) // o veiculo esta a direita da linha
       {
-        n.setParam("Param/W_DAP", W_DAP_prev);
-        n.setParam("Param/W_DLO", W_DLO_prev);
-        n.setParam("Param/LINES", true);
+        ros::Time currtime = ros::Time::now();
         // n.setParam("Param/DETECTION", true);
-        n.setParam("Param/OVERTAKING", false);
-        ROS_INFO("!!!!!OVERTAKING DONE!!!!!!");
-        time_overtaking = ros::Time::now() - begin_overtaking;
-        std::cout << "time taken to overtake: " << time_overtaking << std::endl;
+        if (end_time == true)
+        {
+          ROS_INFO("created timer");
+          n.setParam("Param/W_DAP", W_DAP_prev);
+          n.setParam("Param/W_DLO", W_DLO_prev);
+          n.setParam("Param/LINES", true);
+          begin_3 = ros::Time::now();
+          std::cout << "begin_3: " << begin_3 << std::endl;
+          end_time = false;
+        }
+        // else if ((currtime - begin_3) > ros::Duration(5.0))
+        else if (currtime > begin_3 + ros::Duration(WaitingTime))
+        {
+          n.setParam("Param/OVERTAKING", false);
+          n.setParam("Param/Vel_Ang", true);
+          ROS_INFO("!!!!!OVERTAKING DONE!!!!!!");
+          // n.setParam("Param/DETECTION", true);
+          time_overtaking = ros::Time::now() - begin_overtaking;
+          std::cout << "time taken to overtake: " << time_overtaking << std::endl;
+        }
       }
-    }
 
-    // ROS_INFO("FS = %lf",trajectory->score.FS);
-    // }
+      // ROS_INFO("FS = %lf",trajectory->score.FS);
+      // }
+    }
   }
 }
 
