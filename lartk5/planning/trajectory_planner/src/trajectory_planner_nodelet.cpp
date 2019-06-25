@@ -662,7 +662,7 @@ void Publish_DS_data(int count_points_detected_front, int count_points_detected_
   mindist_msg.layout.dim[0].stride = 2;
   mindist_msg.layout.data_offset = 0;
 
-  vector<double> vec2 = {count_points_detected_front,count_points_detected_back,limit_left,limit_right,limit_left_back,limit_right_back,detect_front,detect_back};
+  vector<double> vec2 = {count_points_detected_front, count_points_detected_back, limit_left, limit_right, limit_left_back, limit_right_back, detect_front, detect_back};
   mindist_msg.data.clear();
   mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
   // mindist_msg.data.insert(chosen_traj.alpha);
@@ -1056,7 +1056,20 @@ int main(int argc, char **argv)
         // change speed in function of steering angle
         if (manage_vt->chosen_traj.index != -1)
         {
-          speed = angle_to_speed(manage_vt->chosen_traj.alpha);
+          bool Vel_Ang;
+          n.getParam("Param/Vel_Ang", Vel_Ang);
+
+          if (Vel_Ang == true)
+          {
+            speed = angle_to_speed(manage_vt->chosen_traj.alpha);
+          }
+          else
+          {
+            double SPEED_REQUIRED;
+            n.getParam("Param/SPEED_REQUIRED", SPEED_REQUIRED);
+            speed = SPEED_REQUIRED;
+          }
+
           // ROS_INFO("speeeeeeeeeeeeed = %f", speed);
         }
 

@@ -98,6 +98,8 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
   nh.getParam("Param/APdistMax", APdistMax);
   double APdistMin; // 5
   nh.getParam("Param/APdistMin", APdistMin);
+  double MIN_SPACING_AP; // 1.2
+  nh.getParam("Param/MIN_SPACING_AP", MIN_SPACING_AP);
 
   int car_number = 0;
   nh.getParam("car_number", car_number);
@@ -110,18 +112,16 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
 
   if (this_speed_new != 0)
   {
-    // max_dist_AP = APdistMax / (SPEED_REQUIRED / this_speed_new);
-    max_dist_AP = (APdistMax - APdistMin) * (this_speed_new / SPEED_REQUIRED);
-    max_dist_AP = APdistMin + max_dist_AP;
+    max_dist_AP = (APdistMax - APdistMin) * (this_speed_new / SPEED_REQUIRED) + APdistMin;
   }
   else
   {
     max_dist_AP = APdistMax;
   }
 
-  if (max_dist_AP < APdistMin * 1.2)
+  if (max_dist_AP < APdistMin * MIN_SPACING_AP)
   {
-    max_dist_AP = APdistMin * 1.2;
+    max_dist_AP = APdistMin * MIN_SPACING_AP;
   }
 
   double dist_max_reached = APdistMin;

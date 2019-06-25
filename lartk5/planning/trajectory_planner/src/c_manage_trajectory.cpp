@@ -143,8 +143,6 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       // ROS_INFO("using limit_left: y_min_l_right");
     }
 
-    
-
     if (y_max_w_right > y_max_w_left)
     {
       limit_right = y_max_w_right + DETECT_SPACE_SENSIVITY;
@@ -161,9 +159,10 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     }
 
     //EVITAR ERROS DO LIDAR
-    if (limit_right < -100 || limit_left > 100){
-      limit_right=0;
-      limit_left=0;
+    if (limit_right < -100 || limit_left > 100)
+    {
+      limit_right = 0;
+      limit_left = 0;
     }
 
     // ROS_INFO("using limit_left: y_min_l_left");
@@ -232,9 +231,10 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     }
 
     //EVITAR ERROS DO LIDAR
-    if (limit_right_back < -100 || limit_left_back > 100){
-      limit_right_back=0;
-      limit_left_back=0;
+    if (limit_right_back < -100 || limit_left_back > 100)
+    {
+      limit_right_back = 0;
+      limit_left_back = 0;
     }
 
     PublishCollSpace_BACK(limit_left_back, limit_right_back, DetectDist);
@@ -305,23 +305,23 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 
         ROS_INFO("count_points_detected= %d", count_points_detected);
 
-        if (y_min_l_left < y_min_l_right)
-        {
-          ROS_INFO("limit_left= y_min_l_left");
-        }
-        else
-        {
-          ROS_INFO("limit_left= y_min_l_right");
-        }
+        // if (y_min_l_left < y_min_l_right)
+        // {
+        //   ROS_INFO("limit_left= y_min_l_left");
+        // }
+        // else
+        // {
+        //   ROS_INFO("limit_left= y_min_l_right");
+        // }
 
-        if (y_max_w_right > y_max_w_left)
-        {
-          ROS_INFO("limit_right= y_max_w_right");
-        }
-        else
-        {
-          ROS_INFO("limit_right= y_max_w_left");
-        }
+        // if (y_max_w_right > y_max_w_left)
+        // {
+        //   ROS_INFO("limit_right= y_max_w_right");
+        // }
+        // else
+        // {
+        //   ROS_INFO("limit_right= y_max_w_left");
+        // }
       }
 
       //-----------------------------------------------------------
@@ -410,6 +410,13 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 
         if (dist_clp < 1) // começou a curvar e perto da linha
         {
+          n.setParam("Param/AP_right", true);
+          n.setParam("Param/DETECTION_BACK", false);
+          PublishCollSpace_BACK(0.0, 0.0, 0.0);
+          pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+          PublishColl_BACK(points_detected_empty);
+          n.setParam("Param/W_DAP", 1);
+          n.setParam("Param/W_DLO", 0.1);
           overtaking_phase = 5;
           ROS_INFO("---------overtaking_phase: 5");
         }
@@ -426,26 +433,26 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       }
     }
 
-    if (overtaking_phase == 5) // veiculo inclinado e perto da linha
-    {
-      n.setParam("Param/AP_right", true);
-      n.setParam("Param/DETECTION_BACK", false);
-      PublishCollSpace_BACK(0.0, 0.0, 0.0);
-      pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-      PublishColl_BACK(points_detected_empty);
-      overtaking_phase = 6;
-      ROS_INFO("--------------overtaking_phase: 6");
-      n.setParam("Param/W_DAP", 1);
-      n.setParam("Param/W_DLO", 0.1);
-    }
+    // if (overtaking_phase == 5) // veiculo inclinado e perto da linha
+    // {
+    //   n.setParam("Param/AP_right", true);
+    //   n.setParam("Param/DETECTION_BACK", false);
+    //   PublishCollSpace_BACK(0.0, 0.0, 0.0);
+    //   pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
+    //   PublishColl_BACK(points_detected_empty);
+    //   overtaking_phase = 6;
+    //   ROS_INFO("--------------overtaking_phase: 6");
+    //   n.setParam("Param/W_DAP", 1);
+    //   n.setParam("Param/W_DLO", 0.1);
+    // }
 
-    if (overtaking_phase == 6) // o veiculo esta a esquerda da linha
+    if (overtaking_phase == 5)
     {
       // if (pos_clp_y > 0){
       // n.setParam("Param/LINES", true);
       // }
       ROS_INFO("dist_clp: %f", dist_clp);
-      if (dist_clp > 1 && pos_clp_y > 0)
+      if (dist_clp > 1 && pos_clp_y > 0) // o veiculo esta a direita da linha
       {
         n.setParam("Param/W_DAP", W_DAP_prev);
         n.setParam("Param/W_DLO", W_DLO_prev);
