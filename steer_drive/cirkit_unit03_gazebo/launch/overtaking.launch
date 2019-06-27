@@ -98,6 +98,8 @@ Use Gazebo to simulate a vehicle with Ackermann steering. -->
     <param name="Param/DETECTION" value="false" />
     <param name="Param/AP_right" value="true" />
     <param name="Param/AP_left" value="false" />
+    <param name="Param/Vel_Ang" value="false" />
+
 
   </group>
 

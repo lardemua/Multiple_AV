@@ -141,7 +141,7 @@ void PublishColl_BACK(pcl::PointCloud<pcl::PointXYZRGBA> points_detected_3);
 void PublishCollSpace_BACK(double limit_left, double limit_right, double DetectDist);
 void set_limits_walls(mtt::TargetListPC &msg);
 void set_limits_line(mtt::TargetListPC &msg);
-void Publish_DS_data(int count_points_detected_front, int count_points_detected_back, double limit_left, double limit_right, double limit_left_back, double limit_right_back, int detect_front, int detect_back);
+void Publish_DS_data(int count_points_detected_front, int count_points_detected_back, double limit_left, double limit_right, double limit_left_back, double limit_right_back, int detect_front, int detect_back, double min_dist_front, double min_dist_back);
 
 // Global Vars
 _EXTERN_ ros::NodeHandle *p_n;

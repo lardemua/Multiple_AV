@@ -615,7 +615,8 @@ void Publish_analysis_data(c_manage_trajectoryPtr &manage_vt)
   if (manage_vt->chosen_traj.index != -1)
   {
     double alpha_degrees = manage_vt->chosen_traj.alpha * (180 / M_PI);
-    vector<double> vec1 = {manage_vt->chosen_traj.min_dist, alpha_degrees, manage_vt->chosen_traj.index, this_speed_new, max_angle};
+    // vector<int> vec1 = {manage_vt->chosen_traj.index};
+    vector<double> vec1 = {manage_vt->chosen_traj.min_dist,manage_vt->chosen_traj.index, alpha_degrees, max_angle, this_speed_new};
     // vector<double> vec1 = {max_angle};
     mindist_msg.data.clear();
     mindist_msg.data.insert(mindist_msg.data.end(), vec1.begin(), vec1.end());
@@ -652,7 +653,7 @@ void Publish_ap_data(c_manage_trajectoryPtr &manage_vt)
   // std::cout << "end" << end << std::endl;
 }
 
-void Publish_DS_data(int count_points_detected_front, int count_points_detected_back, double limit_left, double limit_right, double limit_left_back, double limit_right_back, int detect_front, int detect_back)
+void Publish_DS_data(int count_points_detected_front, int count_points_detected_back, double limit_left, double limit_right, double limit_left_back, double limit_right_back, int detect_front, int detect_back, double min_dist_front, double min_dist_back)
 {
 
   std_msgs::Float64MultiArray mindist_msg;
@@ -662,7 +663,7 @@ void Publish_DS_data(int count_points_detected_front, int count_points_detected_
   mindist_msg.layout.dim[0].stride = 2;
   mindist_msg.layout.data_offset = 0;
 
-  vector<double> vec2 = {count_points_detected_front, count_points_detected_back, limit_left, limit_right, limit_left_back, limit_right_back, detect_front, detect_back};
+  vector<double> vec2 = {count_points_detected_front, count_points_detected_back, limit_left, limit_right, limit_left_back, limit_right_back, detect_front, detect_back, min_dist_front, min_dist_back};
   mindist_msg.data.clear();
   mindist_msg.data.insert(mindist_msg.data.end(), vec2.begin(), vec2.end());
   // mindist_msg.data.insert(chosen_traj.alpha);

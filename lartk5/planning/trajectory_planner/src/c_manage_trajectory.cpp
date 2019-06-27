@@ -95,6 +95,9 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
   bool DETECTION;
   n.getParam("Param/DETECTION", DETECTION);
 
+  bool CRUZAMENTO;
+  n.getParam("Param/CRUZAMENTO", CRUZAMENTO);
+
   bool DETECTION_BACK;
   n.getParam("Param/DETECTION_BACK", DETECTION_BACK);
 
@@ -129,8 +132,57 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
   int detect_front = 0;
   int detect_back = 0;
 
+  //----------------------------------------------------------------------------------
+  //----------------------------------CRUZAMENTO--------------------------------------
+  //----------------------------------------------------------------------------------
+
+  if (CRUZAMENTO == true)
+  {
+    int count_cruz = 0;
+    pcl::PointCloud<pcl::PointXYZRGBA> points_detected_cruzamento;
+    for (size_t o = 0; o < vo.size(); ++o)
+    {
+      // cycle all lines inside each obstacle
+      for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
+      {
+
+        //CRUZAMENTO
+        if (vo[o].y[lo] > pos_clp_y + 1 &&
+            vo[o].y[lo] < pos_clp_y + 4) // via tem 5.3 metros
+        {
+          // t_obstacle o;
+
+          pcl::PointXYZRGBA new_point;
+          new_point.x = vo[o].x[lo];
+          new_point.y = vo[o].y[lo];
+          new_point.z = 0;
+
+          new_point.r = 100;
+          new_point.g = 100;
+          new_point.b = 100;
+          new_point.a = 1;
+
+          count_cruz++;
+
+          points_detected_cruzamento.push_back(new_point);
+        }
+      }
+    }
+    // ROS_INFO("detected points: %d", count_cruz);
+
+    PublishColl(points_detected_cruzamento);
+  }
+
+  //----------------------------------------------------------------------------------
+  //----------------------------------ULTRAPASSAGEM-----------------------------------
+  //----------------------------------------------------------------------------------
+
+  double min_dist_front = 500;
+  double min_dist_back = 500;
+
   if (DETECTION == true)
   {
+
     detect_front = 1;
     if (y_min_l_left < y_min_l_right)
     {
@@ -177,7 +229,10 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
       {
 
-        if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
+        if (vo[o].x[lo] > 0 &&
+            vo[o].x[lo] < DetectDist &&
+            vo[o].y[lo] < limit_left - 0.01 &&
+            vo[o].y[lo] > limit_right + 0.01)
         {
 
           // t_obstacle o;
@@ -186,6 +241,13 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           new_point.x = vo[o].x[lo];
           new_point.y = vo[o].y[lo];
           new_point.z = 0;
+
+          double dist = sqrt(pow(new_point.x, 2) + pow(new_point.y, 2));
+
+          if (dist < min_dist_front)
+          {
+            min_dist_front = dist;
+          }
 
           new_point.r = 100;
           new_point.g = 100;
@@ -257,6 +319,13 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           new_point.y = vo[o].y[lo];
           new_point.z = 0;
 
+          double dist = sqrt(pow(new_point.x, 2) + pow(new_point.y, 2));
+
+          if (dist < min_dist_back)
+          {
+            min_dist_back = dist;
+          }
+
           new_point.r = 100;
           new_point.g = 100;
           new_point.b = 100;
@@ -273,7 +342,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
     PublishColl_BACK(points_detected_3);
   }
 
-  Publish_DS_data(count_points_detected_front, count_points_detected_back, limit_left, limit_right, limit_left_back, limit_right_back, detect_front, detect_back);
+  Publish_DS_data(count_points_detected_front, count_points_detected_back, limit_left, limit_right, limit_left_back, limit_right_back, detect_front, detect_back, min_dist_front, min_dist_back);
 
   if (OVERTAKING == false)
   {
@@ -595,44 +664,6 @@ void CheckSituation_done_manually(std::vector<t_obstacle> &vo, std::vector<t_obs
 t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std::vector<t_obstacle> &vo, double DLO_Max, double DetectDist)
 {
 
-  // ros::NodeHandle nh;
-  // double DLO_Max;
-  // nh.getParam("Param/DLO_Max", DLO_Max);
-
-  // bool DETECTION;
-  // nh.getParam("Param/DETECTION", DETECTION);
-
-  // double DetectDist = 0;
-  // nh.getParam("Param/DetectDist", DetectDist);
-
-  // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_2;
-
-  // double limit_left;
-  // double limit_right;
-
-  // if (y_min_l_left < y_min_l_right)
-  // {
-  //   limit_left = y_min_l_left;
-  // }
-  // else
-  // {
-  //   limit_left = y_min_l_right;
-  // }
-
-  // if (y_max_w_right > y_max_w_left)
-  // {
-  //   limit_right = y_max_w_right;
-  // }
-  // else
-  // {
-  //   limit_right = y_max_w_left;
-  // }
-
-  // if (DETECTION == true)
-  // {
-  //   PublishCollSpace(limit_left, limit_right, DetectDist);
-  // }
-
   // delete all previous computed collision pts
   trajectory->collision_pts.erase(trajectory->collision_pts.begin(), trajectory->collision_pts.end());
 
@@ -688,30 +719,6 @@ t_func_output c_manage_trajectory::compute_DLO(c_trajectoryPtr &trajectory, std:
         // cycle all lines inside each obstacle
         for (size_t lo = 0; lo < vo[o].x.size(); ++lo)
         {
-
-          // Detect obstacles
-          // if (DETECTION == true)
-          // {
-          //   if (vo[o].x[lo] > 0 && vo[o].x[lo] < DetectDist && vo[o].y[lo] < limit_left - 0.01 && vo[o].y[lo] > limit_right + 0.01)
-          //   {
-
-          //     // t_obstacle o;
-
-          //     pcl::PointXYZRGBA new_point;
-          //     new_point.x = vo[o].x[lo];
-          //     new_point.y = vo[o].y[lo];
-          //     new_point.z = 0;
-
-          //     new_point.r = 100;
-          //     new_point.g = 100;
-          //     new_point.b = 100;
-          //     new_point.a = 1;
-
-          //     points_detected_2.push_back(new_point);
-
-          //     count_points_detected++;
-          //   }
-          // }
           // ROS_INFO("vo[o].x[lo]: %f,vo[o].y[lo]: %f",vo[o].x[lo],vo[o].y[lo]);
           double DLOprev = sqrt(pow(trajectory->v_lines[n][l].x[0] - vo[o].x[lo], 2) + pow(trajectory->v_lines[n][l].y[0] - vo[o].y[lo], 2));
 
@@ -1635,10 +1642,12 @@ t_func_output c_manage_trajectory::compute_trajectories_scores(void)
   nh.getParam("Param/DETECTION", DETECTION);
   bool OVERTAKING;
   nh.getParam("Param/OVERTAKING", OVERTAKING);
+  bool CRUZAMENTO;
+  nh.getParam("Param/CRUZAMENTO", CRUZAMENTO);
   bool MANUAL_OVERTAKING;
   nh.getParam("Param/MANUAL_OVERTAKING", MANUAL_OVERTAKING);
 
-  if (DETECTION == true || OVERTAKING == true)
+  if (DETECTION == true || OVERTAKING == true || CRUZAMENTO == true)
   {
     // benchmark_fn("CheckSituation_2try", [&]() { CheckSituation_2try(vo); });
     CheckSituation_2try(vo); //!!!! Uncomment to detect objects
