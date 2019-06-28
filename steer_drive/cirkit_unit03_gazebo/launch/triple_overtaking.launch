@@ -1,0 +1,150 @@
+<?xml version="1.0"?>
+<!-- ackermann_vehicle_simulator.launch
+
+Use Gazebo to simulate a vehicle with Ackermann steering. -->
+<launch>
+
+  <!-- <remap from="/steer_drive_controller/cmd_vel" to="h1/steer_drive_controller/cmd_vel"/> -->
+
+
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="paused" default="true"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="debug" default="false"/>
+  <arg name="verbose" default="true"/>
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!-- /opt/ros/melodic/share/gazebo_ros/launch/Monaco -->
+    <arg name="world_name" value="$(find gazebo_ros)/launch/Monaco/Monaco.world"/>
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    <arg name="headless" value="$(arg headless)"/>
+    <arg name="verbose" value="$(arg verbose)"/>
+  </include>
+
+  <group ns="h1">
+
+    <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
+      <arg name="car_number" default="1" />
+      <arg name="initX" value="-21" />
+      <arg name="initY" value="-3" />
+      <arg name="initYaw" value="0" />
+    </include>
+
+    <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
+    <param name="Param/MIN_STEERING_ANGLE" value="20" />
+    <param name="Param/NUM_NODES" value="10" />
+    <param name="Param/NUM_TRAJ" value="15" />
+    <param name="Param/TRAJ_DENSITY" value="2" />
+
+    <param name="Param/SPEED_REQUIRED" value="6.0" />
+    <param name="Param/SPEED_SAFFETY" value="1.0" />
+
+    <param name="Param/DetectDist" value="20" />
+
+    <param name="Param/APdistMin" value="5" />
+    <param name="Param/APdistMax" value="10" />
+
+    <param name="Param/W_ADAP" value="0.20" />
+    <param name="Param/W_DAP" value="0.40" />
+    <param name="Param/W_DLO" value="0.90" />
+
+    <param name="Param/LINES" value="true" />
+    <param name="Param/OVERTAKING" value="false" />
+    <param name="Param/DETECTION" value="true" />
+    <param name="Param/AP_right" value="true" />
+    <param name="Param/AP_left" value="false" />
+    <param name="Param/Vel_Ang" value="false" />
+
+  </group>
+
+  <!-- Ultrapassagem -->
+  <group ns="h2">
+
+    <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
+
+      <arg name="car_number" default="2" />
+      <arg name="initX" value="7" />
+      <arg name="initY" value="-2" />
+      <arg name="initYaw" value="0" />
+    </include>
+
+    <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
+    <param name="Param/MIN_STEERING_ANGLE" value="20" />
+    <param name="Param/NUM_NODES" value="10" />
+    <param name="Param/NUM_TRAJ" value="15" />
+    <param name="Param/TRAJ_DENSITY" value="2" />
+
+
+    <param name="Param/SPEED_REQUIRED" value="5.5" />
+    <param name="Param/SPEED_SAFFETY" value="1.0" />
+
+    <param name="Param/DetectDist" value="20" />
+
+    <param name="Param/APdistMin" value="5" />
+    <param name="Param/APdistMax" value="10" />
+
+    <param name="Param/W_ADAP" value="0.20" />
+    <param name="Param/W_DAP" value="0.40" />
+    <param name="Param/W_DLO" value="0.90" />
+
+
+    <param name="Param/LINES" value="true" />
+    <param name="Param/OVERTAKING" value="false" />
+    <param name="Param/DETECTION" value="true" />
+    <param name="Param/AP_right" value="true" />
+    <param name="Param/AP_left" value="false" />
+
+  </group>
+
+  <group ns="h3">
+
+    <include file="$(find cirkit_unit03_gazebo)/launch/ackermann_single_model.launch">
+
+      <arg name="car_number" default="3" />
+      <arg name="initX" value="30" />
+      <arg name="initY" value="-2" />
+      <arg name="initYaw" value="0" />
+    </include>
+
+    <param name="Param/MAX_STEERING_ANGLE" value="41.5" />
+    <param name="Param/MIN_STEERING_ANGLE" value="20" />
+    <param name="Param/NUM_NODES" value="10" />
+    <param name="Param/NUM_TRAJ" value="15" />
+    <param name="Param/TRAJ_DENSITY" value="2" />
+
+
+    <param name="Param/SPEED_REQUIRED" value="2.0" />
+    <param name="Param/SPEED_SAFFETY" value="1.0" />
+
+    <param name="Param/DetectDist" value="20" />
+
+    <param name="Param/APdistMin" value="5" />
+    <param name="Param/APdistMax" value="10" />
+
+    <param name="Param/W_ADAP" value="0.20" />
+    <param name="Param/W_DAP" value="0.40" />
+    <param name="Param/W_DLO" value="0.90" />
+
+
+    <param name="Param/LINES" value="true" />
+    <param name="Param/OVERTAKING" value="false" />
+    <param name="Param/DETECTION" value="false" />
+    <param name="Param/AP_right" value="true" />
+    <param name="Param/AP_left" value="false" />
+
+  </group>
+
+  <!-- <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic" output="screen" /> -->
+  <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph" output="screen" />
+  <!-- <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" output="screen" /> -->
+  <!-- <node name="rqt_bag" pkg="rqt_bag" type="rqt_bag" output="screen" /> -->
+  <!-- <node name="rqt_console" pkg="rqt_console" type="rqt_console" output="screen" /> -->
+  <!-- <node name="rqt_tf_tree" pkg="rqt_tf_tree" type="rqt_tf_tree" output="screen" /> -->
+  <node name="rqt_gui" pkg="rqt_gui" type="rqt_gui" output="screen" />
+
+</launch>

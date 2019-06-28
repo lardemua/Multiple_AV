@@ -492,31 +492,36 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker> *marke
 	//|          Car contour           |
 	//|________________________________|
 	// Line marker to car contour
-	marker2.header.frame_id = car_name;
-	marker2.header.stamp = ros::Time::now();
-	marker2.ns = "car_contour";
-	marker2.id = (*marker_count)++;
-	marker2.action = visualization_msgs::Marker::ADD;
-	marker2.type = visualization_msgs::Marker::LINE_LIST;
-	marker2.scale.x = 0.01;
-	marker2.color.r = 0.5;
-	marker2.color.g = 0.5;
-	marker2.color.b = 1.0;
-	marker2.color.a = 0.5;
-	for (size_t i = 0; i <= alpha.size(); ++i)
+	if (num_traj == 3)
 	{
-		for (size_t l = 0; l < v_lines[i].size(); l++)
+		marker2.header.frame_id = car_name;
+		marker2.header.stamp = ros::Time::now();
+		marker2.ns = "car_contour";
+		marker2.id = (*marker_count)++;
+		marker2.action = visualization_msgs::Marker::ADD;
+		marker2.type = visualization_msgs::Marker::LINE_LIST;
+		marker2.scale.x = 0.01;
+		marker2.color.r = 0.5;
+		marker2.color.g = 0.5;
+		marker2.color.b = 1.0;
+		marker2.color.a = 0.5;
+		for (size_t i = 0; i <= alpha.size(); ++i)
 		{
-			pp.x = v_lines[i][l].x[0];
-			pp.y = v_lines[i][l].y[0];
-			pp.z = 0;
-			marker2.points.push_back(pp);
 
-			pp.x = v_lines[i][l].x[1];
-			pp.y = v_lines[i][l].y[1];
-			pp.z = 0;
-			marker2.points.push_back(pp);
+			for (size_t l = 0; l < v_lines[i].size(); l++)
+			{
+				pp.x = v_lines[i][l].x[0];
+				pp.y = v_lines[i][l].y[0];
+				pp.z = 0;
+				marker2.points.push_back(pp);
+
+				pp.x = v_lines[i][l].x[1];
+				pp.y = v_lines[i][l].y[1];
+				pp.z = 0;
+				marker2.points.push_back(pp);
+			}
+
+			marker_vec->push_back(marker2);
 		}
-		marker_vec->push_back(marker2);
 	}
 }
