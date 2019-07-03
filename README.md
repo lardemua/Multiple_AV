@@ -104,7 +104,6 @@ To launch the program run:
 
 ```
 roslaunch cirkit_unit03_gazebo <launch_file_desired.launch>
-
 ```
 
 There are 5 launch files already configured for specific situations:
@@ -141,7 +140,7 @@ roslaunch cirkit_unit03_gazebo crossing.launch
 
 # Editing details
 
-In the ackermann_vehicle_simulator.launch file you can specify the parameters values depending on the simulation desired.
+In the launch files you can specify the parameters values depending on the simulation desired.
 
 # Information:
 
