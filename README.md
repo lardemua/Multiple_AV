@@ -40,15 +40,13 @@ sudo apt install git
 
 # Setup the packages
 
-Go to the catkin_ws folder and run:
+Go to the catkin_ws/src folder and run:
 
 ```
 git clone https://github.com/lardemua/Multiple_AV.git
 ```
-
+ 
 Now you should have a folder named Multiple_AV.
-
-Copy everything inside to the src folder (catkin_ws/src)
 
 # Rosdep
 
@@ -98,15 +96,49 @@ sudo chmod -R ugo+rw Monaco
 
 # Running the program
 
+There are many launch files to choose from.
+
 To launch the program run:
 
 ```
-roslaunch cirkit_unit03_gazebo ackermann_vehicle_simulator.launch
+roslaunch cirkit_unit03_gazebo <launch_file_desired.launch>
+```
+
+There are 5 launch files already configured for specific situations:
+
+* Normal overtaking:
+
+```
+roslaunch cirkit_unit03_gazebo overtaking.launch
+```
+
+* Overtaking on a curve:
+
+```
+roslaunch cirkit_unit03_gazebo overtaking_curve.launch
+```
+
+* Triple overtaking:
+
+```
+roslaunch cirkit_unit03_gazebo triple_overtaking.launch
+```
+
+* Overtaking 3 vehicles:
+
+```
+roslaunch cirkit_unit03_gazebo overtaking_3_vehicles.launch
+```
+
+* Crossing:
+
+```
+roslaunch cirkit_unit03_gazebo crossing.launch
 ```
 
 # Editing details
 
-In the ackermann_vehicle_simulator.launch file you can specify the parameters values depending on the simulation desired.
+In the launch files you can specify the parameters values depending on the simulation desired.
 
 # Information:
 
