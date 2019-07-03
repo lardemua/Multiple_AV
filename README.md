@@ -40,15 +40,13 @@ sudo apt install git
 
 # Setup the packages
 
-Go to the catkin_ws folder and run:
+Go to the catkin_ws/src folder and run:
 
 ```
 git clone https://github.com/lardemua/Multiple_AV.git
 ```
-
+ 
 Now you should have a folder named Multiple_AV.
-
-Copy everything inside to the src folder (catkin_ws/src)
 
 # Rosdep
 
