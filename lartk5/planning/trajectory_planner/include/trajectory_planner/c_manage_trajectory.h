@@ -45,6 +45,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @date 2018-06-06
  */
 
+/**
+ * @file c_manage_trajectory.h
+ * @brief Class which evaluates the trajectories planned
+ * @author Manuel Ferreira
+ * @version v2
+ * @date 2019-07-03
+ */
+
 // INCLUDES
 #include <algorithm>
 #include <geometry_msgs/Polygon.h>

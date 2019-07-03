@@ -45,6 +45,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @date 2018-06-06
  */
 
+/**
+ * @file trajectory_planner_nodelet.h
+ * @brief Include file from trajectory_planner_nodelet
+ * @author Manuel Ferreira
+ * @version v2
+ * @date 2019-07-03
+ */
+
 #include <chrono>
 
 #include <atlasmv_base/AtlasmvMotionCommand.h>

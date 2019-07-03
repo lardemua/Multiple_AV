@@ -41,6 +41,11 @@ char car_number_string[2];
 // std::ofstream file_min_dist;
 // std::ofstream file_speed;
 
+/**
+ * @brief Export Atractor Point Info
+ * 
+ * @param msg 
+ */
 void Extract_AP(std_msgs::Float64MultiArray msg)
 {
 
@@ -87,6 +92,11 @@ void Extract_AP(std_msgs::Float64MultiArray msg)
     }
 }
 
+/**
+ * @brief Export Detected_Space Info
+ * 
+ * @param msg 
+ */
 void Extract_DS(std_msgs::Float64MultiArray msg)
 {
 
@@ -124,6 +134,11 @@ void Extract_DS(std_msgs::Float64MultiArray msg)
     }
 }
 
+/**
+ * @brief Export basic data
+ * 
+ * @param msg 
+ */
 void Extract_min_dist(std_msgs::Float64MultiArray msg)
 {
     ros::NodeHandle n;
@@ -168,6 +183,11 @@ void Extract_min_dist(std_msgs::Float64MultiArray msg)
     }
 }
 
+/**
+ * @brief Extract current lane and distance to the central line
+ * 
+ * @param msg 
+ */
 void ExtractCLP2(trajectory_planner::coordinates msg)
 {
     pos_clp_y = msg.y;
@@ -184,6 +204,11 @@ void ExtractCLP2(trajectory_planner::coordinates msg)
     // ROS_INFO("x: %f, y: %f", pos_clp_x, pos_clp_y);
 }
 
+/**
+ * @brief Extract Atractor Point info
+ * 
+ * @param msg 
+ */
 void get_AP(trajectory_planner::coordinates msg)
 {
     ap_x = msg.x;
@@ -193,18 +218,33 @@ void get_AP(trajectory_planner::coordinates msg)
     // ROS_INFO("ap_x: %f", ap_x);
 }
 
+/**
+ * @brief Extract number of collision points detected from the Front Space Detection
+ * 
+ * @param msg 
+ */
 void Extract_collision_points_front(sensor_msgs::PointCloud2 msg)
 {
     coll_points_front = msg.width;
     // std::cout << "points cz received: " << cruz_points << std::endl;
 }
 
+/**
+ * @brief Extract number of collision points detected from the Back Space Detection
+ * 
+ * @param msg 
+ */
 void Extract_collision_points_back(sensor_msgs::PointCloud2 msg)
 {
     coll_points_back = msg.width;
     // std::cout << "points cz received: " << cruz_points << std::endl;
 }
 
+/**
+ * @brief Export trajectory info
+ * 
+ * @param msg 
+ */
 void ExtractTraj(std_msgs::Float64MultiArray msg)
 {
     ros::NodeHandle n;
@@ -266,24 +306,6 @@ int main(int argc, char **argv)
 
     n.getParam("car_number", car_number);
     sprintf(car_number_string, "%d", car_number);
-
-    // std::ofstream file_ap("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/csv/ap.csv", std::ios_base::app);
-
-    // file_ap << "\n"
-    //         << "new test"
-    //         << "\n";
-
-    // std::ofstream file_min_dist("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/csv/analysis_data.csv", std::ios_base::app);
-
-    // file_min_dist << "\n"
-    //               << "new test"
-    //               << "\n";
-
-    // std::ofstream file_traj("/home/manuel/catkin_ws/src/lartk5/planning/trajectory_planner/src/csv/traj_data.csv", std::ios_base::app);
-
-    // file_traj << "\n"
-    //           << "new test"
-    //           << "\n";
 
     min_dist_sub = n.subscribe("/analysis_data", 1, Extract_min_dist);
 

@@ -41,6 +41,14 @@
  * @date 2018-06-06
  */
 
+/**
+ * @file mtt_target_generator.cpp
+ * @brief Interactive marker obstacle generator
+ * @author Manuel Ferreira
+ * @version v2
+ * @date 2019-07-03
+ */
+
 #include <math.h>
 #include <stdio.h>
 #include <visualization_msgs/Marker.h>
