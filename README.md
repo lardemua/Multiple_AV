@@ -108,31 +108,31 @@ roslaunch cirkit_unit03_gazebo <launch_file_desired.launch>
 
 There are 5 launch files already configured for specific situations:
 
-Normal overtaking:
+* Normal overtaking:
 
 ```
 roslaunch cirkit_unit03_gazebo overtaking.launch
 ```
 
-Overtaking on a curve:
+* Overtaking on a curve:
 
 ```
 roslaunch cirkit_unit03_gazebo overtaking_curve.launch
 ```
 
-Triple overtaking:
+* Triple overtaking:
 
 ```
 roslaunch cirkit_unit03_gazebo triple_overtaking.launch
 ```
 
-Overtaking 3 vehicles:
+* Overtaking 3 vehicles:
 
 ```
 roslaunch cirkit_unit03_gazebo overtaking_3_vehicles.launch
 ```
 
-Crossing:
+* Crossing:
 
 ```
 roslaunch cirkit_unit03_gazebo crossing.launch
