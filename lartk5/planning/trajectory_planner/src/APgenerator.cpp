@@ -116,7 +116,7 @@ void line_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2> &inpu
   }
   else
   {
-    max_dist_AP = APdistMax;
+    max_dist_AP = APdistMin;
   }
 
   if (max_dist_AP < APdistMin * MIN_SPACING_AP)

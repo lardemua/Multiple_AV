@@ -41,6 +41,14 @@
  * @date 2018-06-06
  */
 
+/**
+ * @file c_trajectory.cpp
+ * @brief c_trajectory class generator
+ * @author Manuel Ferreira
+ * @version v2
+ * @date 2019-07-03
+ */
+
 #include <trajectory_planner/c_trajectory.h>
 #include <trajectory_planner/trajectory_planner_nodelet.h>
 

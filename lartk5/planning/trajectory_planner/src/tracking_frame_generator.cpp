@@ -41,6 +41,14 @@
  * @date 2018-06-06
  */
 
+/**
+ * @file tracking_frame_generator.cpp
+ * @brief Transform frame generator
+ * @author Manuel Ferreira
+ * @version v2
+ * @date 2019-07-03
+ */
+
 #include <math.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>

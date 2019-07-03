@@ -43,6 +43,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @date 2018-06-06
  */
 
+/**
+ * @file trajectory_planner_nodelet.cpp
+ * @brief Uses the c-trajectory class, to publish trajectories and send the
+ * message to follow one of them
+ * @author Manuel Ferreira
+ * @version v2
+ * @date 2019-07-03
+ */
+
 #include <trajectory_planner/trajectory_planner_nodelet.h>
 
 bool plan_trajectory = false;

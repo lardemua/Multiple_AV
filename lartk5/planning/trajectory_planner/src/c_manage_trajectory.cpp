@@ -39,6 +39,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @date 2018-06-06
  */
 
+/**
+ * @file c_manage_trajectory.cpp
+ * @brief c_manage_trajectory class manager
+ * @author Manuel Ferreira
+ * @version v2
+ * @date 2019-07-03
+ */
+
 #include <trajectory_planner/c_manage_trajectory.h>
 #include <trajectory_planner/trajectory_planner_nodelet.h>
 
@@ -374,39 +382,11 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
         // PUBLISH INFO ----------------------------------------
 
         ROS_INFO("count_points_detected= %d", count_points_detected);
-
-        // if (y_min_l_left < y_min_l_right)
-        // {
-        //   ROS_INFO("limit_left= y_min_l_left");
-        // }
-        // else
-        // {
-        //   ROS_INFO("limit_left= y_min_l_right");
-        // }
-
-        // if (y_max_w_right > y_max_w_left)
-        // {
-        //   ROS_INFO("limit_right= y_max_w_right");
-        // }
-        // else
-        // {
-        //   ROS_INFO("limit_right= y_max_w_left");
-        // }
       }
-
-      //-----------------------------------------------------------
     }
   }
   else
   {
-
-    // PublishCollSpace(0.0, 0.0, 0.0);
-    // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-    // PublishColl(points_detected_empty);
-
-    // if (still_overtaking == true) //verifica se está em modo ultrapassagem (nao é igual ao param OVERTAKING?)
-    // {
-
     double dist_clp = sqrt(pow(pos_clp_x, 2) + pow(pos_clp_y, 2));
 
     // ROS_INFO("dist_clp: %f", dist_clp);
@@ -447,7 +427,6 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           std::cout << "begin_3: " << begin_3 << std::endl;
           begin_time = false;
         }
-        // else if ((currtime - begin_3) > ros::Duration(5.0))
         else if (currtime > begin_3 + ros::Duration(WaitingTime))
         {
           //waiting_time
@@ -461,13 +440,6 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           ROS_INFO("-------------overtaking_phase: 4");
           // ROS_INFO("time: %f", begin_3);
         }
-        // ROS_INFO("detecting: %d", count_points_detected);
-        // PublishCollSpace(0.0, 0.0, 0.0);
-        // pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-        // PublishColl(points_detected_empty);
-
-        // overtaking_phase = 4;
-        // ROS_INFO("-------------overtaking_phase: 4");
       }
       else
       {
@@ -510,24 +482,8 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
       }
     }
 
-    // if (overtaking_phase == 5) // veiculo inclinado e perto da linha
-    // {
-    //   n.setParam("Param/AP_right", true);
-    //   n.setParam("Param/DETECTION_BACK", false);
-    //   PublishCollSpace_BACK(0.0, 0.0, 0.0);
-    //   pcl::PointCloud<pcl::PointXYZRGBA> points_detected_empty;
-    //   PublishColl_BACK(points_detected_empty);
-    //   overtaking_phase = 6;
-    //   ROS_INFO("--------------overtaking_phase: 6");
-    //   n.setParam("Param/W_DAP", 1);
-    //   n.setParam("Param/W_DLO", 0.1);
-    // }
-
     if (overtaking_phase == 5)
     {
-      // if (pos_clp_y > 0){
-      // n.setParam("Param/LINES", true);
-      // }
       ROS_INFO("dist_clp: %f", dist_clp);
       if (dist_clp > 1 && pos_clp_y > 0) // o veiculo esta a direita da linha
       {
@@ -543,7 +499,6 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
           std::cout << "begin_3: " << begin_3 << std::endl;
           end_time = false;
         }
-        // else if ((currtime - begin_3) > ros::Duration(5.0))
         else if (currtime > begin_3 + ros::Duration(WaitingTime))
         {
           n.setParam("Param/OVERTAKING", false);
@@ -562,7 +517,7 @@ void CheckSituation_2try(std::vector<t_obstacle> &vo)
 }
 
 /**
- * @brief Extract posicion of the closest line points of the vehicle
+ * @brief Extract position of the closest line points of the vehicle
  * 
  * @param msg -> message received from APgenerator
  */
@@ -577,7 +532,7 @@ void ExtractCLP2(trajectory_planner::coordinates msg)
 }
 
 /**
- * @brief manually create overtaking
+ * @brief manually create overtaking (NOT FINISHED!!!!!!!!!!)
  * 
  * @param vo -> obstacles from the walls
  * @param vl -> obstacles from the line
@@ -881,8 +836,6 @@ int c_manage_trajectory::lineSegmentIntersection(double Ax, double Ay,
 
 void set_limits_walls(mtt::TargetListPC &msg)
 {
-  // vo.erase(vo.begin(), vo.end()); //std::vector<t_obstacle> vo
-
   y_max_w_right = -500;
   y_max_w_left = -500;
 
@@ -925,16 +878,8 @@ void set_limits_walls(mtt::TargetListPC &msg)
 
     for (size_t j = 0; j < pc.points.size(); ++j) //para cada ponto
     {
-
-      // double min_x = 100; //sera decessario?
-      // double min_x = DetectDist / 20;
-      // double point_dist = sqrt(pow(pc.points[i].x, 2) + pow(pc.points[i].y, 2));
-
-      // if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].y < 0)
       if (pc.points[j].y > y_max_w_right && pc.points[j].x > 0 && pc.points[j].x < (DetectDist / 10) && pc.points[j].y < -(dist_y_right_front - 1))
       {
-        // dist_min_reached_detect = point_dist;
-        // min_x = pc.points[j].x;  //sera decessario?
         // ROS_INFO("xr: %f, yr: %f", pc.points[j].x, pc.points[j].y);
         y_max_w_right = pc.points[j].y;
       }
@@ -942,19 +887,7 @@ void set_limits_walls(mtt::TargetListPC &msg)
       if (pc.points[j].y > y_min_w_right && pc.points[j].x < 0 && pc.points[j].x > (-(DetectDist / 2)) && pc.points[j].y < -(dist_y_right_back - 1))
       {
         // ROS_INFO("------ xl: %f, yl: %f", pc.points[j].x, pc.points[j].y);
-        // if (first_point_w_right_back == true)
-        // {
-        //   y_min_w_right = pc.points[j].y;
-        //   first_point_w_right_back = false;
-        // }
-        // else
-        // {
-        // if (abs(pc.points[j].y - dist_y_right_back) < DETECT_SPACE_Dist)
-        // {
-        // dist_y_right_back = pc.points[j].y;
         y_min_w_right = pc.points[j].y;
-        // }
-        // }
       }
 
       if (pc.points[j].y > y_max_w_left && pc.points[j].y < 0 && pc.points[j].x > (DetectDist - (DetectDist / 2)) && pc.points[j].x < DetectDist)
@@ -992,33 +925,8 @@ void set_limits_walls(mtt::TargetListPC &msg)
           }
         }
       }
-
-      // o.x.push_back(pc.points[j].x); //obstaculo (o) recebe as posições x e y da nuvem de pontos
-      // o.y.push_back(pc.points[j].y);
     }
-
-    // vo.push_back(o); //vo tem agora a nuvem de pontos
   }
-
-  // bool DETECTION_BACK;
-  // n.getParam("Param/DETECTION_BACK", DETECTION_BACK);
-
-  // if (DETECTION_BACK == true)
-  // {
-  //EVITAR ERROS DE DETACAO DOS LIDAR
-  // if (y_min_w_right < -100 && y_min_w_left < -100) //-------
-  // {
-  //   ROS_INFO("------ y_min_w_right: %f", y_min_w_right);
-  //   ROS_INFO("------ y_min_w_left: %f", y_min_w_left);
-  //   // y_max_w_right = 0;
-  // }
-  // if (y_max_w_right < -100 && y_max_w_left < -100)
-  // {
-  //   ROS_INFO("------ y_max_w_right: %f", y_max_w_right);
-  //   ROS_INFO("------ y_max_w_left: %f", y_max_w_left);
-  //   // y_min_w_right = 0;
-  // }
-  // }
 }
 
 void set_limits_line(mtt::TargetListPC &msg)

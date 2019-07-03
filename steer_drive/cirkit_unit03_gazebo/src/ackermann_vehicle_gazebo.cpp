@@ -29,6 +29,14 @@
  * @date 2018-06-06
  */
 
+/**
+ * @file ackermann_vehicle_gazebo.cpp
+ * @brief Convert obstacles laser scan to point cloud
+ * @author Manuel Ferreira
+ * @version v1
+ * @date 2019-07-03
+ */
+
 #include <laser_geometry/laser_geometry.h>
 #include <pcl/PCLPointCloud2.h>
 #include <ros/ros.h>
