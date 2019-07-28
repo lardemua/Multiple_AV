@@ -500,7 +500,7 @@ void c_trajectory::create_markers(std::vector<visualization_msgs::Marker> *marke
 	//|          Car contour           |
 	//|________________________________|
 	// Line marker to car contour
-	if (num_traj == 3)
+	if (num_traj == 30)
 	{
 		marker2.header.frame_id = car_name;
 		marker2.header.stamp = ros::Time::now();
