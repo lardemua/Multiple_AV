@@ -1323,6 +1323,10 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
     visualization_msgs::MarkerArray *marker_array)
 {
   std::vector<visualization_msgs::Marker> marker_vec;
+  ros::NodeHandle nh;
+  int TRAJ_INFO = 1;
+  nh.getParam("Param/TRAJ_INFO", TRAJ_INFO);
+  // std::cout << "TRAJ_INFO=" << TRAJ_INFO << std::endl;
 
   // ROS_INFO("static marker vec size=%ld", static_marker_vec.size());
   for (size_t i = 0; i < static_marker_vec.size(); ++i)
@@ -1331,17 +1335,36 @@ t_func_output c_manage_trajectory::compute_vis_marker_array(
   }
 
   int marker_count = 0;
-  for (int i = 0; i < (int)vt.size(); ++i)
+  if (TRAJ_INFO == 0)
   {
-    draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP ");
-
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 2.5, vt[i]->score.DLO, vt[i]->score.DLOnorm, "DLO ");
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.CL, vt[i]->score.CL, "CL ");
-    // draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P = ");
+    for (int i = 0; i < (int)vt.size(); ++i)
+    {
+      draw_on_node(vt[i], &marker_vec, &marker_count, 0.60, (vt[i]->score.DAP + vt[i]->score.ADAP + vt[i]->score.DLO) * vt[i]->score.FS, vt[i]->score.overall_norm, "P= ");
+    }
+  }
+  else if (TRAJ_INFO == 1)
+  {
+    for (int i = 0; i < (int)vt.size(); ++i)
+    {
+      draw_on_node(vt[i], &marker_vec, &marker_count, 0.15, vt[i]->score.DAP, vt[i]->score.DAPnorm, "DAP= ");
+    }
+  }
+  else if (TRAJ_INFO == 2)
+  {
+    for (int i = 0; i < (int)vt.size(); ++i)
+    {
+      draw_on_node(vt[i], &marker_vec, &marker_count, 0.30, vt[i]->score.ADAP, vt[i]->score.ADAPnorm, "ADAP= ");
+    }
+  }
+  else if (TRAJ_INFO == 3)
+  {
+    for (int i = 0; i < (int)vt.size(); ++i)
+    {
+      draw_on_node(vt[i], &marker_vec, &marker_count, 2.5, vt[i]->score.DLO, vt[i]->score.DLOnorm, "DLO= ");
+    }
   }
 
-  ros::NodeHandle nh;
+  
   int car_number = 0;
   nh.getParam("car_number", car_number);
   char car_name[20] = "/vehicle_odometry_";
